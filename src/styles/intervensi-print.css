@@ -1,0 +1,153 @@
+/* ============================================
+   SIMPAH - Intervensi Print Styles
+   ============================================ */
+
+/* Print Header/Footer (hidden on screen) */
+.print-header-block,
+.print-footer-block {
+  display: none;
+}
+
+@media print {
+  /* Hide non-essential UI */
+  .sidebar,
+  .sidebar-overlay,
+  .navbar,
+  .no-print,
+  #backToRanking,
+  #backToRanking2,
+  #printReportBtn,
+  .profil-actions {
+    display: none !important;
+  }
+
+  /* Reset layout */
+  .app-layout {
+    display: block !important;
+  }
+  .app-main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .app-content {
+    padding: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  body {
+    font-size: 11pt !important;
+    color: #111 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Print Header */
+  .print-header-block {
+    display: block !important;
+    text-align: center;
+    padding: 1.5cm 0 0.8cm;
+    border-bottom: 3px double #111;
+    margin-bottom: 0.8cm;
+  }
+  .print-header-logo {
+    font-size: 24pt;
+    font-weight: 900;
+    color: #0d7c3d;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .print-header-block h1 {
+    font-size: 16pt;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #111;
+  }
+  .print-header-block p {
+    font-size: 10pt;
+    color: #555;
+  }
+
+  /* Print Footer */
+  .print-footer-block {
+    display: block !important;
+    text-align: center;
+    padding-top: 0.5cm;
+    border-top: 1px solid #ccc;
+    margin-top: 1cm;
+    font-size: 8pt;
+    color: #888;
+  }
+
+  /* Cards */
+  .profil-identity-card,
+  .profil-section,
+  .chart-card,
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    page-break-inside: avoid;
+  }
+
+  .profil-section {
+    page-break-inside: avoid;
+  }
+
+  /* Score ring */
+  .score-ring {
+    border-color: currentColor !important;
+  }
+
+  /* Traffic lights — ensure color prints */
+  .traffic-dot {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .traffic-light {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Recommendations */
+  .recs-group {
+    page-break-inside: avoid;
+  }
+  .rec-item {
+    page-break-inside: avoid;
+  }
+  .recs-group-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Mini bar chart */
+  .mini-bar {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .sipsn-bar-fill {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Badges */
+  .badge,
+  .status-pill {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page settings */
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Score bar */
+  .score-bar { 
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

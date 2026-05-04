@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export Diagram SIMPAH</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+  </script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; padding: 2rem; background: #f8fafc; color: #0f172a; max-width: 1000px; margin: 0 auto; }
+    h1 { margin-bottom: 2rem; color: #0d7c3d; }
+    .diagram-card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .diagram-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+    .instruction { background: #e0f2fe; color: #0284c7; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+
+  <h1>SIMPAH Diagram Export</h1>
+  <div class="instruction">
+    <strong>💡 Cara Menyimpan:</strong>
+    Arahkan kursor ke gambar diagram di bawah ini, lalu <strong>Klik Kanan &rarr; Save Image As...</strong> (atau Copy Image) untuk mengambil gambarnya.
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-title">1. Architecture Overview</div>
+    <div class="mermaid">
+      graph TD
+          A["PWA Lapangan (Mobile-First)"] -->|IndexedDB + Sync| D["Central Data Store"]
+          B["Dashboard GIS"] -->|Read| D
+          C["Dashboard Eksekutif"] -->|Read| D
+          E["Portal Publik"] -->|Read + Write Aduan| D
+          D -->|Export| F["SIPSN Format (CSV/Excel)"]
+          D -->|Audit Trail| G["Timestamp + UserID + GPS"]
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <div class="diagram-title">2. Data Model (SIPSN Compatible)</div>
+    <div class="mermaid">
+      erDiagram
+          WASTE_RECORD ||--o{ SORTED_WASTE : contains
+          WASTE_RECORD ||--o| RESIDUE : generates
+          WASTE_RECORD }o--|| LOCATION : recorded_at
+          WASTE_RECORD }o--|| USER : recorded_by
+          WASTE_RECORD }o--o| FLEET : transported_by
+          FLEET }o--o| MOU : covered_by
+          COMPLAINT }o--o| LOCATION : near
+
+          WASTE_RECORD {
+              string id PK
+              string category_sipsn
+              float weight_kg
+              string type "masuk|pilah|residu"
+              float lat
+              float lng
+              string location_id FK
+              string user_id FK
+              string fleet_id FK
+              boolean is_incidental
+              string notes
+              datetime created_at
+              boolean synced
+          }
+
+          LOCATION {
+              string id PK
+              string name
+              string type "tps|tps3r|bank_sampah|pengepul|tpa"
+              float lat
+              float lng
+              string address
+              string wilayah
+          }
+    </div>
+  </div>
+
+</body>
+</html>
