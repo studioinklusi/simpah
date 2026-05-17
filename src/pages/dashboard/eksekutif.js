@@ -443,7 +443,6 @@ function renderTopLocations(records, locations) {
   body.innerHTML = sorted.map(([id, vol]) => {
     const loc = locations.find(l => l.id === id);
     return `
-    return `
       <tr>
         <td>
           <strong style="font-size:var(--font-sm)">${loc?.name || id}</strong>
