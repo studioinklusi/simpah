@@ -455,7 +455,7 @@ export async function renderMasterData() {
         <div class="md-empty" style="padding:var(--space-8)">
           <div style="font-size:2.5rem;margin-bottom:var(--space-3);opacity:0.3">${icons.users}</div>
           <p style="margin-bottom:var(--space-2)">Belum ada data kependudukan.</p>
-          <p style="font-size:var(--font-xs);color:var(--text-muted)">Data ini digunakan untuk menghitung potensi timbulan sampah & persentase kinerja per kecamatan di halaman Intervensi Desa.</p>
+          <p style="font-size:var(--font-xs);color:var(--text-muted)">Data ini digunakan untuk menghitung potensi timbulan sampah & persentase kinerja per kecamatan di halaman Intervensi Wilayah.</p>
         </div>
       ` : `
       <table class="md-table">
@@ -491,7 +491,7 @@ export async function renderMasterData() {
         </tbody>
       </table>
       <div style="padding:var(--space-3);background:rgba(59,130,246,0.05);border-radius:var(--radius-md);margin-top:var(--space-4);font-size:var(--font-xs);color:var(--text-secondary);display:flex;align-items:flex-start;gap:var(--space-2)">
-        ${icons.info} <span><strong>Info:</strong> Data kependudukan digunakan oleh halaman <em>Intervensi Desa</em> untuk menghitung potensi timbulan, % penanganan, dan % pengurangan per kecamatan. Pastikan nama kecamatan <strong>sama persis</strong> dengan field "Wilayah" di data Lokasi.</span>
+        ${icons.info} <span><strong>Info:</strong> Data kependudukan digunakan oleh halaman <em>Intervensi Wilayah</em> untuk menghitung potensi timbulan, % penanganan, dan % pengurangan per kecamatan. Pastikan nama kecamatan <strong>sama persis</strong> dengan field "Wilayah" di data Lokasi.</span>
       </div>
       `}
     `;

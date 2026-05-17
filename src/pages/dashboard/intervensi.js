@@ -1,4 +1,4 @@
-// SIMPAH - Halaman Intervensi Desa
+// SIMPAH - Halaman Intervensi Wilayah
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatWeight, formatDate } from '../../utils/helpers.js';
 import { getVillageProfiles } from '../../utils/village-stats.js';
@@ -27,7 +27,7 @@ function renderRankingView() {
   const now = new Date();
   const periodLabel = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  renderDashboardLayout('Intervensi Desa', `
+  renderDashboardLayout('Intervensi Wilayah', `
     <div class="page-enter">
       <div class="section-header">
         <div>
@@ -158,7 +158,7 @@ function renderProfilView() {
   const recsPerhatian = v.recommendations.filter(r => r.urgency === 'perhatian');
   const recsPengembangan = v.recommendations.filter(r => r.urgency === 'pengembangan');
 
-  renderDashboardLayout('Intervensi Desa', `
+  renderDashboardLayout('Intervensi Wilayah', `
     <div class="page-enter intervensi-profil" id="profilContainer">
       <!-- Back button -->
       <button class="btn btn-secondary btn-sm" id="backToRanking" style="margin-bottom:var(--space-4)">
@@ -168,7 +168,7 @@ function renderProfilView() {
       <!-- Print Header (hidden on screen, shown on print) -->
       <div class="print-header-block">
         <div class="print-header-logo">SIMPAH</div>
-        <h1>Laporan Profil Intervensi Desa</h1>
+        <h1>Laporan Profil Intervensi Wilayah</h1>
         <p>Sistem Informasi Monitoring Pengelolaan Sampah — Kabupaten Banjarnegara</p>
       </div>
 

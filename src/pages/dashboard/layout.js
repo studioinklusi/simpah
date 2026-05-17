@@ -50,7 +50,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
               ${icons.clipboard} <span>Manajemen MoU</span>
             </a>
             <a href="#/dashboard/intervensi" class="sidebar-link ${activeMenu === 'intervensi' ? 'active' : ''}">
-              ${icons.shield} <span>Intervensi Desa</span>
+              ${icons.shield} <span>Intervensi Wilayah</span>
             </a>
             <a href="#/dashboard/masterdata" class="sidebar-link ${activeMenu === 'masterdata' ? 'active' : ''}">
               ${icons.settings} <span>Master Data</span>
