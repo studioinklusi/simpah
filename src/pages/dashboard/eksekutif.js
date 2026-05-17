@@ -1,7 +1,7 @@
 // SIMPAH - Executive Dashboard
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatWeight, formatNumber, formatPercent, getLast30Days } from '../../utils/helpers.js';
-import { getWasteStats, getAllWasteRecords, getAllLocations, getAllMou } from '../../db/store.js';
+import { getWasteStats, getAllWasteRecords, getAllLocations, getAllMou, getAllUsers } from '../../db/store.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { renderDashboardLayout } from './layout.js';
 import { supabase } from '../../lib/supabase.js';
@@ -13,6 +13,7 @@ export async function renderEksekutif() {
   const stats = await getWasteStats();
   const mous = await getAllMou();
   const locations = await getAllLocations();
+  const users = await getAllUsers();
   const activeMou = mous.filter(m => m.status === 'active').length;
 
   // ── Dynamic KPI Trend Calculation ──
@@ -122,8 +123,8 @@ export async function renderEksekutif() {
       </div>
 
       <!-- Bottom Row -->
-      <div class="dashboard-grid dashboard-grid-2">
-        <div class="chart-card">
+      <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+        <div class="chart-card" style="grid-column: span 2">
           <div class="chart-card-header">
             <h3 class="chart-card-title">Volume per Jenis</h3>
           </div>
@@ -131,12 +132,23 @@ export async function renderEksekutif() {
         </div>
         <div class="card">
           <div class="chart-card-header">
-            <h3 class="chart-card-title">Top 5 Lokasi (Volume Tertinggi)</h3>
+            <h3 class="chart-card-title">Top Lokasi (Volume)</h3>
           </div>
           <div class="table-container" style="border:none">
             <table class="table">
-              <thead><tr><th>Lokasi</th><th>Tipe</th><th style="text-align:right">Volume</th></tr></thead>
+              <thead><tr><th>Lokasi</th><th style="text-align:right">Volume</th></tr></thead>
               <tbody id="topLocationsBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="chart-card-header">
+            <h3 class="chart-card-title">Kader Teraktif</h3>
+          </div>
+          <div class="table-container" style="border:none">
+            <table class="table">
+              <thead><tr><th>Nama</th><th style="text-align:right">Entri</th></tr></thead>
+              <tbody id="topKaderBody"></tbody>
             </table>
           </div>
         </div>
@@ -162,6 +174,7 @@ export async function renderEksekutif() {
   }, 100);
   
   renderTopLocations(stats.records, locations);
+  renderTopKader(stats.records, users);
 }
 
 async function renderCharts(stats, period = 'daily') {
@@ -430,10 +443,49 @@ function renderTopLocations(records, locations) {
   body.innerHTML = sorted.map(([id, vol]) => {
     const loc = locations.find(l => l.id === id);
     return `
+    return `
       <tr>
-        <td><strong style="font-size:var(--font-sm)">${loc?.name || id}</strong></td>
-        <td><span class="badge badge-neutral">${loc?.type?.toUpperCase() || '-'}</span></td>
+        <td>
+          <strong style="font-size:var(--font-sm)">${loc?.name || id}</strong>
+          <div style="font-size:10px;color:var(--text-muted)">${loc?.type?.toUpperCase() || '-'}</div>
+        </td>
         <td style="text-align:right;font-weight:600">${formatWeight(vol)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderTopKader(records, users) {
+  const kaderStats = {};
+  records.forEach(r => {
+    if (r.created_by && r.created_by !== 'system') {
+      kaderStats[r.created_by] = (kaderStats[r.created_by] || 0) + 1;
+    }
+  });
+
+  const sorted = Object.entries(kaderStats)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  const body = document.getElementById('topKaderBody');
+  if (!body) return;
+
+  body.innerHTML = sorted.map(([id, count]) => {
+    const user = users.find(u => u.id === id);
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:24px;height:24px;border-radius:50%;background:var(--primary-100);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold">
+              ${user ? user.full_name.charAt(0).toUpperCase() : '?'}
+            </div>
+            <div>
+              <strong style="font-size:var(--font-sm)">${user?.full_name || id}</strong>
+              <div style="font-size:10px;color:var(--text-muted)">${user?.role || 'Kader'}</div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:right;font-weight:600">${count}x</td>
       </tr>
     `;
   }).join('');
