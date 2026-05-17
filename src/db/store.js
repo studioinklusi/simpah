@@ -585,6 +585,49 @@ export async function getWasteStats() {
   };
 }
 
+// ========== Village Population (Supabase only) ==========
+export async function getAllVillagePopulation() {
+  try {
+    const { data, error } = await supabase.from('village_population').select('*').order('kecamatan');
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.warn('Gagal mengambil data kependudukan:', e);
+    return [];
+  }
+}
+
+export async function addVillagePopulation(popData) {
+  if (!navigator.onLine) throw new Error('Penambahan data kependudukan harus dalam keadaan online');
+  
+  const dataToInsert = {
+    ...popData,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data, error } = await supabase.from('village_population').insert(dataToInsert).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateVillagePopulation(id, updates) {
+  if (!navigator.onLine) throw new Error('Perubahan data kependudukan harus dalam keadaan online');
+  
+  const updatedData = { ...updates, updated_at: new Date().toISOString() };
+  
+  const { data, error } = await supabase.from('village_population').update(updatedData).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteVillagePopulation(id) {
+  if (!navigator.onLine) throw new Error('Penghapusan data kependudukan harus dalam keadaan online');
+  
+  const { error } = await supabase.from('village_population').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ========== Helpers ==========
 function generateId() {
   return crypto.randomUUID();

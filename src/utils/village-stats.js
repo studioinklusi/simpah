@@ -1,15 +1,26 @@
 // SIMPAH - Village Statistics Aggregator
 // Mengagregasi data dari IndexedDB menjadi profil per wilayah
+// Termasuk kalkulasi potensi timbulan berdasarkan data kependudukan
 
-import { getAllWasteRecords, getAllLocations, getAllComplaints } from '../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllComplaints, getAllVillagePopulation } from '../db/store.js';
 import { calculateVillageScore, evaluateVillage } from './intervention-rules.js';
 
+// Standar timbulan nasional (KLHK) — kg/orang/hari
+const DEFAULT_TIMBULAN_PER_KAPITA = 0.70;
+
 export async function getVillageProfiles() {
-  const [records, locations, complaints] = await Promise.all([
+  const [records, locations, complaints, populationData] = await Promise.all([
     getAllWasteRecords(),
     getAllLocations(),
     getAllComplaints(),
+    getAllVillagePopulation(),
   ]);
+
+  // Build population lookup by kecamatan name (case-insensitive)
+  const populationMap = {};
+  populationData.forEach(p => {
+    populationMap[p.kecamatan.toLowerCase()] = p;
+  });
 
   // Build location lookup
   const locationMap = {};
@@ -172,11 +183,45 @@ export async function getVillageProfiles() {
     const pct_tanpa_gps = p.record_count > 0 ? (p.tanpa_gps_count / p.record_count) * 100 : 0;
     const pct_belum_sync = p.record_count > 0 ? (p.belum_sync_count / p.record_count) * 100 : 0;
 
-    // Simulated field — timbulan per KK (using total masuk / estimated KK)
-    // In production this would come from census data, for demo we estimate
-    const estimated_kk = 200 + Math.floor(p.record_count * 5);
+    // ── Data Kependudukan (dari Supabase atau fallback estimasi) ──
+    const popData = populationMap[p.wilayah.toLowerCase()];
+    const has_population_data = !!popData;
+    const jumlah_penduduk = popData?.jumlah_penduduk || 0;
+    const jumlah_kk = popData?.jumlah_kk || 0;
+    const luas_km2 = popData?.luas_km2 || 0;
+    const timbulan_per_kapita = popData?.timbulan_per_kapita || DEFAULT_TIMBULAN_PER_KAPITA;
+    const tahun_data = popData?.tahun_data || null;
+    const sumber_data = popData?.sumber_data || null;
+
+    // ── Potensi Timbulan & Kinerja ──
     const numMonths = Math.max(uniqueMonths.size, 1);
-    const timbulan_per_kk_bulan = estimated_kk > 0 ? (p.total_masuk_kg / numMonths) / estimated_kk : 0;
+    const potensi_timbulan_harian = jumlah_penduduk * timbulan_per_kapita;          // kg/hari
+    const potensi_timbulan_bulanan = potensi_timbulan_harian * 30;                  // kg/bulan
+    const volume_terkelola_bulanan = numMonths > 0 ? p.total_all_kg / numMonths : 0; // kg/bulan (rata-rata)
+    const volume_terpilah_bulanan = numMonths > 0 ? (p.total_pilah_kg + p.total_olah_kg) / numMonths : 0;
+
+    // % Penanganan = Volume Terkelola / Potensi × 100
+    const pct_penanganan = potensi_timbulan_bulanan > 0
+      ? (volume_terkelola_bulanan / potensi_timbulan_bulanan) * 100
+      : 0;
+
+    // % Pengurangan = Volume Terpilah / Volume Terkelola × 100
+    const pct_pengurangan = volume_terkelola_bulanan > 0
+      ? (volume_terpilah_bulanan / volume_terkelola_bulanan) * 100
+      : 0;
+
+    // Gap penanganan (kg/bulan yang belum terkelola)
+    const gap_penanganan = Math.max(0, potensi_timbulan_bulanan - volume_terkelola_bulanan);
+
+    // Kepadatan layanan (jiwa per unit fasilitas)
+    const kepadatan_layanan = p.total_infrastruktur > 0
+      ? Math.round(jumlah_penduduk / p.total_infrastruktur)
+      : jumlah_penduduk; // Jika 0 fasilitas, seluruh penduduk tak terlayani
+
+    // Timbulan per KK per bulan
+    const timbulan_per_kk_bulan = jumlah_kk > 0
+      ? (volume_terkelola_bulanan / jumlah_kk)
+      : 0;
 
     const villageData = {
       ...p,
@@ -187,12 +232,29 @@ export async function getVillageProfiles() {
       avg_entries_per_month: parseFloat(avg_entries_per_month.toFixed(1)),
       pct_tanpa_gps: parseFloat(pct_tanpa_gps.toFixed(1)),
       pct_belum_sync: parseFloat(pct_belum_sync.toFixed(1)),
+      // ── Data Kependudukan ──
+      has_population_data,
+      jumlah_penduduk,
+      jumlah_kk,
+      luas_km2,
+      timbulan_per_kapita,
+      tahun_data,
+      sumber_data,
+      // ── Metrik Kinerja Baru ──
+      potensi_timbulan_harian: parseFloat(potensi_timbulan_harian.toFixed(1)),
+      potensi_timbulan_bulanan: parseFloat(potensi_timbulan_bulanan.toFixed(1)),
+      volume_terkelola_bulanan: parseFloat(volume_terkelola_bulanan.toFixed(1)),
+      volume_terpilah_bulanan: parseFloat(volume_terpilah_bulanan.toFixed(1)),
+      pct_penanganan: parseFloat(pct_penanganan.toFixed(1)),
+      pct_pengurangan: parseFloat(pct_pengurangan.toFixed(1)),
+      gap_penanganan: parseFloat(gap_penanganan.toFixed(1)),
+      kepadatan_layanan,
       timbulan_per_kk_bulan: parseFloat(timbulan_per_kk_bulan.toFixed(1)),
       monthly_volumes_sorted: sortedMonths.map(m => ({ month: m, volume: p.monthly_volumes[m] })),
       record_dates: undefined, // Clean up Set
     };
 
-    // Calculate composite score
+    // Calculate composite score (now includes population-based metrics)
     villageData.skor = calculateVillageScore(villageData);
 
     // Evaluate rules

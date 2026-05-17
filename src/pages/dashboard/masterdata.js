@@ -8,7 +8,8 @@ import { renderDashboardLayout } from './layout.js';
 import {
   getAllLocations, addLocation, updateLocation, deleteLocation,
   getAllFleet, addFleet, updateFleet, deleteFleet,
-  getAllUsers, addUser, updateUser, deleteUser
+  getAllUsers, addUser, updateUser, deleteUser,
+  getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation
 } from '../../db/store.js';
 
 export async function renderMasterData() {
@@ -22,13 +23,14 @@ export async function renderMasterData() {
     <div class="master-data page-enter">
       <div class="md-header">
         <h2 style="display:flex;align-items:center;gap:var(--space-2)">${icons.settings} Pengaturan Master Data</h2>
-        <p>Kelola data referensi sistem: lokasi, kendaraan, dan pengguna.</p>
+        <p>Kelola data referensi sistem: lokasi, kendaraan, pengguna, dan data kependudukan.</p>
       </div>
 
       <div class="md-tabs" id="mdTabs">
         <button class="md-tab active" data-tab="locations" style="display:inline-flex;align-items:center;gap:8px">${icons.mapPin} Lokasi</button>
         <button class="md-tab" data-tab="fleet" style="display:inline-flex;align-items:center;gap:8px">${icons.truck} Kendaraan</button>
         <button class="md-tab" data-tab="users" style="display:inline-flex;align-items:center;gap:8px">${icons.users} Pengguna</button>
+        <button class="md-tab" data-tab="population" style="display:inline-flex;align-items:center;gap:8px">${icons.chart} Kependudukan</button>
       </div>
 
       <div class="md-content" id="mdContent">
@@ -120,6 +122,7 @@ export async function renderMasterData() {
     if (tab === 'locations') await renderLocationsTab(container);
     else if (tab === 'fleet') await renderFleetTab(container);
     else if (tab === 'users') await renderUsersTab(container);
+    else if (tab === 'population') await renderPopulationTab(container);
   }
 
   // ---------- LOCATIONS TAB ----------
@@ -433,6 +436,153 @@ export async function renderMasterData() {
         showToast(isEdit ? 'Pengguna berhasil diperbarui' : 'Pengguna baru berhasil ditambahkan', 'success');
         closeModal();
         loadTabContent('users');
+      } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
+    });
+  }
+
+  // ---------- POPULATION TAB ----------
+  async function renderPopulationTab(container) {
+    const populations = await getAllVillagePopulation();
+    container.innerHTML = `
+      <div class="md-toolbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <h3 style="display:flex;align-items:center;gap:8px">${icons.chart} Data Kependudukan per Kecamatan</h3>
+          <span class="md-count">${populations.length} kecamatan</span>
+        </div>
+        <button class="btn btn-primary btn-sm" id="addPopBtn">${icons.plus} Tambah Kecamatan</button>
+      </div>
+      ${populations.length === 0 ? `
+        <div class="md-empty" style="padding:var(--space-8)">
+          <div style="font-size:2.5rem;margin-bottom:var(--space-3);opacity:0.3">${icons.users}</div>
+          <p style="margin-bottom:var(--space-2)">Belum ada data kependudukan.</p>
+          <p style="font-size:var(--font-xs);color:var(--text-muted)">Data ini digunakan untuk menghitung potensi timbulan sampah & persentase kinerja per kecamatan di halaman Intervensi Desa.</p>
+        </div>
+      ` : `
+      <table class="md-table">
+        <thead>
+          <tr>
+            <th>Kecamatan</th>
+            <th style="text-align:right">Penduduk</th>
+            <th style="text-align:right">KK</th>
+            <th style="text-align:right">Luas (km²)</th>
+            <th style="text-align:right">Timbulan/kap</th>
+            <th style="text-align:right">Potensi/hari</th>
+            <th>Sumber</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${populations.map(p => {
+            const potensiHarian = (p.jumlah_penduduk * (p.timbulan_per_kapita || 0.7)).toFixed(0);
+            return `<tr>
+              <td><strong>${p.kecamatan}</strong></td>
+              <td style="text-align:right">${Number(p.jumlah_penduduk).toLocaleString('id-ID')} jiwa</td>
+              <td style="text-align:right">${Number(p.jumlah_kk).toLocaleString('id-ID')}</td>
+              <td style="text-align:right">${p.luas_km2 || '-'}</td>
+              <td style="text-align:right">${p.timbulan_per_kapita || 0.7} kg</td>
+              <td style="text-align:right;font-weight:600;color:var(--primary-600)">${Number(potensiHarian).toLocaleString('id-ID')} kg</td>
+              <td><span class="md-badge blue">${p.sumber_data || '-'} ${p.tahun_data || ''}</span></td>
+              <td><div class="md-actions">
+                <button class="md-btn-icon" title="Edit" data-edit-pop="${p.id}">${icons.edit}</button>
+                <button class="md-btn-icon danger" title="Hapus" data-del-pop="${p.id}">${icons.trash}</button>
+              </div></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="padding:var(--space-3);background:rgba(59,130,246,0.05);border-radius:var(--radius-md);margin-top:var(--space-4);font-size:var(--font-xs);color:var(--text-secondary);display:flex;align-items:flex-start;gap:var(--space-2)">
+        ${icons.info} <span><strong>Info:</strong> Data kependudukan digunakan oleh halaman <em>Intervensi Desa</em> untuk menghitung potensi timbulan, % penanganan, dan % pengurangan per kecamatan. Pastikan nama kecamatan <strong>sama persis</strong> dengan field "Wilayah" di data Lokasi.</span>
+      </div>
+      `}
+    `;
+    document.getElementById('addPopBtn')?.addEventListener('click', () => openPopulationForm());
+    container.querySelectorAll('[data-edit-pop]').forEach(btn => btn.addEventListener('click', () => {
+      const p = populations.find(x => x.id === btn.dataset.editPop);
+      if (p) openPopulationForm(p);
+    }));
+    container.querySelectorAll('[data-del-pop]').forEach(btn => btn.addEventListener('click', async () => {
+      if (confirm('Yakin ingin menghapus data kependudukan kecamatan ini?')) {
+        await deleteVillagePopulation(btn.dataset.delPop);
+        showToast('Data kependudukan berhasil dihapus', 'success');
+        loadTabContent('population');
+      }
+    }));
+  }
+
+  function openPopulationForm(existing = null) {
+    const isEdit = !!existing;
+    openModal(isEdit ? 'Edit Data Kependudukan' : 'Tambah Kecamatan Baru', `
+      <form id="popForm">
+        <div class="form-group">
+          <label class="form-label">Nama Kecamatan *</label>
+          <input class="form-input" id="popKecamatan" required value="${existing?.kecamatan || ''}" placeholder="Misal: Banjarnegara" />
+          <small style="color:var(--text-muted);font-size:11px">Harus sama persis dengan field "Wilayah" di data Lokasi</small>
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Jumlah Penduduk (jiwa) *</label>
+            <input class="form-input" id="popJiwa" type="number" required min="0" value="${existing?.jumlah_penduduk || ''}" placeholder="Misal: 55000" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Jumlah KK *</label>
+            <input class="form-input" id="popKK" type="number" required min="0" value="${existing?.jumlah_kk || ''}" placeholder="Misal: 14200" />
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Luas Wilayah (km²)</label>
+            <input class="form-input" id="popLuas" type="number" step="0.01" min="0" value="${existing?.luas_km2 || ''}" placeholder="Misal: 24.5" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Timbulan per Kapita (kg/hari)</label>
+            <input class="form-input" id="popTimbulan" type="number" step="0.01" min="0" value="${existing?.timbulan_per_kapita || '0.70'}" placeholder="0.70" />
+            <small style="color:var(--text-muted);font-size:11px">Standar nasional KLHK: 0.70 kg</small>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Tahun Data</label>
+            <input class="form-input" id="popTahun" type="number" min="2000" max="2030" value="${existing?.tahun_data || new Date().getFullYear()}" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Sumber Data</label>
+            <select class="form-select" id="popSumber">
+              <option value="BPS" ${existing?.sumber_data === 'BPS' ? 'selected' : ''}>BPS</option>
+              <option value="Disdukcapil" ${existing?.sumber_data === 'Disdukcapil' ? 'selected' : ''}>Disdukcapil</option>
+              <option value="Kecamatan" ${existing?.sumber_data === 'Kecamatan' ? 'selected' : ''}>Data Kecamatan</option>
+              <option value="Estimasi" ${existing?.sumber_data === 'Estimasi' ? 'selected' : ''}>Estimasi</option>
+              <option value="Lainnya" ${existing?.sumber_data === 'Lainnya' ? 'selected' : ''}>Lainnya</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catatan (opsional)</label>
+          <input class="form-input" id="popCatatan" value="${existing?.catatan || ''}" placeholder="Catatan tambahan..." />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('mdModal').style.display='none'">Batal</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? 'Simpan Perubahan' : 'Tambah Kecamatan'}</button>
+        </div>
+      </form>
+    `);
+    document.getElementById('popForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        kecamatan: document.getElementById('popKecamatan').value.trim(),
+        jumlah_penduduk: parseInt(document.getElementById('popJiwa').value) || 0,
+        jumlah_kk: parseInt(document.getElementById('popKK').value) || 0,
+        luas_km2: parseFloat(document.getElementById('popLuas').value) || 0,
+        timbulan_per_kapita: parseFloat(document.getElementById('popTimbulan').value) || 0.70,
+        tahun_data: parseInt(document.getElementById('popTahun').value) || new Date().getFullYear(),
+        sumber_data: document.getElementById('popSumber').value,
+        catatan: document.getElementById('popCatatan').value.trim(),
+      };
+      try {
+        if (isEdit) await updateVillagePopulation(existing.id, data);
+        else await addVillagePopulation(data);
+        showToast(isEdit ? 'Data kependudukan berhasil diperbarui' : 'Data kecamatan baru berhasil ditambahkan', 'success');
+        closeModal();
+        loadTabContent('population');
       } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
     });
   }

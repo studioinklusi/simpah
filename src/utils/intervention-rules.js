@@ -261,6 +261,41 @@ export const INTERVENTION_RULES = [
     title: 'Potensi Ekonomi Daur Ulang',
     recommendation: 'Volume material terpilah cukup signifikan. Fasilitasi akses ke platform digital pengepul atau negosiasi harga dengan pengepul resmi kabupaten. Pertimbangkan agregasi material antar desa.',
   },
+
+  // --- Kelompok I: Kependudukan & Potensi Timbulan ---
+  {
+    id: 'I-01',
+    group: 'Kependudukan & Timbulan',
+    groupIcon: 'users',
+    urgency: 'kritis',
+    pic: 'Dinas',
+    horizon: 'Menengah (3–12 bulan)',
+    condition: (d) => d.has_population_data && d.pct_penanganan < 30,
+    title: 'Cakupan Penanganan Sangat Rendah',
+    recommendation: 'Kurang dari 30% potensi timbulan yang terkelola. Gap penanganan sangat besar — diperlukan penambahan kapasitas infrastruktur (TPS/TPS3R baru) dan peningkatan frekuensi pengangkutan untuk menjangkau seluruh wilayah.',
+  },
+  {
+    id: 'I-02',
+    group: 'Kependudukan & Timbulan',
+    groupIcon: 'users',
+    urgency: 'perhatian',
+    pic: 'Dinas + Desa',
+    horizon: 'Menengah (3–12 bulan)',
+    condition: (d) => d.has_population_data && d.pct_penanganan >= 30 && d.pct_penanganan < 60,
+    title: 'Cakupan Penanganan Belum Optimal',
+    recommendation: 'Baru 30-60% potensi timbulan yang terkelola. Optimalkan rute pengangkutan dan pertimbangkan kemitraan dengan pihak swasta untuk meningkatkan cakupan layanan.',
+  },
+  {
+    id: 'I-03',
+    group: 'Kependudukan & Timbulan',
+    groupIcon: 'users',
+    urgency: 'perhatian',
+    pic: 'Dinas',
+    horizon: 'Panjang (> 1 tahun)',
+    condition: (d) => d.has_population_data && d.kepadatan_layanan > 5000 && d.total_infrastruktur > 0,
+    title: 'Kepadatan Layanan Tinggi',
+    recommendation: 'Rasio penduduk per fasilitas pengelolaan melebihi 5.000 jiwa/unit. Fasilitas yang ada berpotensi overload. Rencanakan pembangunan fasilitas tambahan berdasarkan sebaran permukiman.',
+  },
 ];
 
 // ========== Evaluator ==========
@@ -298,6 +333,13 @@ export function calculateVillageScore(d) {
   if (d.pct_tanpa_gps > 30) score -= 5;
   if (d.pct_belum_sync > 20) score -= 5;
   if (d.avg_entries_per_month >= 8) score += 5;
+
+  // Population-based scoring (if data available)
+  if (d.has_population_data) {
+    if (d.pct_penanganan >= 70) score += 10;
+    else if (d.pct_penanganan >= 40) score += 5;
+    else if (d.pct_penanganan < 30) score -= 10;
+  }
 
   return Math.max(0, Math.min(100, score));
 }

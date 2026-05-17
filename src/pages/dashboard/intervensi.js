@@ -67,10 +67,11 @@ function renderRankingView() {
             <tr>
               <th style="width:60px">Rank</th>
               <th>Wilayah</th>
-              <th style="width:200px">Skor Performa</th>
-              <th>Recycling</th>
+              <th>Penduduk</th>
+              <th style="width:180px">Skor Performa</th>
+              <th>% Penanganan</th>
+              <th>% Pengurangan</th>
               <th>Residu</th>
-              <th>Aduan</th>
               <th>Infrastruktur</th>
               <th style="width:100px">Status</th>
             </tr>
@@ -78,6 +79,8 @@ function renderRankingView() {
           <tbody>
             ${villageProfiles.map((v, i) => {
               const status = getScoreStatus(v.skor);
+              const penangananColor = v.has_population_data ? (v.pct_penanganan < 30 ? '#ef4444' : v.pct_penanganan < 60 ? '#f59e0b' : '#10b981') : 'var(--text-muted)';
+              const penguranganColor = v.pct_pengurangan < 10 ? '#ef4444' : v.pct_pengurangan < 25 ? '#f59e0b' : '#10b981';
               return `
               <tr class="ranking-row" data-wilayah="${v.wilayah}" style="cursor:pointer">
                 <td style="text-align:center">
@@ -89,6 +92,12 @@ function renderRankingView() {
                     ${v.recommendations.filter(r => r.urgency === 'kritis').length} isu kritis
                   </div>
                 </td>
+                <td style="font-size:var(--font-xs)">
+                  ${v.has_population_data
+                    ? `<strong>${(v.jumlah_penduduk / 1000).toFixed(1)}rb</strong><div style="color:var(--text-muted)">${(v.jumlah_kk / 1000).toFixed(1)}rb KK</div>`
+                    : '<span style="color:var(--text-muted)">—</span>'
+                  }
+                </td>
                 <td>
                   <div class="score-bar-container">
                     <div class="score-bar" style="width:${v.skor}%;background:${status.color}"></div>
@@ -96,16 +105,13 @@ function renderRankingView() {
                   <span style="font-size:12px;font-weight:700;color:${status.color}">${v.skor}/100</span>
                 </td>
                 <td>
-                  <span style="font-weight:600;color:${v.recycling_rate < 10 ? '#ef4444' : v.recycling_rate < 25 ? '#f59e0b' : '#10b981'}">${v.recycling_rate.toFixed(1)}%</span>
+                  <span style="font-weight:600;color:${penangananColor}">${v.has_population_data ? v.pct_penanganan.toFixed(1) + '%' : '—'}</span>
+                </td>
+                <td>
+                  <span style="font-weight:600;color:${penguranganColor}">${v.pct_pengurangan.toFixed(1)}%</span>
                 </td>
                 <td>
                   <span style="font-weight:600;color:${v.residu_rate > 60 ? '#ef4444' : v.residu_rate > 40 ? '#f59e0b' : '#10b981'}">${v.residu_rate.toFixed(1)}%</span>
-                </td>
-                <td>
-                  ${v.complaint_count > 0
-                    ? `<span class="badge ${v.complaint_count > 5 ? 'badge-danger' : 'badge-warning'}">${v.complaint_count} aduan</span>`
-                    : '<span class="badge badge-success">0</span>'
-                  }
                 </td>
                 <td style="font-size:12px">
                   ${v.tps3r_count > 0 ? `<span class="badge badge-success" style="margin:1px">${icons.recycle} ${v.tps3r_count}</span>` : ''}
@@ -177,16 +183,16 @@ function renderProfilView() {
               <span class="profil-meta-value">${periodLabel}</span>
             </div>
             <div class="profil-meta-item">
-              <span class="profil-meta-label">Total Data Entri</span>
-              <span class="profil-meta-value">${v.record_count} record</span>
+              <span class="profil-meta-label">Penduduk</span>
+              <span class="profil-meta-value">${v.has_population_data ? Number(v.jumlah_penduduk).toLocaleString('id-ID') + ' jiwa' : 'Belum diinput'}</span>
+            </div>
+            <div class="profil-meta-item">
+              <span class="profil-meta-label">Jumlah KK</span>
+              <span class="profil-meta-value">${v.has_population_data ? Number(v.jumlah_kk).toLocaleString('id-ID') + ' KK' : '-'}</span>
             </div>
             <div class="profil-meta-item">
               <span class="profil-meta-label">Jumlah Fasilitas</span>
               <span class="profil-meta-value">${v.total_infrastruktur} unit</span>
-            </div>
-            <div class="profil-meta-item">
-              <span class="profil-meta-label">Rekomendasi</span>
-              <span class="profil-meta-value">${v.recommendations.length} item</span>
             </div>
           </div>
         </div>
@@ -201,7 +207,47 @@ function renderProfilView() {
         </div>
       </div>
 
-      <!-- Section 2: Traffic Light Indicators -->
+      <!-- Section 2: Demografi & Potensi Timbulan -->
+      ${v.has_population_data ? `
+      <div class="profil-section">
+        <h3 class="profil-section-title">${icons.users} Demografi & Potensi Timbulan</h3>
+        <div class="traffic-grid">
+          ${renderTrafficItem('Potensi Timbulan', `${(v.potensi_timbulan_harian / 1000).toFixed(1)} ton/hr`, 'Estimasi KLHK', '#3b82f6')}
+          ${renderTrafficItem('% Penanganan', `${v.pct_penanganan.toFixed(1)}%`, '≥ 70%', getTrafficColor(v.pct_penanganan, 30, 70, true))}
+          ${renderTrafficItem('% Pengurangan', `${v.pct_pengurangan.toFixed(1)}%`, '≥ 30%', getTrafficColor(v.pct_pengurangan, 10, 30, true))}
+          ${renderTrafficItem('Gap Penanganan', `${(v.gap_penanganan / 1000).toFixed(1)} ton/bln`, 'Mendekati 0', getTrafficColor(v.gap_penanganan, v.potensi_timbulan_bulanan * 0.7, v.potensi_timbulan_bulanan * 0.3, false))}
+          ${renderTrafficItem('Kepadatan Layanan', `${v.kepadatan_layanan > 0 ? (v.kepadatan_layanan / 1000).toFixed(1) + 'rb' : '∞'} jiwa/unit`, '≤ 2.500', getTrafficColor(v.kepadatan_layanan, 5000, 2500, false))}
+          ${renderTrafficItem('Luas Wilayah', `${v.luas_km2} km²`, '-', '#6b7280')}
+        </div>
+        <div style="margin-top:var(--space-4);background:var(--gray-50);border-radius:var(--radius-md);padding:var(--space-4)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+            <span style="font-size:var(--font-sm);font-weight:600">Cakupan Penanganan</span>
+            <span style="font-size:var(--font-sm);font-weight:700;color:${getTrafficColor(v.pct_penanganan, 30, 70, true)}">${v.pct_penanganan.toFixed(1)}% dari potensi</span>
+          </div>
+          <div style="height:12px;background:var(--gray-200);border-radius:var(--radius-full);overflow:hidden">
+            <div style="height:100%;width:${Math.min(v.pct_penanganan, 100)}%;background:${getTrafficColor(v.pct_penanganan, 30, 70, true)};border-radius:var(--radius-full);transition:width 0.5s ease"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:var(--space-1)">
+            <span>Terkelola: ${(v.volume_terkelola_bulanan / 1000).toFixed(1)} ton/bln</span>
+            <span>Potensi: ${(v.potensi_timbulan_bulanan / 1000).toFixed(1)} ton/bln</span>
+          </div>
+        </div>
+        <div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:var(--space-3);display:flex;align-items:center;gap:var(--space-2)">
+          ${icons.info} Sumber data: ${v.sumber_data || '-'} (${v.tahun_data || '-'}) • Timbulan per kapita: ${v.timbulan_per_kapita} kg/orang/hari
+        </div>
+      </div>
+      ` : `
+      <div class="profil-section">
+        <h3 class="profil-section-title">${icons.users} Demografi & Potensi Timbulan</h3>
+        <div style="text-align:center;padding:var(--space-6);color:var(--text-muted)">
+          <div style="font-size:1.5rem;margin-bottom:var(--space-2);opacity:0.3">${icons.users}</div>
+          <p style="margin-bottom:var(--space-2)">Data kependudukan belum diinput untuk wilayah ini.</p>
+          <p style="font-size:var(--font-xs)">Tambahkan di menu <strong>Master Data → Kependudukan</strong> untuk melihat analisis potensi timbulan.</p>
+        </div>
+      </div>
+      `}
+
+      <!-- Section 3: Traffic Light Indicators -->
       <div class="profil-section">
         <h3 class="profil-section-title">${icons.chart} Indikator Performa</h3>
         <div class="traffic-grid">
