@@ -9,7 +9,8 @@ import 'leaflet/dist/leaflet.css';
 
 import { registerRoute, startRouter } from './router.js';
 import { icons } from './components/icons.js';
-import { initTheme, getCurrentUser } from './utils/helpers.js';
+import { initTheme } from './utils/helpers.js';
+import { initAuth, waitForAuth } from './lib/auth.js';
 import { initDB } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { initSync } from './db/sync.js';
@@ -91,13 +92,28 @@ async function bootstrap() {
 
     // Hide loading screen
     const loading = document.getElementById('loadingScreen');
+
+    // Initialize auth FIRST (restore Supabase session)
+    try {
+      const authInitPromise = (async () => {
+        await initAuth();
+        await waitForAuth();
+      })();
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth initialization timed out after 8 seconds')), 8000));
+      
+      await Promise.race([authInitPromise, timeoutPromise]);
+    } catch (authErr) {
+      console.warn('Auth init warning:', authErr);
+      // Continue anyway — user can still access public routes
+    }
+
     if (loading) {
       setTimeout(() => {
         loading.classList.add('hidden');
-      }, 1200);
+      }, 600);
     }
 
-    // Start router - default to portal for public access
+    // Start router — default to portal for public access
     startRouter('/portal');
 
   } catch (error) {

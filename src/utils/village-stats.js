@@ -76,7 +76,7 @@ export async function getVillageProfiles() {
     const p = profiles[wilayah];
     p.record_count++;
     p.total_all_kg += r.weight_kg || 0;
-    p.record_dates.add(r.date_str);
+    if (r.date_str) p.record_dates.add(r.date_str);
 
     if (r.type === 'masuk') p.total_masuk_kg += r.weight_kg || 0;
     if (r.type === 'campur') p.total_campur_kg += r.weight_kg || 0;
@@ -165,7 +165,7 @@ export async function getVillageProfiles() {
 
     // Average entries per month
     const uniqueMonths = new Set();
-    p.record_dates.forEach(d => uniqueMonths.add(d.substring(0, 7)));
+    p.record_dates.forEach(d => { if (d) uniqueMonths.add(d.substring(0, 7)); });
     const avg_entries_per_month = uniqueMonths.size > 0 ? p.record_count / uniqueMonths.size : 0;
 
     // Percentages

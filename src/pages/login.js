@@ -1,15 +1,20 @@
-// SIMPAH - Login Page
+// SIMPAH - Login Page (Sprint 2: Supabase Auth)
 import { icons } from '../components/icons.js';
-import { setCurrentUser } from '../utils/helpers.js';
-import { getUserByUsername as dbGetUser } from '../db/store.js';
-import { createAuditEntry } from '../utils/audit.js';
+import { login as authLogin, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
 import { showToast } from '../components/toast.js';
 
 export function renderLogin() {
+  // If already logged in, redirect to default page
+  const existingUser = getAuthProfile();
+  if (existingUser) {
+    window.location.hash = getDefaultRoute(existingUser.role);
+    return;
+  }
+
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="login-page">
-      <a href="#/portal" class="back-to-portal-link">
+      <a href="#/portal" class="back-to-portal-link" id="backToPortal">
         ${icons.chevronLeft} Kembali ke Beranda
       </a>
       <div class="login-bg">
@@ -18,7 +23,7 @@ export function renderLogin() {
         <div class="login-bg-circle c3"></div>
       </div>
       <div class="login-container">
-        <div class="login-card">
+        <div class="login-card" id="loginCard">
           <div class="login-header">
             <div class="login-logo-icon">
               <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
@@ -31,17 +36,40 @@ export function renderLogin() {
             <h1 class="gradient-text">SIMPAH</h1>
             <p>Sistem Informasi Monitoring Pengelolaan Sampah</p>
           </div>
+
+          <!-- Error Banner (hidden by default) -->
+          <div class="login-error-banner" id="loginErrorBanner" style="display:none">
+            <span class="login-error-icon">${icons.alert}</span>
+            <span class="login-error-text" id="loginErrorText"></span>
+          </div>
+
           <form id="loginForm" class="login-form">
             <div class="form-group">
-              <label class="form-label">Username</label>
-              <input type="text" id="loginUsername" class="form-input form-input-lg" placeholder="Masukkan username" required autocomplete="username" />
+              <label class="form-label">Email / Username</label>
+              <div class="input-with-icon">
+                <span class="input-icon-left">${icons.users}</span>
+                <input type="text" id="loginUsername" class="form-input form-input-lg has-icon-left" 
+                  placeholder="contoh: admin1 atau admin1@simpah.dev" 
+                  required autocomplete="username" autofocus />
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Password</label>
-              <input type="password" id="loginPassword" class="form-input form-input-lg" placeholder="Masukkan password" required autocomplete="current-password" />
+              <div class="input-with-icon">
+                <span class="input-icon-left">${icons.shield}</span>
+                <input type="password" id="loginPassword" class="form-input form-input-lg has-icon-left has-icon-right" 
+                  placeholder="Masukkan password" 
+                  required autocomplete="current-password" />
+                <button type="button" class="input-icon-right-btn" id="togglePassword" tabindex="-1" title="Tampilkan password">
+                  ${icons.eye}
+                </button>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary btn-lg btn-block" id="loginBtn">
-              Masuk
+              <span class="btn-text">Masuk</span>
+              <span class="btn-loading" style="display:none">
+                <div class="spinner" style="margin:0 auto;width:20px;height:20px;border-width:2px"></div>
+              </span>
             </button>
           </form>
           <div class="login-divider"><span>atau</span></div>
@@ -51,25 +79,25 @@ export function renderLogin() {
           <div class="login-demo">
             <p>Demo Akun:</p>
             <div class="demo-accounts">
-              <button class="demo-account" data-user="warga1" data-pass="warga123" style="grid-column: 1 / -1">
+              <button class="demo-account" data-user="warga1@simpah.dev" data-pass="warga123" style="grid-column: 1 / -1">
                 <span>${icons.users}</span> Warga
               </button>
-              <button class="demo-account" data-user="petugas1" data-pass="petugas123">
+              <button class="demo-account" data-user="petugas1@simpah.dev" data-pass="petugas123">
                 <span>${icons.truck}</span> P. Angkut
               </button>
-              <button class="demo-account" data-user="koordinator1" data-pass="koordinator123">
+              <button class="demo-account" data-user="koordinator1@simpah.dev" data-pass="koordinator123">
                 <span>${icons.checkCircle}</span> Koordinator
               </button>
-              <button class="demo-account" data-user="operator1" data-pass="operator123">
+              <button class="demo-account" data-user="operator1@simpah.dev" data-pass="operator123">
                 <span>${icons.clipboard}</span> Operator TPS
               </button>
-              <button class="demo-account" data-user="kader1" data-pass="kader123">
+              <button class="demo-account" data-user="kader1@simpah.dev" data-pass="kader123">
                 <span>${icons.home}</span> Kader
               </button>
-              <button class="demo-account" data-user="eksekutif1" data-pass="eksekutif123">
+              <button class="demo-account" data-user="eksekutif1@simpah.dev" data-pass="eksekutif123">
                 <span>${icons.chart}</span> Eksekutif
               </button>
-              <button class="demo-account" data-user="admin1" data-pass="admin123">
+              <button class="demo-account" data-user="admin1@simpah.dev" data-pass="admin123">
                 <span>${icons.shield}</span> Admin
               </button>
             </div>
@@ -104,66 +132,138 @@ export function renderLogin() {
       .demo-accounts { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-3); }
       .demo-account { padding:var(--space-3) var(--space-4); border-radius:var(--radius-md); border:1px solid rgba(255,255,255,0.08); color:var(--gray-400); font-size:var(--font-sm); font-weight:500; transition:all var(--transition-fast); display:flex; align-items:center; gap:var(--space-2); justify-content:center; cursor:pointer; background:transparent; }
       .demo-account:hover { border-color:var(--primary-500); color:var(--primary-400); background:rgba(16,185,129,0.08); }
+      .demo-account.selected { border-color:var(--primary-500); color:var(--primary-400); background:rgba(16,185,129,0.15); box-shadow:0 0 0 1px var(--primary-500); }
+
+      /* Error banner */
+      .login-error-banner { display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:var(--radius-md); margin-bottom:var(--space-4); animation:shakeX 0.4s ease; }
+      .login-error-icon { color:#ef4444; flex-shrink:0; }
+      .login-error-text { color:#fca5a5; font-size:var(--font-sm); }
+
+      /* Input with icon */
+      .input-with-icon { position:relative; }
+      .input-icon-left { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--gray-500); pointer-events:none; display:flex; z-index:1; }
+      .input-icon-left svg { width:18px; height:18px; }
+      .has-icon-left { padding-left:40px !important; }
+      .has-icon-right { padding-right:40px !important; }
+      .input-icon-right-btn { position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray-500); cursor:pointer; padding:8px; display:flex; transition:color 0.2s; z-index:1; }
+      .input-icon-right-btn:hover { color:var(--gray-300); }
+      .input-icon-right-btn svg { width:18px; height:18px; }
+
+      /* Shake animation for errors */
+      @keyframes shakeX {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-8px); }
+        40% { transform: translateX(8px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+      }
+      .shake { animation: shakeX 0.4s ease; }
     </style>
   `;
 
-  // Event handlers
-  const form = document.getElementById('loginForm');
-  form.addEventListener('submit', handleLogin);
+  // ── Event Handlers ──────────────────────────────────────────────
 
+  const form = document.getElementById('loginForm');
+  const usernameInput = document.getElementById('loginUsername');
+  const passwordInput = document.getElementById('loginPassword');
+  const loginBtn = document.getElementById('loginBtn');
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const errorBanner = document.getElementById('loginErrorBanner');
+  const errorText = document.getElementById('loginErrorText');
+  const loginCard = document.getElementById('loginCard');
+
+  // Login form submit
+  form.addEventListener('submit', (e) => handleLogin(e));
+
+  // Demo account buttons
   document.querySelectorAll('.demo-account').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.getElementById('loginUsername').value = btn.dataset.user;
-      document.getElementById('loginPassword').value = btn.dataset.pass;
+      // Remove previous selection
+      document.querySelectorAll('.demo-account').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+
+      usernameInput.value = btn.dataset.user;
+      passwordInput.value = btn.dataset.pass;
+      
+      // Hide error if shown
+      hideError();
+
+      // Auto-focus submit button so user can just press Enter
+      loginBtn.focus();
     });
   });
-}
 
-async function handleLogin(e) {
-  e.preventDefault();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
+  // Toggle password visibility
+  togglePasswordBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    togglePasswordBtn.innerHTML = isPassword ? icons.eyeOff || icons.eye : icons.eye;
+    togglePasswordBtn.title = isPassword ? 'Sembunyikan password' : 'Tampilkan password';
+  });
 
-  if (!username || !password) {
-    showToast('Harap isi username dan password', 'warning');
-    return;
-  }
+  // Enter on password field → submit
+  passwordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+  });
 
-  const btn = document.getElementById('loginBtn');
-  btn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
-  btn.disabled = true;
+  // ── Login Handler ─────────────────────────────────────────────
 
-  try {
-    const user = await dbGetUser(username);
-    if (!user || user.password !== password) {
-      showToast('Username atau password salah', 'error');
-      btn.innerHTML = 'Masuk';
-      btn.disabled = false;
+  async function handleLogin(e) {
+    e.preventDefault();
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username || !password) {
+      showError('Harap isi email/username dan password');
       return;
     }
 
-    setCurrentUser(user);
-    await createAuditEntry('users', user.id, 'login', user.id, { role: user.role, job_type: user.job_type || null });
-    showToast(`Selamat datang, ${user.name}!`, 'success');
+    setLoading(true);
+    hideError();
 
-    // Navigate based on role
-    setTimeout(() => {
-      switch (user.role) {
-        case 'eksekutif':
-          window.location.hash = '#/dashboard/eksekutif';
-          break;
-        case 'admin':
-          window.location.hash = '#/dashboard';
-          break;
-        case 'petugas':
-        case 'warga':
-        default:
-          window.location.hash = '#/pwa/home';
-      }
-    }, 500);
-  } catch (err) {
-    showToast('Terjadi kesalahan', 'error');
-    btn.innerHTML = 'Masuk';
-    btn.disabled = false;
+    try {
+      const { profile } = await authLogin(username, password);
+
+      showToast(`Selamat datang, ${profile.full_name}!`, 'success');
+
+      // Navigate based on role
+      setTimeout(() => {
+        window.location.hash = getDefaultRoute(profile.role);
+      }, 400);
+    } catch (err) {
+      console.error('[Login] Error:', err);
+      showError(err.message || 'Terjadi kesalahan saat login');
+
+      // Shake animation
+      loginCard.classList.remove('shake');
+      void loginCard.offsetWidth; // force reflow
+      loginCard.classList.add('shake');
+
+      setLoading(false);
+    }
+  }
+
+  function setLoading(loading) {
+    const btnText = loginBtn.querySelector('.btn-text');
+    const btnLoading = loginBtn.querySelector('.btn-loading');
+    
+    loginBtn.disabled = loading;
+    btnText.style.display = loading ? 'none' : '';
+    btnLoading.style.display = loading ? '' : 'none';
+    usernameInput.disabled = loading;
+    passwordInput.disabled = loading;
+  }
+
+  function showError(message) {
+    errorText.textContent = message;
+    errorBanner.style.display = 'flex';
+  }
+
+  function hideError() {
+    errorBanner.style.display = 'none';
+    errorText.textContent = '';
   }
 }

@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
-import { addWasteRecord, getAllLocations, getAllFleet } from '../../db/store.js';
+import { addWasteRecord, getAllLocations, getAllFleet, getAllMou } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
@@ -13,7 +13,9 @@ export async function renderInputSampah() {
 
   const locations = await getAllLocations();
   const fleet = await getAllFleet();
+  const mous = await getAllMou();
   let gpsData = null;
+  let mouValid = true; // Track MoU validation state
   let photoPicker = null;
 
   // Try to get GPS immediately
@@ -108,6 +110,7 @@ export async function renderInputSampah() {
             <option value="">Tanpa kendaraan</option>
             ${fleet.filter(f => f.status === 'active').map(f => `<option value="${f.id}" data-plate="${f.plate_number}">${f.plate_number} - ${f.vehicle_type}</option>`).join('')}
           </select>
+          <div id="mouStatusIndicator" style="margin-top:var(--space-2);display:none"></div>
         </div>
 
         <!-- Notes -->
@@ -158,6 +161,88 @@ export async function renderInputSampah() {
     });
   });
 
+  // ── MoU Validation on Fleet Selection ──
+  function checkFleetMou(fleetId) {
+    const indicator = document.getElementById('mouStatusIndicator');
+    if (!indicator) return;
+
+    if (!fleetId) {
+      indicator.style.display = 'none';
+      mouValid = true;
+      return;
+    }
+
+    // Find MoU that contains this fleet (by ID or plate number)
+    const selectedFleetData = fleet.find(f => f.id === fleetId);
+    const linkedMou = mous.find(m => {
+      if (!m.fleet_ids || !Array.isArray(m.fleet_ids)) return false;
+      // Match by fleet ID directly
+      if (m.fleet_ids.includes(fleetId)) return true;
+      // Fallback: match by plate number in fleet_ids (for cross-source compatibility)
+      if (selectedFleetData?.plate_number) {
+        return m.fleet_ids.some(fid => {
+          const fleetByFid = fleet.find(f => f.id === fid);
+          return fleetByFid?.plate_number === selectedFleetData.plate_number;
+        });
+      }
+      return false;
+    });
+
+    if (!linkedMou) {
+      indicator.style.display = 'block';
+      indicator.innerHTML = `
+        <div style="display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);font-size:var(--font-sm)">
+          ${icons.alert}
+          <div>
+            <strong style="color:#d97706">Kendaraan belum terdaftar di MoU</strong>
+            <div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">Kendaraan ini belum dikaitkan dengan perjanjian transporter manapun. Data tetap bisa disimpan tapi perlu verifikasi.</div>
+          </div>
+        </div>`;
+      mouValid = true; // Allow but warn
+      return;
+    }
+
+    if (linkedMou.status === 'active') {
+      indicator.style.display = 'block';
+      indicator.innerHTML = `
+        <div style="display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);font-size:var(--font-sm)">
+          ${icons.checkCircle}
+          <div>
+            <strong style="color:#059669">MoU Aktif: ${linkedMou.transporter_name}</strong>
+            <div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">${linkedMou.contract_number} • Berlaku s/d ${linkedMou.end_date}</div>
+          </div>
+        </div>`;
+      mouValid = true;
+    } else if (linkedMou.status === 'expiring') {
+      indicator.style.display = 'block';
+      indicator.innerHTML = `
+        <div style="display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);font-size:var(--font-sm)">
+          ${icons.alert}
+          <div>
+            <strong style="color:#d97706">MoU Segera Habis: ${linkedMou.transporter_name}</strong>
+            <div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">${linkedMou.contract_number} • Berakhir ${linkedMou.end_date} — Segera perpanjang!</div>
+          </div>
+        </div>`;
+      mouValid = true; // Allow but warn
+    } else {
+      // expired or terminated
+      indicator.style.display = 'block';
+      indicator.innerHTML = `
+        <div style="display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border-radius:var(--radius-md);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);font-size:var(--font-sm)">
+          ${icons.xCircle}
+          <div>
+            <strong style="color:#dc2626">MoU Kadaluarsa: ${linkedMou.transporter_name}</strong>
+            <div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">${linkedMou.contract_number} • Berakhir ${linkedMou.end_date} — Kendaraan ini tidak boleh digunakan untuk pengangkutan!</div>
+          </div>
+        </div>`;
+      mouValid = false;
+    }
+  }
+
+  document.getElementById('fleetSelect')?.addEventListener('change', (e) => {
+    checkFleetMou(e.target.value);
+  });
+
   // Accumulation toggle
   const accumToggle = document.getElementById('accumToggle');
   const accumPanel = document.getElementById('accumPanel');
@@ -202,6 +287,12 @@ export async function renderInputSampah() {
   document.getElementById('wasteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Block if MoU expired
+    if (!mouValid) {
+      showToast('Tidak dapat menyimpan: Kendaraan terpilih memiliki MoU yang sudah kadaluarsa. Pilih kendaraan lain atau hubungi admin.', 'error');
+      return;
+    }
+
     const weightInput = parseFloat(document.getElementById('weightInput').value);
     if (!weightInput || weightInput <= 0) {
       showToast('Masukkan berat yang valid', 'warning');
@@ -234,7 +325,7 @@ export async function renderInputSampah() {
       photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
       photo_count: photos.length,
       user_id: user.id,
-      user_name: user.name
+      user_name: user.full_name
     };
 
     const submitBtn = document.getElementById('submitBtn');

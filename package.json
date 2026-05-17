@@ -8,10 +8,16 @@
     "build": "vite build",
     "preview": "vite preview --host"
   },
-  "keywords": ["waste-management", "pwa", "monitoring", "sipsn"],
+  "keywords": [
+    "waste-management",
+    "pwa",
+    "monitoring",
+    "sipsn"
+  ],
   "author": "SIMPAH Team",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.3",
     "chart.js": "^4.4.0",
     "idb": "^8.0.0",
     "leaflet": "^1.9.4",

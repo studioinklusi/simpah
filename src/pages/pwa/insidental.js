@@ -102,7 +102,7 @@ export async function renderInsidental() {
         lat: gpsData?.latitude, lng: gpsData?.longitude,
         photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
         photo_count: photos.length,
-        user_id: user.id, user_name: user.name
+        user_id: user.id, user_name: user.full_name
       }, user.id);
       showToast('Kegiatan berhasil dicatat!', 'success');
       renderInsidental();

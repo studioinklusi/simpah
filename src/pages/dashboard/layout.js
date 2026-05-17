@@ -1,8 +1,12 @@
 // SIMPAH - Dashboard Layout (Sidebar + Navbar)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, toggleTheme, getState, logout } from '../../utils/helpers.js';
+import { confirmLogout } from '../../components/logout-modal.js';
+import { getCurrentUser, toggleTheme, getState } from '../../utils/helpers.js';
 import { isActiveRoute } from '../../router.js';
 import { canValidate, isAdmin, canViewExecutive } from '../../utils/permissions.js';
+import { supabase } from '../../lib/supabase.js';
+import { showToast } from '../../components/toast.js';
+import { renderAIChatWidget } from '../../components/ai-chat.js';
 
 export function renderDashboardLayout(title, content, activeMenu = '') {
   const user = getCurrentUser();
@@ -74,9 +78,9 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
         </nav>
         <div class="sidebar-footer">
           <div class="sidebar-user" id="sidebarUser">
-            <div class="sidebar-user-avatar">${user ? user.name.charAt(0).toUpperCase() : 'U'}</div>
+            <div class="sidebar-user-avatar">${user ? (user.full_name || 'U').charAt(0).toUpperCase() : 'U'}</div>
             <div class="sidebar-user-info">
-              <div class="sidebar-user-name">${user?.name || 'Guest'}</div>
+              <div class="sidebar-user-name">${user?.full_name || 'Guest'}</div>
               <div class="sidebar-user-role">${getRoleName(user?.role)}</div>
             </div>
           </div>
@@ -134,7 +138,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
   });
 
   // Logout
-  document.getElementById('dashLogoutBtn')?.addEventListener('click', () => logout());
+  document.getElementById('dashLogoutBtn')?.addEventListener('click', () => confirmLogout());
 
   // Portal Confirmation
   document.getElementById('dashPortalLink')?.addEventListener('click', (e) => {
@@ -142,6 +146,46 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
       e.preventDefault();
     }
   });
+
+  // Realtime Subscriptions
+  if (user && (isAdmin(user) || canValidate(user) || canViewExecutive(user))) {
+    // Pastikan channel sebelumnya di-unsubscribe jika layout dirender ulang
+    if (window._simpahRealtimeChannel) {
+      supabase.removeChannel(window._simpahRealtimeChannel);
+    }
+    
+    window._simpahRealtimeChannel = supabase.channel('dashboard-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'complaints' },
+        (payload) => {
+          showToast(`Aduan Baru: ${payload.new.category}`, 'info');
+          const dot = document.querySelector('.notif-dot');
+          if (dot) dot.style.display = 'block';
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'waste_records' },
+        (payload) => {
+          // Hanya beri notifikasi untuk transaksi yang diverifikasi jika admin
+          if (payload.new.verification_status === 'pending' && (isAdmin(user) || canValidate(user))) {
+            showToast(`Transaksi Baru Masuk: ${payload.new.weight_kg} kg`, 'info');
+            const dot = document.querySelector('.notif-dot');
+            if (dot) dot.style.display = 'block';
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  // AI Assistant Widget (Hanya untuk Eksekutif & Admin)
+  if (user && (isAdmin(user) || canViewExecutive(user))) {
+    // Hindari duplikasi widget jika layout dirender ulang
+    if (!document.querySelector('.ai-chat-widget')) {
+      renderAIChatWidget();
+    }
+  }
 }
 
 function getRoleName(role) {

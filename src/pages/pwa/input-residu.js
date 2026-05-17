@@ -134,7 +134,7 @@ export async function renderInputResidu() {
         photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
         photo_count: photos.length,
         user_id: user.id,
-        user_name: user.name
+        user_name: user.full_name
       }, user.id);
       showToast('Data residu berhasil disimpan!', 'success');
       setTimeout(() => { window.location.hash = '#/pwa/home'; }, 800);

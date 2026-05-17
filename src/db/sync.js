@@ -1,6 +1,8 @@
 // SIMPAH - Offline Sync Simulation
 import { getDB } from './schema.js';
 import { setState, getState } from '../utils/helpers.js';
+import { supabase } from '../lib/supabase.js';
+import { uploadBase64Image } from '../lib/storage.js';
 
 let syncInterval = null;
 
@@ -36,26 +38,84 @@ export async function triggerSync() {
 
   try {
     const db = await getDB();
-    let unsynced;
-    try {
-      unsynced = await db.getAllFromIndex('waste_records', 'synced', false);
-    } catch (e) {
-      // Fallback: boolean keys may not work in all browsers
-      const all = await db.getAll('waste_records');
-      unsynced = all.filter(r => r.synced === false);
-    }
+    const queues = ['waste_records', 'complaints', 'incidental_events'];
+    let totalUnsynced = 0;
+    
+    for (const table of queues) {
+      let unsynced = [];
+      try {
+        unsynced = await db.getAllFromIndex(table, 'synced', false);
+      } catch (e) {
+        const all = await db.getAll(table);
+        unsynced = all.filter(r => r.synced === false);
+      }
+      totalUnsynced += unsynced.length;
 
-    if (unsynced.length === 0) {
+      // Upload to Supabase per table
+      for (const record of unsynced) {
+        // Abaikan data demo
+        if (record.id && record.id.length < 30) {
+          record.synced = true;
+          await db.put(table, record);
+          continue;
+        }
+
+        const payload = { ...record };
+        
+        // Hapus properti lokal
+        delete payload.synced;
+        if (payload.date_str) {
+           if (table === 'waste_records') payload.record_date = payload.date_str;
+           delete payload.date_str;
+        }
+        delete payload.created_by;
+        delete payload.photos; // Local helper
+        delete payload.photo_count; // Local helper
+        delete payload.destination; // Local helper
+        delete payload.is_accumulation; // Local helper
+        delete payload.accumulation_days; // Local helper
+        delete payload.accumulation_total_kg; // Local helper
+        
+        // Sesuaikan user_id
+        if (!payload.user_id && record.created_by && table !== 'complaints') {
+           payload.user_id = record.created_by;
+        }
+        
+        // Unggah foto jika ada
+        if (!payload.photo_url && record.photos && record.photos.length > 0 && record.photos[0].dataUrl) {
+          const bucket = 'simpah_media';
+          const ext = record.photos[0].dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+          const path = `${table}/${record.id}/${Date.now()}.${ext}`;
+          const publicUrl = await uploadBase64Image(bucket, path, record.photos[0].dataUrl);
+          if (publicUrl) {
+            payload.photo_url = publicUrl;
+          }
+        }
+        
+        const { error } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+        
+        if (error) {
+          console.error(`Gagal upload data ${table}`, record.id, error);
+          throw error;
+        }
+        
+        if (table === 'waste_records' && record.type === 'pilah') {
+           const sortedItems = await db.getAllFromIndex('sorted_waste', 'waste_record_id', record.id);
+           if (sortedItems && sortedItems.length > 0) {
+              const { error: sortedError } = await supabase.from('sorted_waste').upsert(sortedItems, { onConflict: 'id' });
+              if (sortedError) console.error('Gagal upload sorted_waste', sortedError);
+           }
+        }
+        
+        record.synced = true;
+        await db.put(table, record);
+      }
+    } // End table loop
+
+    if (totalUnsynced === 0) {
       setState('syncStatus', 'idle');
       setState('pendingSync', 0);
       return;
-    }
-
-    // Simulate server sync with delay
-    for (const record of unsynced) {
-      await simulateServerSync(record);
-      record.synced = true;
-      await db.put('waste_records', record);
     }
 
     setState('syncStatus', 'success');
@@ -78,26 +138,24 @@ export async function triggerSync() {
 async function updatePendingCount() {
   try {
     const db = await getDB();
-    let unsynced;
-    try {
-      unsynced = await db.getAllFromIndex('waste_records', 'synced', false);
-    } catch (e) {
-      const all = await db.getAll('waste_records');
-      unsynced = all.filter(r => r.synced === false);
+    const queues = ['waste_records', 'complaints', 'incidental_events'];
+    let total = 0;
+    
+    for (const table of queues) {
+      try {
+        const unsynced = await db.getAllFromIndex(table, 'synced', false);
+        total += unsynced.length;
+      } catch (e) {
+        const all = await db.getAll(table);
+        total += all.filter(r => r.synced === false).length;
+      }
     }
-    setState('pendingSync', unsynced.length);
+    setState('pendingSync', total);
   } catch (e) {
     // ignore
   }
 }
 
-function simulateServerSync(record) {
-  return new Promise((resolve) => {
-    // Simulate network delay (200-800ms)
-    const delay = 200 + Math.random() * 600;
-    setTimeout(resolve, delay);
-  });
-}
 
 export function destroySync() {
   if (syncInterval) {

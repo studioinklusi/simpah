@@ -1,6 +1,7 @@
 // SIMPAH - PWA Layout (Header + Bottom Nav)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, toggleTheme, getState, logout } from '../../utils/helpers.js';
+import { confirmLogout } from '../../components/logout-modal.js';
+import { getCurrentUser, toggleTheme, getState } from '../../utils/helpers.js';
 import { isActiveRoute } from '../../router.js';
 
 export function renderPWALayout(title, content, activeTab = 'home') {
@@ -90,7 +91,7 @@ export function renderPWALayout(title, content, activeTab = 'home') {
   // Wire up logout
   const logoutBtn = document.getElementById('pwaLogoutBtn');
   if (logoutBtn) {
-    logoutBtn.onclick = () => logout();
+    logoutBtn.onclick = () => confirmLogout();
   }
 
   const portalLink = document.getElementById('pwaPortalLink');

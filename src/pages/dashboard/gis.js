@@ -38,6 +38,11 @@ export async function renderGIS() {
         <div class="gis-filter-panel" id="gisFilterPanel" style="display:none">
           <h4 style="font-weight:700;margin-bottom:var(--space-4)">Filter</h4>
           <div class="form-group">
+            <label class="form-label">Periode Data</label>
+            <input type="date" id="gisDateStart" class="form-input" value="${new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0]}" style="margin-bottom:var(--space-2)" />
+            <input type="date" id="gisDateEnd" class="form-input" value="${new Date().toISOString().split('T')[0]}" />
+          </div>
+          <div class="form-group">
             <label class="form-label">Jenis Lokasi</label>
             ${LOCATION_TYPES.map(lt => `
               <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);font-size:var(--font-sm);cursor:pointer">
@@ -51,6 +56,7 @@ export async function renderGIS() {
               <input type="checkbox" checked id="heatmapToggle" /> Aktifkan
             </label>
           </div>
+          <button class="btn btn-primary btn-sm btn-block" id="applyGisFilter" style="margin-top:var(--space-3)">Terapkan Filter</button>
         </div>
         <div class="gis-controls">
           <button class="btn btn-secondary btn-sm" id="filterToggleBtn" style="box-shadow:var(--shadow-lg)">
@@ -73,7 +79,7 @@ export async function renderGIS() {
   };
 }
 
-async function initMap(locations, records) {
+async function initMap(locations, allRecords) {
   const L = await import('leaflet');
   await import('leaflet.heat');
 
@@ -116,46 +122,73 @@ async function initMap(locations, records) {
     });
   });
 
+  // Filter records by date range
+  function getFilteredRecords() {
+    const startDate = document.getElementById('gisDateStart')?.value;
+    const endDate = document.getElementById('gisDateEnd')?.value;
+    if (!startDate || !endDate) return allRecords;
+    return allRecords.filter(r => {
+      const d = r.date_str || r.record_date;
+      return d && d >= startDate && d <= endDate;
+    });
+  }
+
+  let records = getFilteredRecords();
+
   // Add location markers
   const markerLayers = {};
-  locations.forEach(loc => {
-    const icon = markerIcons[loc.type] || markerIcons.tps;
-    const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
+  function renderMarkers() {
+    // Clear existing markers
+    Object.values(markerLayers).flat().forEach(m => map.removeLayer(m));
+    Object.keys(markerLayers).forEach(k => { markerLayers[k] = []; });
 
-    // Calculate stats for this location
-    const locRecords = records.filter(r => r.location_id === loc.id);
-    const totalKg = locRecords.reduce((s, r) => s + (r.weight_kg || 0), 0);
+    locations.forEach(loc => {
+      const icon = markerIcons[loc.type] || markerIcons.tps;
+      const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
 
-    marker.bindPopup(`
-      <div style="min-width:200px;font-family:Inter,sans-serif">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:4px">${loc.name}</h3>
-        <p style="font-size:11px;color:#6b7280;margin-bottom:8px">${loc.address || loc.wilayah}</p>
-        <div style="display:flex;gap:12px;font-size:12px">
-          <div><strong>${locRecords.length}</strong><br><span style="color:#6b7280">Record</span></div>
-          <div><strong>${(totalKg/1000).toFixed(1)} ton</strong><br><span style="color:#6b7280">Total</span></div>
+      // Calculate stats for this location with filtered records
+      const locRecords = records.filter(r => r.location_id === loc.id);
+      const totalKg = locRecords.reduce((s, r) => s + (r.weight_kg || 0), 0);
+
+      marker.bindPopup(`
+        <div style="min-width:200px;font-family:Inter,sans-serif">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:4px">${loc.name}</h3>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:8px">${loc.address || loc.wilayah}</p>
+          <div style="display:flex;gap:12px;font-size:12px">
+            <div><strong>${locRecords.length}</strong><br><span style="color:#6b7280">Record</span></div>
+            <div><strong>${(totalKg/1000).toFixed(1)} ton</strong><br><span style="color:#6b7280">Total</span></div>
+          </div>
+          <p style="font-size:11px;color:#6b7280;margin-top:6px">Tipe: ${loc.type.toUpperCase()}</p>
         </div>
-        <p style="font-size:11px;color:#6b7280;margin-top:6px">Tipe: ${loc.type.toUpperCase()}</p>
-      </div>
-    `);
+      `);
 
-    if (!markerLayers[loc.type]) markerLayers[loc.type] = [];
-    markerLayers[loc.type].push(marker);
-  });
-
-  // Add heatmap
-  const heatData = records
-    .filter(r => r.lat && r.lng)
-    .map(r => [r.lat, r.lng, (r.weight_kg || 50) / 100]);
-
-  let heatLayer = null;
-  if (heatData.length > 0) {
-    heatLayer = L.heatLayer(heatData, {
-      radius: 30,
-      blur: 20,
-      maxZoom: 15,
-      gradient: { 0.2: '#fde68a', 0.5: '#fbbf24', 0.8: '#f59e0b', 1.0: '#ef4444' }
-    }).addTo(map);
+      if (!markerLayers[loc.type]) markerLayers[loc.type] = [];
+      markerLayers[loc.type].push(marker);
+    });
   }
+
+  // Heatmap management
+  let heatLayer = null;
+  function renderHeatmap() {
+    if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+
+    const heatData = records
+      .filter(r => r.lat && r.lng)
+      .map(r => [r.lat, r.lng, (r.weight_kg || 50) / 100]);
+
+    if (heatData.length > 0 && document.getElementById('heatmapToggle')?.checked) {
+      heatLayer = L.heatLayer(heatData, {
+        radius: 30,
+        blur: 20,
+        maxZoom: 15,
+        gradient: { 0.2: '#fde68a', 0.5: '#fbbf24', 0.8: '#f59e0b', 1.0: '#ef4444' }
+      }).addTo(map);
+    }
+  }
+
+  // Initial render
+  renderMarkers();
+  renderHeatmap();
 
   // Filter panel toggle
   const filterBtn = document.getElementById('filterToggleBtn');
@@ -177,11 +210,22 @@ async function initMap(locations, records) {
   });
 
   // Heatmap toggle
-  document.getElementById('heatmapToggle')?.addEventListener('change', (e) => {
-    if (heatLayer) {
-      if (e.target.checked) heatLayer.addTo(map);
-      else map.removeLayer(heatLayer);
-    }
+  document.getElementById('heatmapToggle')?.addEventListener('change', () => {
+    renderHeatmap();
+  });
+
+  // Apply date filter button
+  document.getElementById('applyGisFilter')?.addEventListener('click', () => {
+    records = getFilteredRecords();
+    renderMarkers();
+    renderHeatmap();
+    // Re-apply location type checkbox states
+    document.querySelectorAll('.loc-filter').forEach(cb => {
+      if (!cb.checked) {
+        const markers = markerLayers[cb.dataset.locType] || [];
+        markers.forEach(m => map.removeLayer(m));
+      }
+    });
   });
 
   // Fit bounds

@@ -1,4 +1,6 @@
-// SIMPAH - Hash Router
+// SIMPAH - Hash Router with Auth Guard
+import { getAuthProfile, isPublicRoute } from './lib/auth.js';
+
 const routes = {};
 let currentCleanup = null;
 
@@ -22,6 +24,28 @@ export function startRouter(defaultRoute = '/portal') {
     if (currentCleanup && typeof currentCleanup === 'function') {
       currentCleanup();
       currentCleanup = null;
+    }
+
+    // ── Centralized Route Guard ──────────────────────────────────
+    // Protected routes require authentication.
+    // Public routes (/login, /portal/*) are always accessible.
+    if (!isPublicRoute(hash)) {
+      const user = getAuthProfile();
+      if (!user) {
+        // Not authenticated — redirect to login
+        window.location.hash = '#/login';
+        return;
+      }
+    }
+
+    // If user is already logged in and visits /login, redirect to their default page
+    if (hash === '/login') {
+      const user = getAuthProfile();
+      if (user) {
+        const defaultForRole = _getDefaultRouteForRole(user.role);
+        window.location.hash = defaultForRole;
+        return;
+      }
     }
 
     // Find matching route (exact match first, then prefix match)
@@ -64,3 +88,17 @@ export function isActiveRoute(path) {
   const current = getCurrentRoute();
   return current === path || current.startsWith(path + '/');
 }
+
+function _getDefaultRouteForRole(role) {
+  switch (role) {
+    case 'eksekutif':
+      return '#/dashboard/eksekutif';
+    case 'admin':
+      return '#/dashboard/gis';
+    case 'petugas':
+    case 'warga':
+    default:
+      return '#/pwa/home';
+  }
+}
+

@@ -194,8 +194,8 @@ export async function renderMasterData() {
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Kapasitas (m³, opsional)</label>
-          <input class="form-input" id="locCapacity" type="number" step="0.1" value="${existing?.capacity_m3 || ''}" placeholder="10" />
+          <label class="form-label">Kapasitas (kg, opsional)</label>
+          <input class="form-input" id="locCapacity" type="number" step="0.1" value="${existing?.capacity_kg || ''}" placeholder="Misal: 1000" />
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-ghost" onclick="document.getElementById('mdModal').style.display='none'">Batal</button>
@@ -211,7 +211,7 @@ export async function renderMasterData() {
         wilayah: document.getElementById('locWilayah').value.trim(),
         lat: parseFloat(document.getElementById('locLat').value) || null,
         lng: parseFloat(document.getElementById('locLng').value) || null,
-        capacity_m3: parseFloat(document.getElementById('locCapacity').value) || null
+        capacity_kg: parseFloat(document.getElementById('locCapacity').value) || null
       };
       try {
         if (isEdit) await updateLocation(existing.id, data);
@@ -241,7 +241,7 @@ export async function renderMasterData() {
             fleet.map(f => `<tr>
               <td><strong>${f.plate_number}</strong></td>
               <td>${f.vehicle_type || '-'}</td>
-              <td>${f.capacity_m3 ? f.capacity_m3 + ' m³' : '-'}</td>
+              <td>${f.capacity_kg ? f.capacity_kg + ' kg' : '-'}</td>
               <td><span class="md-badge ${f.status === 'active' ? 'green' : 'red'}">${f.status === 'active' ? 'Aktif' : 'Nonaktif'}</span></td>
               <td><div class="md-actions">
                 <button class="md-btn-icon" title="Edit" data-edit-fleet="${f.id}">${icons.edit}</button>
@@ -280,8 +280,8 @@ export async function renderMasterData() {
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Kapasitas (m³)</label>
-          <input class="form-input" id="fleetCapacity" type="number" step="0.1" value="${existing?.capacity_m3 || ''}" placeholder="8" />
+          <label class="form-label">Kapasitas (kg)</label>
+          <input class="form-input" id="fleetCapacity" type="number" step="0.1" value="${existing?.capacity_kg || ''}" placeholder="Misal: 2500" />
         </div>
         <div class="form-group">
           <label class="form-label">Status</label>
@@ -301,7 +301,7 @@ export async function renderMasterData() {
       const data = {
         plate_number: document.getElementById('fleetPlate').value.trim().toUpperCase(),
         vehicle_type: document.getElementById('fleetType').value,
-        capacity_m3: parseFloat(document.getElementById('fleetCapacity').value) || null,
+        capacity_kg: parseFloat(document.getElementById('fleetCapacity').value) || null,
         status: document.getElementById('fleetStatus').value
       };
       try {

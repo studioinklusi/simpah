@@ -199,7 +199,7 @@ export async function renderInputPilah() {
           photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
           photo_count: photos.length,
           user_id: user.id,
-          user_name: user.name
+          user_name: user.full_name
         }, user.id);
         pilahRecordId = record.id;
         await addSortedWaste(items, record.id, user.id);
@@ -219,7 +219,7 @@ export async function renderInputPilah() {
           photos: !pilahRecordId ? photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })) : [], // Attach photos to residu if no pilah record
           photo_count: !pilahRecordId ? photos.length : 0,
           user_id: user.id,
-          user_name: user.name
+          user_name: user.full_name
         }, user.id);
       }
 

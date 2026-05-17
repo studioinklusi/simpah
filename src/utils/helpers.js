@@ -1,4 +1,7 @@
 // SIMPAH - General Helpers
+import { supabase } from '../lib/supabase.js';
+import { getAuthProfile, logout as authLogout, refreshProfile } from '../lib/auth.js';
+
 export function formatDate(isoString) {
   if (!isoString) return '-';
   const d = new Date(isoString);
@@ -133,19 +136,24 @@ export function toggleTheme() {
   setState('theme', next);
 }
 
-// Session management
+// Session management — bridged to centralized auth module (src/lib/auth.js)
 export function getCurrentUser() {
-  const userData = localStorage.getItem('simpah-user');
-  return userData ? JSON.parse(userData) : null;
+  return getAuthProfile();
+}
+
+export async function fetchCurrentUser() {
+  // Now handled by initAuth() in auth.js during bootstrap.
+  // Kept for backward compat — delegates to refreshProfile.
+  return refreshProfile();
 }
 
 export function setCurrentUser(user) {
-  localStorage.setItem('simpah-user', JSON.stringify(user));
+  // Still used by auth.js internally to sync state.
+  // Keep sessionStorage for quick access fallback.
+  sessionStorage.setItem('simpah_user', JSON.stringify(user));
   setState('user', user);
 }
 
-export function logout() {
-  localStorage.removeItem('simpah-user');
-  setState('user', null);
-  window.location.hash = '#/login';
+export async function logout() {
+  return authLogout();
 }

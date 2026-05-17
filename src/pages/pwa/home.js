@@ -15,7 +15,7 @@ export async function renderPWAHome() {
     <!-- Greeting -->
     <div class="pwa-greeting page-enter">
       <div class="greeting-text">
-        <h2>Halo, ${user.name.split(' ')[0]}!</h2>
+        <h2>Halo, ${(user.full_name || 'User').split(' ')[0]}!</h2>
         <p style="font-size:var(--font-sm);color:var(--primary-600);font-weight:600;margin:2px 0 4px">${getMotivationalGreeting()}</p>
         <p>${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
       </div>

@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+ml-backend/.env
+ml-backend/venv/
+ml-backend/__pycache__/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
