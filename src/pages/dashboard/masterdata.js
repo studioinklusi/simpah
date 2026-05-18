@@ -772,20 +772,20 @@ export async function renderMasterData() {
   function openRbacForm(role, modules, permissions) {
     const rolePerms = permissions.filter(p => p.role_code === role.code).map(p => p.module_id);
     
-    openModal(\`Atur Hak Akses: \${role.name}\`, \`
+    openModal(`Atur Hak Akses: ${role.name}`, `
       <form id="rbacForm">
-        <p style="margin-bottom:var(--space-4);color:var(--text-secondary);font-size:13px">Pilih menu dashboard apa saja yang boleh diakses oleh <strong>\${role.name}</strong>.</p>
+        <p style="margin-bottom:var(--space-4);color:var(--text-secondary);font-size:13px">Pilih menu dashboard apa saja yang boleh diakses oleh <strong>${role.name}</strong>.</p>
         
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-5)">
-          \${modules.map(mod => \`
-            <label style="display:flex;align-items:flex-start;gap:8px;padding:var(--space-3);border:1px solid var(--gray-200);border-radius:var(--radius-md);cursor:pointer;background:\${rolePerms.includes(mod.id) ? 'var(--blue-50)' : 'white'}">
-              <input type="checkbox" name="modules" value="\${mod.id}" \${rolePerms.includes(mod.id) ? 'checked' : ''} style="margin-top:4px" />
+          ${modules.map(mod => `
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:var(--space-3);border:1px solid var(--gray-200);border-radius:var(--radius-md);cursor:pointer;background:${rolePerms.includes(mod.id) ? 'var(--blue-50)' : 'white'}">
+              <input type="checkbox" name="modules" value="${mod.id}" ${rolePerms.includes(mod.id) ? 'checked' : ''} style="margin-top:4px" />
               <div>
-                <div style="font-weight:600;font-size:14px;color:var(--gray-900)">\${mod.name}</div>
-                <div style="font-size:12px;color:var(--gray-500)">\${mod.description || ''}</div>
+                <div style="font-weight:600;font-size:14px;color:var(--gray-900)">${mod.name}</div>
+                <div style="font-size:12px;color:var(--gray-500)">${mod.description || ''}</div>
               </div>
             </label>
-          \`).join('')}
+          `).join('')}
         </div>
         
         <div class="form-actions">
@@ -793,7 +793,7 @@ export async function renderMasterData() {
           <button type="submit" class="btn btn-primary">Simpan Hak Akses</button>
         </div>
       </form>
-    \`);
+    `);
 
     document.getElementById('rbacForm').addEventListener('submit', async (e) => {
       e.preventDefault();
