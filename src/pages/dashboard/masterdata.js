@@ -648,7 +648,7 @@ export async function renderMasterData() {
           <div class="form-group" style="flex:1">
             <label class="form-label">Kategori</label>
             <select class="form-select" id="fasumCategory" required>
-              ${['Pasar', 'Sekolah', 'Terminal', 'Perkantoran', 'Rumah Sakit', 'Lainnya'].map(c => `<option value="${c}" ${existing?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+              ${['Pasar', 'Sekolah', 'Terminal', 'Perkantoran', 'Rumah Sakit', 'Destinasi Wisata', 'MBG / Dapur Umum', 'Hotel / Penginapan', 'Industri', 'Lainnya'].map(c => `<option value="${c}" ${existing?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
           </div>
           <div class="form-group" style="flex:1">
@@ -679,13 +679,13 @@ export async function renderMasterData() {
           <div class="form-group" style="flex:1">
             <label class="form-label">Satuan Kapasitas</label>
             <select class="form-select" id="fasumCapUnit">
-              ${['Orang', 'm2', 'Bed', 'Kios'].map(c => `<option value="${c}" ${existing?.capacity_unit === c ? 'selected' : ''}>${c}</option>`).join('')}
+              ${['Orang', 'm2', 'Bed', 'Kios', 'Kamar', 'Porsi', 'Unit'].map(c => `<option value="${c}" ${existing?.capacity_unit === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
           </div>
           <div class="form-group" style="flex:1">
             <label class="form-label">Timbulan / Unit (kg)</label>
             <input class="form-input" id="fasumTimbulan" type="number" step="0.01" value="${existing?.timbulan_per_unit || '0.15'}" />
-            <small style="color:var(--text-muted);font-size:11px">SNI: Sekolah 0.15, Pasar 0.25, RS 2.5</small>
+            <small style="color:var(--text-muted);font-size:11px">SNI: Sekolah 0.15, Pasar 0.25, RS 2.5, Hotel 1.0</small>
           </div>
         </div>
         <div class="form-actions">
