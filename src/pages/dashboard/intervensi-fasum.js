@@ -68,20 +68,20 @@ export async function renderIntervensiFasum() {
                 const isPerhatian = f.potensi_harian >= 200 && f.potensi_harian < 500;
                 const badgeColor = isKritis ? 'danger' : (isPerhatian ? 'warning' : 'success');
                 const label = isKritis ? 'Kritis' : (isPerhatian ? 'Perhatian' : 'Aman');
-                return \`
+                return `
                 <tr>
-                  <td style="text-align:center"><span class="rank-badge \${i < 3 ? 'rank-top' : ''}">\${i + 1}</span></td>
+                  <td style="text-align:center"><span class="rank-badge ${i < 3 ? 'rank-top' : ''}">${i + 1}</span></td>
                   <td>
-                    <strong>\${f.name}</strong>
-                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">\${f.address || 'Alamat belum disetel'}</div>
+                    <strong>${f.name}</strong>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${f.address || 'Alamat belum disetel'}</div>
                   </td>
-                  <td><span class="badge badge-neutral">\${f.category}</span></td>
-                  <td>\${f.kecamatan || '-'}</td>
-                  <td style="text-align:right">\${f.capacity_value} \${f.capacity_unit}</td>
-                  <td style="text-align:right;font-weight:600;color:\${isKritis ? 'var(--danger-600)' : 'inherit'}">\${f.potensi_harian.toFixed(1)} kg</td>
-                  <td style="text-align:center"><span class="badge badge-\${badgeColor}">\${label}</span></td>
+                  <td><span class="badge badge-neutral">${f.category}</span></td>
+                  <td>${f.kecamatan || '-'}</td>
+                  <td style="text-align:right">${f.capacity_value} ${f.capacity_unit}</td>
+                  <td style="text-align:right;font-weight:600;color:${isKritis ? 'var(--danger-600)' : 'inherit'}">${f.potensi_harian.toFixed(1)} kg</td>
+                  <td style="text-align:center"><span class="badge badge-${badgeColor}">${label}</span></td>
                 </tr>
-                \`;
+                `;
               }).join('')}
             </tbody>
           </table>
