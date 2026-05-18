@@ -628,6 +628,49 @@ export async function deleteVillagePopulation(id) {
   if (error) throw new Error(error.message);
 }
 
+// ========== Public Facilities (Supabase only) ==========
+export async function getAllPublicFacilities() {
+  try {
+    const { data, error } = await supabase.from('public_facilities').select('*').order('name');
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.warn('Gagal mengambil data fasilitas umum:', e);
+    return [];
+  }
+}
+
+export async function addPublicFacility(facilityData) {
+  if (!navigator.onLine) throw new Error('Penambahan fasilitas umum harus dalam keadaan online');
+  
+  const dataToInsert = {
+    ...facilityData,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data, error } = await supabase.from('public_facilities').insert(dataToInsert).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updatePublicFacility(id, updates) {
+  if (!navigator.onLine) throw new Error('Perubahan fasilitas umum harus dalam keadaan online');
+  
+  const updatedData = { ...updates, updated_at: new Date().toISOString() };
+  
+  const { data, error } = await supabase.from('public_facilities').update(updatedData).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deletePublicFacility(id) {
+  if (!navigator.onLine) throw new Error('Penghapusan fasilitas umum harus dalam keadaan online');
+  
+  const { error } = await supabase.from('public_facilities').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ========== Helpers ==========
 function generateId() {
   return crypto.randomUUID();

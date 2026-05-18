@@ -1,7 +1,7 @@
 // SIMPAH - GIS Dashboard
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
-import { getAllLocations, getAllWasteRecords } from '../../db/store.js';
+import { getAllLocations, getAllWasteRecords, getAllPublicFacilities } from '../../db/store.js';
 import { renderDashboardLayout } from './layout.js';
 import { LOCATION_TYPES } from '../../utils/sipsn.js';
 
@@ -11,6 +11,7 @@ export async function renderGIS() {
 
   const locations = await getAllLocations();
   const records = await getAllWasteRecords();
+  const facilities = await getAllPublicFacilities();
 
   renderDashboardLayout('Peta GIS', `
     <div class="page-enter">
@@ -31,6 +32,10 @@ export async function renderGIS() {
             </div>
           `).join('')}
           <div class="gis-legend-item" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border-color)">
+            <span class="gis-legend-dot" style="background:#6366f1;border-radius:0"></span>
+            <span>${icons.grid} Fasilitas Umum</span>
+          </div>
+          <div class="gis-legend-item" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border-color)">
             <span class="gis-legend-dot" style="background:linear-gradient(135deg,#fbbf24,#ef4444);"></span>
             <span>Heatmap Volume</span>
           </div>
@@ -49,6 +54,9 @@ export async function renderGIS() {
                 <input type="checkbox" checked data-loc-type="${lt.id}" class="loc-filter" /> ${lt.label}
               </label>
             `).join('')}
+            <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);font-size:var(--font-sm);cursor:pointer">
+              <input type="checkbox" checked data-loc-type="fasum" class="loc-filter" /> Fasilitas Umum
+            </label>
           </div>
           <div class="form-group">
             <label class="form-label">Tampilkan Heatmap</label>
@@ -68,7 +76,7 @@ export async function renderGIS() {
   `, 'gis');
 
   // Init map after DOM is ready
-  setTimeout(() => initMap(locations, records), 100);
+  setTimeout(() => initMap(locations, records, facilities), 100);
 
   return () => {
     // cleanup map on page leave
@@ -79,7 +87,7 @@ export async function renderGIS() {
   };
 }
 
-async function initMap(locations, allRecords) {
+async function initMap(locations, allRecords, facilities) {
   const L = await import('leaflet');
   await import('leaflet.heat');
 
@@ -120,6 +128,15 @@ async function initMap(locations, allRecords) {
       iconAnchor: [14, 14],
       popupAnchor: [0, -14]
     });
+  });
+
+  // Icon untuk Fasum (Kotak/Membulat)
+  markerIcons['fasum'] = L.divIcon({
+    className: 'custom-marker-fasum',
+    html: `<div style="width:24px;height:24px;border-radius:6px;background:#6366f1;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:12px">${icons.grid}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
   });
 
   // Filter records by date range
@@ -164,6 +181,27 @@ async function initMap(locations, allRecords) {
 
       if (!markerLayers[loc.type]) markerLayers[loc.type] = [];
       markerLayers[loc.type].push(marker);
+    });
+
+    // Render Fasum Markers
+    facilities.filter(f => f.latitude && f.longitude).forEach(f => {
+      const marker = L.marker([f.latitude, f.longitude], { icon: markerIcons['fasum'] }).addTo(map);
+      
+      const potensiHarian = (f.capacity_value * (f.timbulan_per_unit || 0)).toFixed(1);
+      marker.bindPopup(`
+        <div style="min-width:200px;font-family:Inter,sans-serif">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:4px">${f.name}</h3>
+          <p style="font-size:11px;color:#6b7280;margin-bottom:8px">${f.address || f.kecamatan}</p>
+          <div style="display:flex;gap:12px;font-size:12px">
+            <div><strong>${f.capacity_value}</strong><br><span style="color:#6b7280">${f.capacity_unit}</span></div>
+            <div><strong>${potensiHarian} kg/hari</strong><br><span style="color:#6b7280">Potensi Timbulan</span></div>
+          </div>
+          <p style="font-size:11px;color:#6b7280;margin-top:6px">Kategori: ${f.category}</p>
+        </div>
+      `);
+
+      if (!markerLayers['fasum']) markerLayers['fasum'] = [];
+      markerLayers['fasum'].push(marker);
     });
   }
 

@@ -9,7 +9,8 @@ import {
   getAllLocations, addLocation, updateLocation, deleteLocation,
   getAllFleet, addFleet, updateFleet, deleteFleet,
   getAllUsers, addUser, updateUser, deleteUser,
-  getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation
+  getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
+  getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility
 } from '../../db/store.js';
 
 export async function renderMasterData() {
@@ -31,6 +32,7 @@ export async function renderMasterData() {
         <button class="md-tab" data-tab="fleet" style="display:inline-flex;align-items:center;gap:8px">${icons.truck} Kendaraan</button>
         <button class="md-tab" data-tab="users" style="display:inline-flex;align-items:center;gap:8px">${icons.users} Pengguna</button>
         <button class="md-tab" data-tab="population" style="display:inline-flex;align-items:center;gap:8px">${icons.chart} Kependudukan</button>
+        <button class="md-tab" data-tab="fasum" style="display:inline-flex;align-items:center;gap:8px">${icons.grid} Fasilitas Umum</button>
       </div>
 
       <div class="md-content" id="mdContent">
@@ -123,6 +125,7 @@ export async function renderMasterData() {
     else if (tab === 'fleet') await renderFleetTab(container);
     else if (tab === 'users') await renderUsersTab(container);
     else if (tab === 'population') await renderPopulationTab(container);
+    else if (tab === 'fasum') await renderFasumTab(container);
   }
 
   // ---------- LOCATIONS TAB ----------
@@ -587,6 +590,134 @@ export async function renderMasterData() {
     });
   }
 
+  // ---------- FASILITAS UMUM TAB ----------
+  async function renderFasumTab(container) {
+    const facilities = await getAllPublicFacilities();
+    container.innerHTML = `
+      <div class="md-toolbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <h3 style="display:flex;align-items:center;gap:8px">${icons.grid} Daftar Fasilitas Umum</h3>
+          <span class="md-count">${facilities.length} fasilitas</span>
+        </div>
+        <button class="btn btn-primary btn-sm" id="addFasumBtn">${icons.plus} Tambah Fasum</button>
+      </div>
+      <table class="md-table">
+        <thead><tr><th>Nama</th><th>Kategori</th><th>Wilayah</th><th>Kapasitas</th><th>Potensi Sampah</th><th>Aksi</th></tr></thead>
+        <tbody>
+          ${facilities.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data fasilitas umum</td></tr>' :
+            facilities.map(f => {
+              const potensiHarian = (f.capacity_value * (f.timbulan_per_unit || 0)).toFixed(1);
+              return `<tr>
+                <td><strong>${f.name}</strong></td>
+                <td><span class="md-badge blue">${f.category}</span></td>
+                <td>${f.kecamatan || '-'}</td>
+                <td>${f.capacity_value || 0} ${f.capacity_unit || ''}</td>
+                <td style="font-weight:600;color:var(--primary-600)">${potensiHarian} kg/hari</td>
+                <td><div class="md-actions">
+                  <button class="md-btn-icon" title="Edit" data-edit-fasum="${f.id}">${icons.edit}</button>
+                  <button class="md-btn-icon danger" title="Hapus" data-del-fasum="${f.id}">${icons.trash}</button>
+                </div></td>
+              </tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+    `;
+    document.getElementById('addFasumBtn')?.addEventListener('click', () => openFasumForm());
+    container.querySelectorAll('[data-edit-fasum]').forEach(btn => btn.addEventListener('click', () => {
+      const f = facilities.find(x => x.id === btn.dataset.editFasum);
+      if (f) openFasumForm(f);
+    }));
+    container.querySelectorAll('[data-del-fasum]').forEach(btn => btn.addEventListener('click', async () => {
+      if (confirm('Yakin ingin menghapus fasilitas umum ini?')) {
+        await deletePublicFacility(btn.dataset.delFasum);
+        showToast('Fasilitas umum berhasil dihapus', 'success');
+        loadTabContent('fasum');
+      }
+    }));
+  }
+
+  function openFasumForm(existing = null) {
+    const isEdit = !!existing;
+    openModal(isEdit ? 'Edit Fasilitas Umum' : 'Tambah Fasilitas Umum', `
+      <form id="fasumForm">
+        <div class="form-group">
+          <label class="form-label">Nama Fasilitas</label>
+          <input class="form-input" id="fasumName" required value="${existing?.name || ''}" placeholder="Misal: Pasar Kota" />
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Kategori</label>
+            <select class="form-select" id="fasumCategory" required>
+              ${['Pasar', 'Sekolah', 'Terminal', 'Perkantoran', 'Rumah Sakit', 'Lainnya'].map(c => `<option value="${c}" ${existing?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Wilayah (Kecamatan)</label>
+            <input class="form-input" id="fasumWilayah" required value="${existing?.kecamatan || ''}" placeholder="Misal: Banjarnegara" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alamat</label>
+          <input class="form-input" id="fasumAddress" value="${existing?.address || ''}" placeholder="Alamat lengkap" />
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Latitude (Peta)</label>
+            <input class="form-input" id="fasumLat" type="number" step="any" value="${existing?.latitude || ''}" placeholder="-7.xxx" />
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Longitude (Peta)</label>
+            <input class="form-input" id="fasumLng" type="number" step="any" value="${existing?.longitude || ''}" placeholder="109.xxx" />
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-3)">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Nilai Kapasitas</label>
+            <input class="form-input" id="fasumCapVal" type="number" value="${existing?.capacity_value || '0'}" placeholder="Misal: 1000" />
+            <small style="color:var(--text-muted);font-size:11px">Jml siswa / luas m2 / bed</small>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Satuan Kapasitas</label>
+            <select class="form-select" id="fasumCapUnit">
+              ${['Orang', 'm2', 'Bed', 'Kios'].map(c => `<option value="${c}" ${existing?.capacity_unit === c ? 'selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Timbulan / Unit (kg)</label>
+            <input class="form-input" id="fasumTimbulan" type="number" step="0.01" value="${existing?.timbulan_per_unit || '0.15'}" />
+            <small style="color:var(--text-muted);font-size:11px">SNI: Sekolah 0.15, Pasar 0.25, RS 2.5</small>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('mdModal').style.display='none'">Batal</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? 'Simpan Perubahan' : 'Tambah Fasum'}</button>
+        </div>
+      </form>
+    `);
+    document.getElementById('fasumForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById('fasumName').value.trim(),
+        category: document.getElementById('fasumCategory').value,
+        kecamatan: document.getElementById('fasumWilayah').value.trim(),
+        address: document.getElementById('fasumAddress').value.trim(),
+        latitude: parseFloat(document.getElementById('fasumLat').value) || null,
+        longitude: parseFloat(document.getElementById('fasumLng').value) || null,
+        capacity_value: parseInt(document.getElementById('fasumCapVal').value) || 0,
+        capacity_unit: document.getElementById('fasumCapUnit').value,
+        timbulan_per_unit: parseFloat(document.getElementById('fasumTimbulan').value) || 0
+      };
+      try {
+        if (isEdit) await updatePublicFacility(existing.id, data);
+        else await addPublicFacility(data);
+        showToast(isEdit ? 'Fasum berhasil diperbarui' : 'Fasum berhasil ditambahkan', 'success');
+        closeModal();
+        loadTabContent('fasum');
+      } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
+    });
+  }
+
   // Load initial tab
+
   loadTabContent(activeTab);
 }

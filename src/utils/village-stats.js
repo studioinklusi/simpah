@@ -2,24 +2,33 @@
 // Mengagregasi data dari IndexedDB menjadi profil per wilayah
 // Termasuk kalkulasi potensi timbulan berdasarkan data kependudukan
 
-import { getAllWasteRecords, getAllLocations, getAllComplaints, getAllVillagePopulation } from '../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllComplaints, getAllVillagePopulation, getAllPublicFacilities } from '../db/store.js';
 import { calculateVillageScore, evaluateVillage } from './intervention-rules.js';
 
 // Standar timbulan nasional (KLHK) — kg/orang/hari
 const DEFAULT_TIMBULAN_PER_KAPITA = 0.70;
 
 export async function getVillageProfiles() {
-  const [records, locations, complaints, populationData] = await Promise.all([
+  const [records, locations, complaints, populationData, facilities] = await Promise.all([
     getAllWasteRecords(),
     getAllLocations(),
     getAllComplaints(),
     getAllVillagePopulation(),
+    getAllPublicFacilities(),
   ]);
 
   // Build population lookup by kecamatan name (case-insensitive)
   const populationMap = {};
   populationData.forEach(p => {
     populationMap[p.kecamatan.toLowerCase()] = p;
+  });
+
+  // Build public facilities potential lookup by kecamatan
+  const fasilitasMap = {};
+  facilities.forEach(f => {
+    const wil = f.kecamatan.toLowerCase();
+    const potensi = (f.capacity_value || 0) * (f.timbulan_per_unit || 0);
+    fasilitasMap[wil] = (fasilitasMap[wil] || 0) + potensi;
   });
 
   // Build location lookup
@@ -195,7 +204,9 @@ export async function getVillageProfiles() {
 
     // ── Potensi Timbulan & Kinerja ──
     const numMonths = Math.max(uniqueMonths.size, 1);
-    const potensi_timbulan_harian = jumlah_penduduk * timbulan_per_kapita;          // kg/hari
+    const potensi_timbulan_domestik = jumlah_penduduk * timbulan_per_kapita;          // kg/hari
+    const potensi_timbulan_fasum = fasilitasMap[p.wilayah.toLowerCase()] || 0;
+    const potensi_timbulan_harian = potensi_timbulan_domestik + potensi_timbulan_fasum;
     const potensi_timbulan_bulanan = potensi_timbulan_harian * 30;                  // kg/bulan
     const volume_terkelola_bulanan = numMonths > 0 ? p.total_all_kg / numMonths : 0; // kg/bulan (rata-rata)
     const volume_terpilah_bulanan = numMonths > 0 ? (p.total_pilah_kg + p.total_olah_kg) / numMonths : 0;
