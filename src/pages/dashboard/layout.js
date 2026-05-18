@@ -52,6 +52,9 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <a href="#/dashboard/intervensi" class="sidebar-link ${activeMenu === 'intervensi' ? 'active' : ''}">
               ${icons.shield} <span>Intervensi Wilayah</span>
             </a>
+            <a href="#/dashboard/intervensi-fasum" class="sidebar-link ${activeMenu === 'intervensi-fasum' ? 'active' : ''}">
+              ${icons.grid} <span>Intervensi Fasum</span>
+            </a>
             <a href="#/dashboard/masterdata" class="sidebar-link ${activeMenu === 'masterdata' ? 'active' : ''}">
               ${icons.settings} <span>Master Data</span>
             </a>
