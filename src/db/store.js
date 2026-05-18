@@ -671,6 +671,39 @@ export async function deletePublicFacility(id) {
   if (error) throw new Error(error.message);
 }
 
+// ========== RBAC (Supabase only) ==========
+export async function getSystemModules() {
+  const { data, error } = await supabase.from('system_modules').select('*').order('id');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getSystemRoles() {
+  const { data, error } = await supabase.from('system_roles').select('*').order('name');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getRolePermissions() {
+  const { data, error } = await supabase.from('role_permissions').select('*');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function saveRolePermissions(roleCode, moduleIds) {
+  if (!navigator.onLine) throw new Error('Pengaturan hak akses harus dalam keadaan online');
+  
+  // Hapus semua permission lama untuk role ini
+  await supabase.from('role_permissions').delete().eq('role_code', roleCode);
+  
+  // Masukkan permission baru jika ada
+  if (moduleIds && moduleIds.length > 0) {
+    const inserts = moduleIds.map(moduleId => ({ role_code: roleCode, module_id: moduleId }));
+    const { error } = await supabase.from('role_permissions').insert(inserts);
+    if (error) throw new Error(error.message);
+  }
+}
+
 // ========== Helpers ==========
 function generateId() {
   return crypto.randomUUID();

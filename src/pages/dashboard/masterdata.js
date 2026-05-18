@@ -10,7 +10,8 @@ import {
   getAllFleet, addFleet, updateFleet, deleteFleet,
   getAllUsers, addUser, updateUser, deleteUser,
   getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
-  getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility
+  getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility,
+  getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions
 } from '../../db/store.js';
 
 export async function renderMasterData() {
@@ -33,6 +34,7 @@ export async function renderMasterData() {
         <button class="md-tab" data-tab="users" style="display:inline-flex;align-items:center;gap:8px">${icons.users} Pengguna</button>
         <button class="md-tab" data-tab="population" style="display:inline-flex;align-items:center;gap:8px">${icons.chart} Kependudukan</button>
         <button class="md-tab" data-tab="fasum" style="display:inline-flex;align-items:center;gap:8px">${icons.grid} Fasilitas Umum</button>
+        <button class="md-tab" data-tab="rbac" style="display:inline-flex;align-items:center;gap:8px">${icons.shield} Hak Akses</button>
       </div>
 
       <div class="md-content" id="mdContent">
@@ -126,6 +128,7 @@ export async function renderMasterData() {
     else if (tab === 'users') await renderUsersTab(container);
     else if (tab === 'population') await renderPopulationTab(container);
     else if (tab === 'fasum') await renderFasumTab(container);
+    else if (tab === 'rbac') await renderRbacTab(container);
   }
 
   // ---------- LOCATIONS TAB ----------
@@ -717,7 +720,97 @@ export async function renderMasterData() {
     });
   }
 
-  // Load initial tab
+  // ---------- RBAC TAB ----------
+  async function renderRbacTab(container) {
+    const [roles, modules, permissions] = await Promise.all([
+      getSystemRoles(),
+      getSystemModules(),
+      getRolePermissions()
+    ]);
 
+    container.innerHTML = `
+      <div class="md-toolbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <h3 style="display:flex;align-items:center;gap:8px">${icons.shield} Pengaturan Hak Akses (RBAC)</h3>
+          <span class="md-count">${roles.length} role</span>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:var(--space-4)">
+        ${roles.map(role => {
+          const rolePerms = permissions.filter(p => p.role_code === role.code).map(p => p.module_id);
+          return `
+          <div class="card" style="padding:var(--space-4);border:1px solid var(--gray-200)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-3)">
+              <div>
+                <h4 style="font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+                  ${role.name} ${role.is_system ? '<span class="badge badge-primary" style="font-size:10px;padding:2px 6px">Bawaan Sistem</span>' : ''}
+                </h4>
+                <div style="font-size:12px;color:var(--text-muted)">Kode: ${role.code}</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" data-edit-role="${role.code}">${icons.edit} Atur Izin</button>
+            </div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:var(--space-3)">${role.description || '-'}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${rolePerms.length === 0 ? '<span style="font-size:12px;color:var(--text-muted)">Tidak ada akses menu dashboard</span>' : ''}
+              ${rolePerms.map(pid => {
+                const mod = modules.find(m => m.id === pid);
+                return `<span class="badge badge-neutral" style="font-size:11px">${mod ? mod.name : pid}</span>`;
+              }).join('')}
+            </div>
+          </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    container.querySelectorAll('[data-edit-role]').forEach(btn => btn.addEventListener('click', () => {
+      const role = roles.find(r => r.code === btn.dataset.editRole);
+      if (role) openRbacForm(role, modules, permissions);
+    }));
+  }
+
+  function openRbacForm(role, modules, permissions) {
+    const rolePerms = permissions.filter(p => p.role_code === role.code).map(p => p.module_id);
+    
+    openModal(\`Atur Hak Akses: \${role.name}\`, \`
+      <form id="rbacForm">
+        <p style="margin-bottom:var(--space-4);color:var(--text-secondary);font-size:13px">Pilih menu dashboard apa saja yang boleh diakses oleh <strong>\${role.name}</strong>.</p>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-5)">
+          \${modules.map(mod => \`
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:var(--space-3);border:1px solid var(--gray-200);border-radius:var(--radius-md);cursor:pointer;background:\${rolePerms.includes(mod.id) ? 'var(--blue-50)' : 'white'}">
+              <input type="checkbox" name="modules" value="\${mod.id}" \${rolePerms.includes(mod.id) ? 'checked' : ''} style="margin-top:4px" />
+              <div>
+                <div style="font-weight:600;font-size:14px;color:var(--gray-900)">\${mod.name}</div>
+                <div style="font-size:12px;color:var(--gray-500)">\${mod.description || ''}</div>
+              </div>
+            </label>
+          \`).join('')}
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('mdModal').style.display='none'">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Hak Akses</button>
+        </div>
+      </form>
+    \`);
+
+    document.getElementById('rbacForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const checkboxes = document.querySelectorAll('input[name="modules"]:checked');
+      const selectedModules = Array.from(checkboxes).map(cb => cb.value);
+      
+      try {
+        await saveRolePermissions(role.code, selectedModules);
+        showToast('Hak akses berhasil diperbarui', 'success');
+        closeModal();
+        loadTabContent('rbac');
+      } catch (err) {
+        showToast('Gagal: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // Load initial tab
   loadTabContent(activeTab);
 }

@@ -216,6 +216,22 @@ async function _loadProfile(userId, forceRefresh = false) {
       console.warn('[Auth] Profile load failed:', error);
       _profile = null;
     } else {
+      // Fetch RBAC Permissions
+      try {
+        const { data: permData, error: permError } = await supabase
+          .from('role_permissions')
+          .select('module_id')
+          .eq('role_code', data.role);
+          
+        if (!permError && permData) {
+          data.permissions = permData.map(p => p.module_id);
+        } else {
+          data.permissions = [];
+        }
+      } catch (err) {
+        data.permissions = [];
+      }
+
       _profile = data;
       // Sync with legacy helpers state
       sessionStorage.setItem('simpah_user', JSON.stringify(data));
