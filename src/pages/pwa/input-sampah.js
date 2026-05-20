@@ -74,11 +74,11 @@ export async function renderInputSampah() {
 
         <div class="accumulation-toggle">
           <label class="accum-label">
-            <input type="checkbox" id="accumToggle" />
+            <input type="checkbox" id="accumToggle" checked />
             <span class="accum-switch"></span>
             <span>Ini laporan akumulasi beberapa hari</span>
           </label>
-          <div class="accum-panel" id="accumPanel" style="display:none">
+          <div class="accum-panel" id="accumPanel" style="display:block">
             <p class="accum-hint">Berapa hari sampah ini dikumpulkan sebelum ditimbang?</p>
             <div class="accum-days-row">
               <button type="button" class="accum-day-btn" data-days="3">3 hari</button>

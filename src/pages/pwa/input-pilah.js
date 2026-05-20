@@ -91,6 +91,28 @@ export async function renderInputPilah() {
           <strong>0 <small>KG</small></strong>
         </div>
 
+        <div class="accumulation-toggle">
+          <label class="accum-label">
+            <input type="checkbox" id="accumToggle" checked />
+            <span class="accum-switch"></span>
+            <span>Ini laporan akumulasi beberapa hari</span>
+          </label>
+          <div class="accum-panel" id="accumPanel" style="display:block">
+            <p class="accum-hint">Berapa hari sampah ini dikumpulkan sebelum ditimbang?</p>
+            <div class="accum-days-row">
+              <button type="button" class="accum-day-btn" data-days="3">3 hari</button>
+              <button type="button" class="accum-day-btn" data-days="5">5 hari</button>
+              <button type="button" class="accum-day-btn selected" data-days="7">7 hari</button>
+              <button type="button" class="accum-day-btn" data-days="14">14 hari</button>
+            </div>
+            <div class="accum-custom">
+              <span>atau</span>
+              <input type="number" id="accumCustomDays" class="form-input" placeholder="Jumlah hari" min="2" max="30" style="width:120px" />
+            </div>
+            <div class="accum-preview" id="accumPreview"></div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Catatan</label>
           <textarea id="notesInput" class="form-textarea" rows="2" placeholder="Catatan opsional..."></textarea>
@@ -119,6 +141,21 @@ export async function renderInputPilah() {
       .pilah-total { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; font-size:20px; color:var(--primary-700); background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.2)); border:1px solid rgba(16,185,129,0.3); border-radius:var(--radius-xl); margin-bottom:var(--space-5); text-transform:uppercase; font-weight:600; }
       .pilah-total strong { font-size:28px; font-weight:900; }
       .pilah-total small { font-size:14px; opacity:0.8; }
+      
+      .accumulation-toggle { margin-bottom:var(--space-4); }
+      .accum-label { display:flex; align-items:center; gap:var(--space-3); cursor:pointer; font-size:var(--font-base); font-weight:600; }
+      .accum-label input { display:none; }
+      .accum-switch { width:40px; height:22px; border-radius:11px; background:var(--gray-300); position:relative; transition:all 0.2s; flex-shrink:0; }
+      .accum-switch::after { content:''; width:18px; height:18px; border-radius:50%; background:#fff; position:absolute; top:2px; left:2px; transition:all 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+      .accum-label input:checked + .accum-switch { background:var(--primary-500); }
+      .accum-label input:checked + .accum-switch::after { left:20px; }
+      .accum-panel { margin-top:var(--space-3); padding:var(--space-4); border-radius:var(--radius-lg); background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.15); animation:scaleIn 0.2s ease; }
+      .accum-hint { font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:var(--space-3); font-weight:500; }
+      .accum-days-row { display:flex; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-3); }
+      .accum-day-btn { padding:var(--space-3) var(--space-5); border-radius:var(--radius-full); border:1px solid var(--border-color); background:transparent; font-size:var(--font-sm); font-weight:600; cursor:pointer; transition:all 0.15s; color:var(--text-primary); }
+      .accum-day-btn.selected { background:var(--primary-500); color:#fff; border-color:var(--primary-500); }
+      .accum-custom { display:flex; align-items:center; gap:var(--space-3); font-size:var(--font-sm); color:var(--text-muted); }
+      .accum-preview { margin-top:var(--space-3); padding:var(--space-3); border-radius:var(--radius-md); background:rgba(16,185,129,0.1); font-size:var(--font-sm); color:var(--primary-700, #047857); text-align:center; font-weight:600; }
     </style>
   `);
 
@@ -154,6 +191,46 @@ export async function renderInputPilah() {
       total += parseFloat(i.value) || 0;
     });
     document.getElementById('pilahTotal').innerHTML = `<span>Total (Pilah + Residu):</span><strong>${total.toFixed(1)} <small>KG</small></strong>`;
+
+    const preview = document.getElementById('accumPreview');
+    if (preview) {
+      const days = getSelectedAccumDays();
+      if (total > 0 && days > 1) {
+        preview.innerHTML = `${icons.chart} Sistem akan mencatat rata-rata <strong>${(total / days).toFixed(1)} kg/hari</strong> selama ${days} hari ke belakang`;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+    }
+  }
+
+  // Accumulation logic
+  const accumToggle = document.getElementById('accumToggle');
+  const accumPanel = document.getElementById('accumPanel');
+  accumToggle?.addEventListener('change', () => {
+    accumPanel.style.display = accumToggle.checked ? 'block' : 'none';
+    updateTotal();
+  });
+  
+  document.querySelectorAll('.accum-day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.accum-day-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('accumCustomDays').value = '';
+      updateTotal();
+    });
+  });
+
+  document.getElementById('accumCustomDays')?.addEventListener('input', () => {
+    document.querySelectorAll('.accum-day-btn').forEach(b => b.classList.remove('selected'));
+    updateTotal();
+  });
+
+  function getSelectedAccumDays() {
+    const custom = parseInt(document.getElementById('accumCustomDays')?.value);
+    if (custom >= 2) return custom;
+    const selected = document.querySelector('.accum-day-btn.selected');
+    return selected ? parseInt(selected.dataset.days) : 7;
   }
 
   // Submit
@@ -184,13 +261,15 @@ export async function renderInputPilah() {
       const photos = photoPicker?.getPhotos() || [];
       const locationEl = document.getElementById('locationSelect');
       let pilahRecordId = null;
+      
+      const isAccum = document.getElementById('accumToggle').checked;
+      const accumDays = isAccum ? getSelectedAccumDays() : 1;
 
       if (items.length > 0) {
-        const record = await addWasteRecord({
+        const baseRecord = {
           type: 'pilah',
           source_type: document.getElementById('sourceSelect').value,
           category_sipsn: items.length === 1 ? items[0].category_sipsn : 'MIX',
-          weight_kg: totalPilah,
           lat: gpsData?.latitude || null,
           lng: gpsData?.longitude || null,
           location_id: locationEl.value || null,
@@ -200,27 +279,73 @@ export async function renderInputPilah() {
           photo_count: photos.length,
           user_id: user.id,
           user_name: user.full_name
-        }, user.id);
-        pilahRecordId = record.id;
-        await addSortedWaste(items, record.id, user.id);
+        };
+
+        if (accumDays > 1) {
+          const dailyTotal = parseFloat((totalPilah / accumDays).toFixed(1));
+          const dailyItems = items.map(i => ({ ...i, weight_kg: parseFloat((i.weight_kg / accumDays).toFixed(1)) }));
+          const now = new Date();
+          
+          for (let d = 0; d < accumDays; d++) {
+            const backDate = new Date(now);
+            backDate.setDate(backDate.getDate() - d);
+            const record = await addWasteRecord({
+              ...baseRecord,
+              weight_kg: dailyTotal,
+              notes: baseRecord.notes + (d === 0 ? '' : ` [Akumulasi hari ke-${accumDays - d}/${accumDays}]`),
+              is_accumulation: true,
+              accumulation_days: accumDays,
+              accumulation_total_kg: totalPilah,
+              override_date: backDate.toISOString()
+            }, user.id);
+            if (d === 0) pilahRecordId = record.id;
+            await addSortedWaste(dailyItems, record.id, user.id);
+          }
+        } else {
+          const record = await addWasteRecord({ ...baseRecord, weight_kg: totalPilah }, user.id);
+          pilahRecordId = record.id;
+          await addSortedWaste(items, record.id, user.id);
+        }
       }
 
       if (residuVal > 0) {
-        await addWasteRecord({
+        const residuBase = {
           type: 'residu',
           source_type: document.getElementById('sourceSelect').value,
           category_sipsn: 'MIX',
-          weight_kg: residuVal,
           lat: gpsData?.latitude || null,
           lng: gpsData?.longitude || null,
           location_id: locationEl.value || null,
           location_name: locationEl.value ? locationEl.options[locationEl.selectedIndex].text : '',
-          notes: (document.getElementById('notesInput').value.trim() + (pilahRecordId ? ' [Sisa pemilahan]' : '')).trim(),
-          photos: !pilahRecordId ? photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })) : [], // Attach photos to residu if no pilah record
+          photos: !pilahRecordId ? photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })) : [],
           photo_count: !pilahRecordId ? photos.length : 0,
           user_id: user.id,
           user_name: user.full_name
-        }, user.id);
+        };
+
+        if (accumDays > 1) {
+          const dailyResidu = parseFloat((residuVal / accumDays).toFixed(1));
+          const now = new Date();
+          for (let d = 0; d < accumDays; d++) {
+            const backDate = new Date(now);
+            backDate.setDate(backDate.getDate() - d);
+            await addWasteRecord({
+              ...residuBase,
+              weight_kg: dailyResidu,
+              notes: (document.getElementById('notesInput').value.trim() + (pilahRecordId ? ' [Sisa pemilahan]' : '') + (d === 0 ? '' : ` [Akumulasi hari ke-${accumDays - d}/${accumDays}]`)).trim(),
+              is_accumulation: true,
+              accumulation_days: accumDays,
+              accumulation_total_kg: residuVal,
+              override_date: backDate.toISOString()
+            }, user.id);
+          }
+        } else {
+          await addWasteRecord({
+            ...residuBase,
+            weight_kg: residuVal,
+            notes: (document.getElementById('notesInput').value.trim() + (pilahRecordId ? ' [Sisa pemilahan]' : '')).trim()
+          }, user.id);
+        }
       }
 
       showToast('Data pemilahan berhasil disimpan!', 'success');
