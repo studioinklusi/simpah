@@ -1,0 +1,17 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs at 00:00 every 3 days (UTC)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send API request to Supabase
+        run: |
+          curl -X GET "${{ secrets.SUPABASE_URL || 'https://xayqnpkpgyuytlfpphxi.supabase.co' }}/rest/v1/locations?limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhheXFucGtwZ3l1eXRsZnBwaHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1OTgsImV4cCI6MjA5MzQ5MjU5OH0.HYI2X1rFOkB34Epo6cwEHOA9L8P8Hfp04yzJGe7ReZU' }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhheXFucGtwZ3l1eXRsZnBwaHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1OTgsImV4cCI6MjA5MzQ5MjU5OH0.HYI2X1rFOkB34Epo6cwEHOA9L8P8Hfp04yzJGe7ReZU' }}"

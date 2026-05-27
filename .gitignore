@@ -31,3 +31,6 @@ ml-backend/__pycache__/
 *.sw?
 
 .vercel
+
+# MS Office Temporary Files
+~$*

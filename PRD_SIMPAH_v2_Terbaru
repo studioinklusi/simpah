@@ -1,0 +1,81 @@
+# Product Requirements Document (PRD)
+**Nama Produk:** SIMPAH (Sistem Informasi Monitoring Pengelolaan Sampah)
+**Versi:** 1.2 (Pembaruan Terakhir - Berdasarkan Hasil UAT & Migrasi)
+**Tanggal:** 18 Mei 2026
+**Klien Target:** Dinas Perumahan, Kawasan Permukiman dan Lingkungan Hidup (DPPKPLH) Kabupaten Banjarnegara
+
+---
+
+## 1. Ringkasan Eksekutif
+SIMPAH adalah platform berbasis *Progressive Web App* (PWA) dan *Dashboard Web* yang dirancang untuk mendigitalisasi proses pencatatan tonase sampah, manajemen fasilitas, serta analitik pengelolaan sampah dari hulu ke hilir. Pada versi pembaruan terakhir ini, SIMPAH berfokus pada transisi dari *dummy-data* ke lingkungan *Production-ready* dengan dukungan *database* tersentralisasi (Supabase), kalkulasi analitik berbasis demografi wilayah riil, dan dukungan entitas sampah non-domestik (Fasum).
+
+## 2. Pembaruan Utama (Latest Updates)
+Berdasarkan log pengembangan terakhir, berikut adalah fitur dan perubahan utama yang telah diintegrasikan ke dalam rilis ini:
+1. **Migrasi Backend ke Supabase:** Transisi penuh arsitektur data ke PostgreSQL menggunakan Supabase untuk menjamin persistensi, skalabilitas, dan integritas data riil (bukan sekadar *local browser storage*).
+2. **Role-Based Access Control (RBAC):** Pemisahan hak akses dan *Row Level Security* (RLS) secara ketat untuk peran: `dinas`, `kader`, `petugas`, `pengepul`, dan `pemdes`.
+3. **Analitik Populasi Wilayah (Kecamatan & Desa):** Penyesuaian terminologi dari "Desa" menjadi "Wilayah". Menambahkan metrik potensi timbulan sampah aktual berdasarkan jumlah penduduk (asumsi SNI 0.7 kg/kapita/hari) untuk memunculkan indikator % Penanganan dan % Pengurangan secara riil.
+4. **Manajemen Fasilitas Umum (Fasum):** Ekspansi pemantauan sumber sampah di luar rumah tangga, mencakup kategori: *Wisata*, *MBG (Makan Besar/Gedung)*, *Hotel*, dan *Industri*.
+5. **Optimalisasi Modul Cetak:** Penghapusan opsi "Export PDF" pihak ketiga/eksternal dan berfokus secara eksklusif pada fitur "Cetak/Print Asli" bawaan browser yang sudah distandardisasi tata letaknya untuk laporan resmi.
+6. **Data Cleansing:** Pembersihan seluruh rekam transaksi fiktif (*dummy data*) untuk persiapan *deployment* produksi.
+
+---
+
+## 3. Detail Kebutuhan Fungsional (Functional Requirements)
+
+### 3.1. Modul Autentikasi & Otorisasi (RBAC)
+*   **Kebutuhan:** Sistem harus membatasi tampilan dan kapabilitas operasi berdasarkan *Role* pengguna.
+*   **Spesifikasi:**
+    *   **Dinas (Admin):** Akses penuh ke dashboard analitik, GIS, pengaturan *Master Data*, dan persetujuan (validasi) laporan sampah masuk.
+    *   **Pemdes (Pemerintah Desa):** Melihat analitik wilayahnya sendiri, skor intervensi desa, dan memantau kinerja kader.
+    *   **Kader (Lapangan):** Akses PWA via *mobile* untuk input rekam timbangan sampah dari rumah tangga secara cepat, dan pelaporan edukasi/sosialisasi.
+    *   **Petugas & Pengepul:** Menginput data aliran hilir dan daur ulang (residu TPA & material daur ulang).
+
+### 3.2. Manajemen & Analitik Populasi Kewilayahan
+*   **Kebutuhan:** Dasbor mampu membandingkan aktual sampah masuk dengan *potensi* sampah per wilayah.
+*   **Spesifikasi:**
+    *   Struktur hierarki: `Kabupaten -> Kecamatan -> Wilayah/Desa`.
+    *   Pengisian populasi penduduk aktif (Jiwa & KK).
+    *   Kalkulasi otomatis (Rumus: `Jumlah Penduduk × 0.7 kg/hari`).
+    *   Penyajian visual gap analisis: menampilkan indikator warna (Hijau/Kuning/Merah) untuk capaian target KLHK (% Penanganan ≥ 70%, % Pengurangan ≥ 30%).
+    *   Modul untuk melacak performa kader pengelola persampahan (Leaderboard Kader/Wilayah).
+
+### 3.3. Manajemen Fasilitas Umum (Fasum)
+*   **Kebutuhan:** Sistem dapat merekam jejak aliran limbah padat non-domestik.
+*   **Spesifikasi:**
+    *   Pembuatan entitas data Fasum yang terikat ke entitas Kecamatan/Wilayah.
+    *   Kategori meliputi: Tempat Wisata, MBG (Restoran/Gedung), Perhotelan, dan Industri.
+    *   Integrasi data Fasum ke dalam halaman `Intervensi` sehingga DLHK dapat mendeteksi Fasum yang belum melakukan pengolahan limbah secara mandiri atau belum bekerjasama dengan TPS3R/Bank Sampah.
+
+### 3.4. PWA (Mobile-first Input) & Sinkronisasi
+*   **Kebutuhan:** Memudahkan operator lapangan di lokasi *blank spot* (tanpa sinyal).
+*   **Spesifikasi:**
+    *   Bisa diunduh dan diinstal *Add to Home Screen* pada *smartphone*.
+    *   Input form sampah (Organik, Anorganik, Residu) dengan validasi dan pembagian rata berat otomatis (Batch Input).
+    *   Bypass sementara koneksi jika *offline*; sinkronisasi *background* ke Supabase ketika mendeteksi sinyal internet kembali stabil.
+
+### 3.5. Modul Cetak Laporan (Print Asli)
+*   **Kebutuhan:** Rekap laporan yang *print-ready* tanpa dependensi *library* PDF berat.
+*   **Spesifikasi:**
+    *   Format laporan didesain memakai instruksi CSS `@media print` murni.
+    *   Menampilkan *header* kop surat resmi instansi, tanggal *generate*, tabel rekapan data (*Raw* atau Pivot), dan ruang tanda tangan Kepala Dinas di bagian bawah (*footer*).
+
+---
+
+## 4. Kebutuhan Non-Fungsional (Non-Functional Requirements)
+
+1.  **Teknologi & Infrastruktur:**
+    *   **Frontend:** Vanilla JS / Vite (diarahkan untuk performa ultra-ringan di HP *entry-level* kader).
+    *   **Backend:** Supabase (PostgreSQL, Auth API).
+    *   **Hosting:** Vercel (Frontend).
+2.  **Keamanan:**
+    *   Enkripsi *password* menggunakan standar Auth Supabase.
+    *   Pemberlakuan *Row Level Security (RLS)* di database agar kader hanya bisa mengedit datanya sendiri.
+3.  **Performansi:** Waktu *load* awal PWA di *browser mobile* harus < 3 detik. Proses input dan simpan form maksimal memakan waktu 1 detik jika dalam jaringan yang normal.
+
+---
+
+## 5. Rencana Fase Rilis (Deployment & UAT)
+1.  **Fase Staging:** Aplikasi di-*deploy* ke Vercel terhubung ke `Supabase Development DB`. Pengujian internal *load testing*.
+2.  **Fase Data Seeding:** Mengisi *Master Data* wilayah, pengguna (kader, desa, dinas), titik Fasum, dan demografi penduduk dari data BPS.
+3.  **Fase Produksi (Live):** Peluncuran untuk DPPKPLH Banjarnegara. Penghapusan segala rekam jejak transaksi fiktif/dummy yang tersisa.
+4.  **Fase Pelatihan:** Sosialisasi cara pakai fitur Cetak Asli dan navigasi ke pengurus tingkat Dinas dan Kader percontohan.
