@@ -2,16 +2,53 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Runs at 00:00 every 3 days (UTC)
+    # Runs every 3 days at 00:00 UTC to prevent Supabase free-tier pause (7-day inactivity limit)
     - cron: '0 0 */3 * *'
-  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch: # Manual trigger from GitHub Actions tab
 
 jobs:
   ping-db:
     runs-on: ubuntu-latest
     steps:
-      - name: Send API request to Supabase
+      - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -X GET "${{ secrets.SUPABASE_URL || 'https://xayqnpkpgyuytlfpphxi.supabase.co' }}/rest/v1/locations?limit=1" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhheXFucGtwZ3l1eXRsZnBwaHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1OTgsImV4cCI6MjA5MzQ5MjU5OH0.HYI2X1rFOkB34Epo6cwEHOA9L8P8Hfp04yzJGe7ReZU' }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhheXFucGtwZ3l1eXRsZnBwaHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1OTgsImV4cCI6MjA5MzQ5MjU5OH0.HYI2X1rFOkB34Epo6cwEHOA9L8P8Hfp04yzJGe7ReZU' }}"
+          echo "🔔 Pinging Supabase at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "❌ ERROR: SUPABASE_URL or SUPABASE_ANON_KEY secrets are not set!"
+            echo "Please add them in: Repository Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+          # Query locations table with a lightweight request
+          HTTP_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X GET "${SUPABASE_URL}/rest/v1/locations?select=name&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json")
+
+          RESPONSE=$(cat /tmp/response.json)
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Supabase is active! (HTTP ${HTTP_STATUS})"
+            echo "📊 Response: ${RESPONSE}"
+          else
+            echo "❌ Ping failed with HTTP ${HTTP_STATUS}"
+            echo "📊 Response: ${RESPONSE}"
+            exit 1
+          fi
+
+      - name: Ping Supabase Auth (secondary keep-alive)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # Also hit the auth endpoint to keep auth service warm
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${SUPABASE_URL}/auth/v1/settings" \
+            -H "apikey: ${SUPABASE_ANON_KEY}")
+          
+          echo "🔐 Auth service ping: HTTP ${HTTP_STATUS}"
