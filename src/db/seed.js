@@ -49,12 +49,12 @@ function randomBetween(min, max) {
   return min + Math.random() * (max - min);
 }
 
-function generateWasteRecords(count = 120) {
+function generateWasteRecords(count = 180) {
   const records = [];
   const now = new Date();
 
   for (let i = 0; i < count; i++) {
-    const daysAgo = Math.floor(Math.random() * 60);
+    const daysAgo = Math.floor(Math.random() * 90);
     const date = new Date(now);
     date.setDate(date.getDate() - daysAgo);
     date.setHours(Math.floor(Math.random() * 12) + 6, Math.floor(Math.random() * 60));
@@ -243,7 +243,7 @@ export async function seedDatabase() {
   await tx4.done;
 
   // Seed waste records
-  const wasteRecords = generateWasteRecords(120);
+  const wasteRecords = generateWasteRecords(180);
   const tx5 = db.transaction('waste_records', 'readwrite');
   for (const r of wasteRecords) {
     await tx5.store.put(r);
