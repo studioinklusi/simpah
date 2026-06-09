@@ -74,6 +74,24 @@ export function startRouter(defaultRoute = '/portal') {
       // 404 - redirect to default
       window.location.hash = defaultRoute;
     }
+
+    // Manage AI Assistant Widget visibility based on auth status and route
+    const user = getAuthProfile();
+    const widget = document.querySelector('.ai-chat-widget');
+    if (user && !isPublicRoute(hash)) {
+      if (!widget) {
+        try {
+          const { renderAIChatWidget } = await import('./components/ai-chat.js');
+          renderAIChatWidget();
+        } catch (err) {
+          console.error('Failed to load AI Chat widget:', err);
+        }
+      }
+    } else {
+      if (widget) {
+        widget.remove();
+      }
+    }
   }
 
   window.addEventListener('hashchange', handleRoute);

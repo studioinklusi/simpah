@@ -6,7 +6,6 @@ import { isActiveRoute } from '../../router.js';
 import { canValidate, isAdmin, canViewExecutive } from '../../utils/permissions.js';
 import { supabase } from '../../lib/supabase.js';
 import { showToast } from '../../components/toast.js';
-import { renderAIChatWidget } from '../../components/ai-chat.js';
 
 export function renderDashboardLayout(title, content, activeMenu = '') {
   const user = getCurrentUser();
@@ -182,13 +181,6 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
       .subscribe();
   }
 
-  // AI Assistant Widget (Hanya untuk Eksekutif & Admin)
-  if (user && (isAdmin(user) || canViewExecutive(user))) {
-    // Hindari duplikasi widget jika layout dirender ulang
-    if (!document.querySelector('.ai-chat-widget')) {
-      renderAIChatWidget();
-    }
-  }
 }
 
 function getRoleName(role) {

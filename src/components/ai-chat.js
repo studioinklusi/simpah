@@ -191,6 +191,18 @@ export function renderAIChatWidget() {
         from { opacity: 0; transform: scale(0.9); }
         to { opacity: 1; transform: scale(1); }
       }
+      @media (max-width: 768px) {
+        .ai-chat-widget {
+          bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+          right: 16px;
+        }
+        .ai-chat-panel {
+          bottom: 70px;
+          right: 0;
+          width: calc(100vw - 32px);
+          max-width: 340px;
+        }
+      }
     </style>
   `;
 
