@@ -524,11 +524,11 @@
   width: 100%;
   background: #ffffff;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   gap: 5rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-6);
+  padding: 4rem var(--space-6) var(--space-8) var(--space-6);
 }
 
 .reference-left-panel {
@@ -888,6 +888,7 @@
     flex-direction: column;
     padding: var(--space-6) 1.5rem;
     gap: 3.5rem;
+    align-items: center;
   }
   .reference-left-panel {
     align-items: center;

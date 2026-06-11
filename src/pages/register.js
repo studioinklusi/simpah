@@ -18,11 +18,9 @@ export function renderRegister() {
     <nav class="auth-navbar">
       <div class="auth-navbar-left">
         <div class="auth-navbar-left-logo">
-          <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="30" stroke="#059669" stroke-width="3" fill="none" opacity="0.3"/>
-            <path d="M20 44 L32 16 L44 44 Z" fill="none" stroke="#059669" stroke-width="4" stroke-linejoin="round"/>
-            <circle cx="32" cy="28" r="5" fill="#059669"/>
-            <path d="M24 38 h16" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 20 2 20 2s-1.7 5.5-3.8 10.7A7 7 0 0 1 11 20z" fill="#ecfdf5" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
           </svg>
         </div>
         <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
