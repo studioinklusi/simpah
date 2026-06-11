@@ -3,6 +3,7 @@ import './styles/index.css';
 import './styles/components.css';
 import './styles/dashboard.css';
 import './styles/pwa.css';
+import './styles/auth.css';
 import './styles/portal.css';
 import './styles/intervensi-print.css';
 import 'leaflet/dist/leaflet.css';

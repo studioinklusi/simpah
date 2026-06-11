@@ -128,11 +128,6 @@ export function renderRegister() {
         </div>
       </div>
     </div>
-    <style>
-      .login-footer a:hover {
-        text-decoration: underline !important;
-      }
-    </style>
   `;
 
   // ── DOM Elements ────────────────────────────────────────────────
