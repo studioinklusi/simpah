@@ -13,24 +13,80 @@ export function renderRegister() {
 
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div class="login-page">
-      <div class="login-bg">
-        <div class="login-bg-circle c1"></div>
-        <div class="login-bg-circle c2"></div>
-        <div class="login-bg-circle c3"></div>
+    <div class="auth-split-container">
+      <!-- Left Column: Illustration & Copywriting -->
+      <div class="auth-left-panel">
+        <div class="auth-left-content">
+          <div class="auth-illustration-container">
+            <svg viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+              <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#34d399" />
+                  <stop offset="100%" stop-color="#059669" />
+                </linearGradient>
+                <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#0f766e" />
+                  <stop offset="100%" stop-color="#2dd4bf" />
+                </linearGradient>
+                <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#022c22" flood-opacity="0.15"/>
+                </filter>
+              </defs>
+              <!-- Background Circle Glows -->
+              <circle cx="250" cy="200" r="140" fill="url(#grad2)" opacity="0.15" />
+              <circle cx="200" cy="180" r="80" fill="url(#grad1)" opacity="0.1" />
+
+              <!-- Main Illustration Group -->
+              <g filter="url(#shadow)">
+                <!-- Shield/Circle base representing planet conservation -->
+                <rect x="150" y="80" width="200" height="240" rx="100" fill="#ffffff" opacity="0.95" />
+                
+                <!-- Styled Tree/Plant -->
+                <!-- Stem -->
+                <path d="M250 290 V170" stroke="#047857" stroke-width="6" stroke-linecap="round" />
+                <path d="M250 230 C220 220 210 200 200 200" stroke="#047857" stroke-width="4" stroke-linecap="round" />
+                <path d="M250 200 C280 190 290 170 300 170" stroke="#047857" stroke-width="4" stroke-linecap="round" />
+                
+                <!-- Leaves -->
+                <!-- Top Leaf -->
+                <path d="M250 170 C230 140 250 110 250 110 C250 110 270 140 250 170 Z" fill="url(#grad1)" />
+                <!-- Left Leaf -->
+                <path d="M200 200 C175 190 175 165 175 165 C175 165 200 175 200 200 Z" fill="url(#grad2)" />
+                <!-- Right Leaf -->
+                <path d="M300 170 C325 160 325 135 325 135 C325 135 300 145 300 170 Z" fill="url(#grad1)" />
+                
+                <!-- Circular recycling arrows around the plant -->
+                <path d="M180 250 C160 210 170 150 210 130" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 4" />
+                <path d="M320 150 C340 190 330 250 290 270" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 4" />
+                
+                <!-- Hand cradling the base (stylized) -->
+                <path d="M170 270 Q250 320 330 270" stroke="#059669" stroke-width="8" stroke-linecap="round" fill="none" />
+              </g>
+              
+              <!-- Decorative flying leaves/particles -->
+              <path d="M120 120 C110 110 115 100 115 100 C115 100 125 105 120 120 Z" fill="#34d399" opacity="0.6" transform="rotate(15 120 120)" />
+              <path d="M380 280 C370 270 375 260 375 260 C375 260 385 265 380 280 Z" fill="#2dd4bf" opacity="0.5" transform="rotate(-20 380 280)" />
+              <path d="M360 90 C350 85 352 75 352 75 C352 75 360 78 360 90 Z" fill="#059669" opacity="0.4" transform="rotate(45 360 90)" />
+            </svg>
+          </div>
+          <h2>Pilah Sampah, Selamatkan Bumi</h2>
+          <p>Mulai langkah kecilmu dari rumah. Pelajari cara pemilahan sampah organik & anorganik, kumpulkan poin kontribusi, dan pantau dampak positif lingkunganmu bersama SIMPAH.</p>
+        </div>
       </div>
-      <div class="login-container">
-        <div class="login-card" id="registerCard">
+
+      <!-- Right Column: Floating Form Card -->
+      <div class="auth-right-panel">
+        <div class="floating-card" id="registerCard">
           <div class="login-header">
             <div class="login-logo-icon">
-              <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
-                <circle cx="32" cy="32" r="30" stroke="#10b981" stroke-width="2" fill="none" opacity="0.3"/>
-                <path d="M20 44 L32 16 L44 44 Z" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linejoin="round"/>
-                <circle cx="32" cy="28" r="4" fill="#10b981"/>
-                <path d="M24 38 h16" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+              <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style="margin: 0 auto">
+                <circle cx="32" cy="32" r="30" stroke="#059669" stroke-width="2" fill="none" opacity="0.3"/>
+                <path d="M20 44 L32 16 L44 44 Z" fill="none" stroke="#059669" stroke-width="2.5" stroke-linejoin="round"/>
+                <circle cx="32" cy="28" r="4" fill="#059669"/>
+                <path d="M24 38 h16" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <h1 class="gradient-text">SIMPAH</h1>
+            <h1 class="gradient-text" style="background: linear-gradient(to right, #047857, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SIMPAH</h1>
             <p>Pendaftaran Akun Baru (Warga)</p>
           </div>
 
@@ -42,15 +98,15 @@ export function renderRegister() {
 
           <!-- Success State Container (hidden by default) -->
           <div id="registerSuccessState" style="display:none; text-align:center; padding: var(--space-4) 0;">
-            <div style="color:var(--primary-400); margin-bottom:var(--space-4);">
+            <div style="color:#059669; margin-bottom:var(--space-4);">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto">
                 <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
             </div>
-            <h3 style="color:#fff; font-size:var(--font-lg); font-weight:700; margin-bottom:var(--space-2)">Registrasi Berhasil!</h3>
-            <p id="successMessage" style="color:var(--gray-300); font-size:var(--font-sm); margin-bottom:var(--space-6); line-height:1.5;"></p>
-            <a href="#/login" class="btn btn-primary btn-block">
+            <h3 style="color:#111827; font-size:var(--font-lg); font-weight:700; margin-bottom:var(--space-2)">Registrasi Berhasil!</h3>
+            <p id="successMessage" style="color:#4b5563; font-size:var(--font-sm); margin-bottom:var(--space-6); line-height:1.5;"></p>
+            <a href="#/login" class="btn btn-primary btn-block" style="background:#059669; border-color:#059669">
               Masuk Sekarang
             </a>
           </div>
@@ -114,7 +170,7 @@ export function renderRegister() {
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg btn-block" id="registerBtn" style="margin-top: var(--space-4);">
+            <button type="submit" class="btn btn-primary btn-lg btn-block" id="registerBtn" style="margin-top: var(--space-4); background:#059669; border-color:#059669;">
               <span class="btn-text">Daftar</span>
               <span class="btn-loading" style="display:none">
                 <div class="spinner" style="margin:0 auto;width:20px;height:20px;border-width:2px"></div>
@@ -122,8 +178,8 @@ export function renderRegister() {
             </button>
           </form>
 
-          <div class="login-footer" style="text-align:center; margin-top:var(--space-6); font-size:var(--font-sm); color:var(--gray-400)">
-            Sudah memiliki akun? <a href="#/login" style="color:var(--primary-400); text-decoration:none; font-weight:600">Masuk</a>
+          <div class="login-footer">
+            Sudah memiliki akun? <a href="#/login">Masuk</a>
           </div>
         </div>
       </div>
@@ -206,7 +262,6 @@ export function renderRegister() {
       showToast('Registrasi berhasil!', 'success');
 
       // Check if user is active or needs confirmation
-      // Supabase returns user object. If confirmation is active, user.identities might be empty or user.confirmed_at is null
       const isConfirmed = data.user?.email_confirmed_at || data.user?.confirmed_at;
 
       // Render success state
