@@ -69,6 +69,9 @@ export function renderLogin() {
               </span>
             </button>
           </form>
+          <div class="login-footer" style="text-align:center; margin-top:var(--space-6); font-size:var(--font-sm); color:var(--gray-400)">
+            Belum memiliki akun? <a href="#/register" style="color:var(--primary-400); text-decoration:none; font-weight:600">Daftar Sekarang</a>
+          </div>
           <div class="login-demo">
             <p>Demo Akun:</p>
             <div class="demo-accounts">
@@ -120,6 +123,7 @@ export function renderLogin() {
       .login-divider { text-align:center; margin:var(--space-5) 0; position:relative; }
       .login-divider::before { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(255,255,255,0.1); }
       .login-divider span { position:relative; background:rgba(26,35,50,0.9); padding:0 var(--space-4); color:var(--gray-500); font-size:var(--font-sm); }
+      .login-footer a:hover { text-decoration: underline !important; }
       .login-demo { margin-top:var(--space-6); text-align:center; }
       .login-demo > p { font-size:var(--font-xs); color:var(--gray-500); margin-bottom:var(--space-3); }
       .demo-accounts { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-3); }

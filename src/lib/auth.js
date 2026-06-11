@@ -12,6 +12,7 @@ const _authReadyPromise = new Promise((resolve) => { _authReadyResolve = resolve
 // Routes that DON'T require authentication
 const PUBLIC_ROUTES = [
   '/login',
+  '/register',
 ];
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -103,6 +104,29 @@ export async function login(emailOrUsername, password) {
   }
 
   return { user: data.user, profile: _profile };
+}
+
+/**
+ * Register a new user with email, password, username, and full name.
+ * Default role is 'warga' set by database trigger.
+ */
+export async function register(email, password, username, fullName) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        username: username.trim().toLowerCase(),
+        full_name: fullName.trim(),
+      }
+    }
+  });
+
+  if (error) {
+    throw new AuthError(_mapAuthError(error), error.status);
+  }
+
+  return data;
 }
 
 /**

@@ -17,6 +17,7 @@ import { initSync } from './db/sync.js';
 
 // Pages
 import { renderLogin } from './pages/login.js';
+import { renderRegister } from './pages/register.js';
 import { renderPWAHome } from './pages/pwa/home.js';
 import { renderSampahHub } from './pages/pwa/sampah-hub.js';
 import { renderInputSampah } from './pages/pwa/input-sampah.js';
@@ -53,6 +54,7 @@ async function bootstrap() {
 
     // Register routes
     registerRoute('/login', () => renderLogin());
+    registerRoute('/register', () => renderRegister());
 
     // PWA routes
     registerRoute('/pwa/home', () => renderPWAHome(), ['warga', 'petugas', 'eksekutif', 'admin']);
