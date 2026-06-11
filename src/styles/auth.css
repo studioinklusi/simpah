@@ -891,20 +891,7 @@
     align-items: center;
   }
   .reference-left-panel {
-    align-items: center;
-    text-align: center;
-  }
-  .reference-left-panel h2 {
-    font-size: 2.25rem;
-  }
-  .reference-left-panel p.desc {
-    max-width: 100%;
-  }
-  .reference-list {
-    align-items: flex-start;
-  }
-  .reference-illustration-wrapper {
-    margin-top: var(--space-4);
+    display: none !important;
   }
 }
 
