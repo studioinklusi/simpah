@@ -16,7 +16,7 @@ export function getCurrentRoute() {
   return window.location.hash.slice(1) || '/';
 }
 
-export function startRouter(defaultRoute = '/portal') {
+export function startRouter(defaultRoute = '/login') {
   async function handleRoute() {
     const hash = window.location.hash.slice(1) || defaultRoute;
     

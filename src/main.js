@@ -34,12 +34,6 @@ import { renderIntervensi } from './pages/dashboard/intervensi.js';
 import { renderIntervensiFasum } from './pages/dashboard/intervensi-fasum.js';
 import { renderMasterData } from './pages/dashboard/masterdata.js';
 import { renderValidasi } from './pages/dashboard/validasi.js';
-import { renderPortalBeranda, initPortalNav } from './pages/portal/beranda.js';
-import { renderEdukasi } from './pages/portal/edukasi.js';
-import { renderGaleri } from './pages/portal/galeri.js';
-import { renderRegulasi } from './pages/portal/regulasi.js';
-import { renderAduan } from './pages/portal/aduan.js';
-import { renderCekAduan } from './pages/portal/cek-aduan.js';
 import { renderAduanManagement } from './pages/dashboard/aduan.js';
 import { renderAuditLog } from './pages/dashboard/audit.js';
 
@@ -84,13 +78,7 @@ async function bootstrap() {
     registerRoute('/dashboard/aduan', () => renderAduanManagement(), ['warga', 'petugas', 'eksekutif', 'admin']);
     registerRoute('/dashboard/audit', () => renderAuditLog(), ['admin']);
 
-    // Portal routes
-    registerRoute('/portal', () => { renderPortalBeranda(); initPortalNav(); });
-    registerRoute('/portal/edukasi', () => renderEdukasi());
-    registerRoute('/portal/galeri', () => renderGaleri());
-    registerRoute('/portal/regulasi', () => renderRegulasi());
-    registerRoute('/portal/aduan', () => renderAduan());
-    registerRoute('/portal/cek-aduan', () => renderCekAduan());
+
 
     // Hide loading screen
     const loading = document.getElementById('loadingScreen');
@@ -115,8 +103,8 @@ async function bootstrap() {
       }, 600);
     }
 
-    // Start router — default to portal for public access
-    startRouter('/portal');
+    // Start router — default to login
+    startRouter('/login');
 
   } catch (error) {
     console.error('Bootstrap failed:', error);

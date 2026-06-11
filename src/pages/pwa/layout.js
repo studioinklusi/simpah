@@ -65,10 +65,7 @@ export function renderPWALayout(title, content, activeTab = 'home') {
           <span>Peta</span>
         </a>
         `}
-        <a href="#/portal" class="bottom-nav-item ${activeTab === 'portal' ? 'active' : ''}" id="pwaPortalLink">
-          ${icons.globe}
-          <span>Portal</span>
-        </a>
+
       </nav>
     </div>
     <style>
@@ -94,12 +91,5 @@ export function renderPWALayout(title, content, activeTab = 'home') {
     logoutBtn.onclick = () => confirmLogout();
   }
 
-  const portalLink = document.getElementById('pwaPortalLink');
-  if (portalLink) {
-    portalLink.addEventListener('click', (e) => {
-      if (!confirm('Anda akan keluar dari aplikasi dan menuju Portal Publik. Lanjutkan?')) {
-        e.preventDefault();
-      }
-    });
-  }
+
 }

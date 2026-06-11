@@ -73,9 +73,6 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <a href="#/pwa/home" class="sidebar-link ${activeMenu === 'pwa' ? 'active' : ''}">
               ${icons.activity} <span>Input Lapangan</span>
             </a>
-            <a href="#/portal" class="sidebar-link ${activeMenu === 'portal' ? 'active' : ''}" id="dashPortalLink">
-              ${icons.globe} <span>Portal Publik</span>
-            </a>
           </div>
         </nav>
         <div class="sidebar-footer">
@@ -142,12 +139,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
   // Logout
   document.getElementById('dashLogoutBtn')?.addEventListener('click', () => confirmLogout());
 
-  // Portal Confirmation
-  document.getElementById('dashPortalLink')?.addEventListener('click', (e) => {
-    if (!confirm('Anda akan keluar dari area Dasbor menuju Portal Publik. Lanjutkan?')) {
-      e.preventDefault();
-    }
-  });
+
 
   // Realtime Subscriptions
   if (user && (isAdmin(user) || canValidate(user) || canViewExecutive(user))) {

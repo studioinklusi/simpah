@@ -12,12 +12,6 @@ const _authReadyPromise = new Promise((resolve) => { _authReadyResolve = resolve
 // Routes that DON'T require authentication
 const PUBLIC_ROUTES = [
   '/login',
-  '/portal',
-  '/portal/edukasi',
-  '/portal/galeri',
-  '/portal/regulasi',
-  '/portal/aduan',
-  '/portal/cek-aduan',
 ];
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -42,7 +36,7 @@ export async function initAuth() {
       case 'SIGNED_OUT':
         _clearSession();
         // Only redirect if we're on a protected route
-        if (!_isPublicRoute(window.location.hash.slice(1) || '/portal')) {
+        if (!_isPublicRoute(window.location.hash.slice(1) || '/login')) {
           window.location.hash = '#/login';
         }
         break;

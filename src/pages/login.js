@@ -14,9 +14,6 @@ export function renderLogin() {
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="login-page">
-      <a href="#/portal" class="back-to-portal-link" id="backToPortal">
-        ${icons.chevronLeft} Kembali ke Beranda
-      </a>
       <div class="login-bg">
         <div class="login-bg-circle c1"></div>
         <div class="login-bg-circle c2"></div>
@@ -72,10 +69,6 @@ export function renderLogin() {
               </span>
             </button>
           </form>
-          <div class="login-divider"><span>atau</span></div>
-          <a href="#/portal" class="btn btn-secondary btn-block">
-            ${icons.globe} Kunjungi Portal Publik
-          </a>
           <div class="login-demo">
             <p>Demo Akun:</p>
             <div class="demo-accounts">
