@@ -13,87 +13,100 @@ export function renderRegister() {
 
   const app = document.getElementById('app');
   app.innerHTML = `
+    <!-- Header Navbar -->
+    <nav class="auth-navbar">
+      <div class="auth-navbar-left">
+        <div class="auth-navbar-left-logo">
+          <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="#059669" stroke-width="3" fill="none" opacity="0.3"/>
+            <path d="M20 44 L32 16 L44 44 Z" fill="none" stroke="#059669" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="32" cy="28" r="5" fill="#059669"/>
+            <path d="M24 38 h16" stroke="#059669" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
+      </div>
+      <div class="auth-navbar-right">
+        <a href="#" class="nav-link">Tentang Kami</a>
+        <a href="#/login" class="nav-btn">Masuk</a>
+      </div>
+    </nav>
+
     <div class="auth-split-container">
-      <!-- Left Column: Illustration & Copywriting -->
-      <div class="auth-left-panel">
-        <div class="auth-left-content">
-          <div class="auth-illustration-container">
-            <svg viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
+      <!-- Left Column: Copywriting & Illustration -->
+      <div class="reference-left-panel">
+        <h2>Belajar Pemilahan Sampah Jadi <span class="accent-text">Mudah & Praktis!</span></h2>
+        <p class="desc">Daftarkan akun Anda hari ini untuk mengakses modul edukasi interaktif, mencatatkan setoran sampah terpilah secara real-time, dan mengumpulkan poin kontribusi hijau.</p>
+        
+        <div class="reference-list">
+          <div class="reference-list-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Pencatatan Sampah Terpilah & Real-time</span>
+          </div>
+          <div class="reference-list-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Modul Edukasi Interaktif & Kuis Lingkungan</span>
+          </div>
+          <div class="reference-list-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Sertifikat Kontribusi & Penukaran Poin Warga</span>
+          </div>
+        </div>
+
+        <div class="reference-illustration-wrapper">
+          <div class="floating-illustration-card">
+            <div class="illustration-glow"></div>
+            <!-- Sustainability Illustration SVG -->
+            <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">
               <defs>
-                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id="svgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stop-color="#34d399" />
                   <stop offset="100%" stop-color="#059669" />
                 </linearGradient>
-                <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#0f766e" />
-                  <stop offset="100%" stop-color="#2dd4bf" />
-                </linearGradient>
-                <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#022c22" flood-opacity="0.15"/>
-                </filter>
               </defs>
-              <!-- Background Circle Glows -->
-              <circle cx="250" cy="200" r="140" fill="url(#grad2)" opacity="0.15" />
-              <circle cx="200" cy="180" r="80" fill="url(#grad1)" opacity="0.1" />
-
-              <!-- Main Illustration Group -->
-              <g filter="url(#shadow)">
-                <!-- Shield/Circle base representing planet conservation -->
-                <rect x="150" y="80" width="200" height="240" rx="100" fill="#ffffff" opacity="0.95" />
-                
-                <!-- Styled Tree/Plant -->
-                <!-- Stem -->
-                <path d="M250 290 V170" stroke="#047857" stroke-width="6" stroke-linecap="round" />
-                <path d="M250 230 C220 220 210 200 200 200" stroke="#047857" stroke-width="4" stroke-linecap="round" />
-                <path d="M250 200 C280 190 290 170 300 170" stroke="#047857" stroke-width="4" stroke-linecap="round" />
-                
-                <!-- Leaves -->
-                <!-- Top Leaf -->
-                <path d="M250 170 C230 140 250 110 250 110 C250 110 270 140 250 170 Z" fill="url(#grad1)" />
-                <!-- Left Leaf -->
-                <path d="M200 200 C175 190 175 165 175 165 C175 165 200 175 200 200 Z" fill="url(#grad2)" />
-                <!-- Right Leaf -->
-                <path d="M300 170 C325 160 325 135 325 135 C325 135 300 145 300 170 Z" fill="url(#grad1)" />
-                
-                <!-- Circular recycling arrows around the plant -->
-                <path d="M180 250 C160 210 170 150 210 130" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 4" />
-                <path d="M320 150 C340 190 330 250 290 270" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 4" />
-                
-                <!-- Hand cradling the base (stylized) -->
-                <path d="M170 270 Q250 320 330 270" stroke="#059669" stroke-width="8" stroke-linecap="round" fill="none" />
-              </g>
-              
-              <!-- Decorative flying leaves/particles -->
-              <path d="M120 120 C110 110 115 100 115 100 C115 100 125 105 120 120 Z" fill="#34d399" opacity="0.6" transform="rotate(15 120 120)" />
-              <path d="M380 280 C370 270 375 260 375 260 C375 260 385 265 380 280 Z" fill="#2dd4bf" opacity="0.5" transform="rotate(-20 380 280)" />
-              <path d="M360 90 C350 85 352 75 352 75 C352 75 360 78 360 90 Z" fill="#059669" opacity="0.4" transform="rotate(45 360 90)" />
+              <rect width="400" height="300" rx="16" fill="#f8fafc" />
+              <!-- Recycling Bin abstract vector -->
+              <rect x="150" y="140" width="100" height="120" rx="16" fill="url(#svgGrad)" />
+              <path d="M170 140 L160 90 H240 L230 140 Z" fill="#047857" opacity="0.8" />
+              <!-- Recycle Arrows symbol inside bin -->
+              <path d="M190 200 C190 185 200 180 210 180 M210 180 L205 175 M210 180 L205 185" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M210 200 C210 215 200 220 190 220 M190 220 L195 225 M190 220 L195 215" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Growing Leaf from bin -->
+              <path d="M200 90 Q200 50 220 40 Q225 60 200 90" fill="#34d399" />
+              <path d="M200 90 Q200 60 180 50 Q175 70 200 90" fill="#10b981" />
+              <circle cx="270" cy="80" r="15" fill="#38bdf8" opacity="0.2" />
+              <circle cx="120" cy="190" r="10" fill="#fbbf24" opacity="0.2" />
             </svg>
           </div>
-          <h2>Pilah Sampah, Selamatkan Bumi</h2>
-          <p>Mulai langkah kecilmu dari rumah. Pelajari cara pemilahan sampah organik & anorganik, kumpulkan poin kontribusi, dan pantau dampak positif lingkunganmu bersama SIMPAH.</p>
+          <div class="floating-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Bumi Bersih!</span>
+          </div>
         </div>
       </div>
 
       <!-- Right Column: Floating Form Card -->
-      <div class="auth-right-panel">
-        <div class="floating-card" id="registerCard">
+      <div class="reference-right-panel">
+        <div class="reference-card" id="registerCard">
           <div class="login-header">
-            <div class="login-logo-icon">
-              <svg width="48" height="48" viewBox="0 0 64 64" fill="none" style="margin: 0 auto">
-                <circle cx="32" cy="32" r="30" stroke="#059669" stroke-width="2" fill="none" opacity="0.3"/>
-                <path d="M20 44 L32 16 L44 44 Z" fill="none" stroke="#059669" stroke-width="2.5" stroke-linejoin="round"/>
-                <circle cx="32" cy="28" r="4" fill="#059669"/>
-                <path d="M24 38 h16" stroke="#059669" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h1 class="gradient-text" style="background: linear-gradient(to right, #047857, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SIMPAH</h1>
-            <p>Pendaftaran Akun Baru (Warga)</p>
+            <h1>Daftar Akun Baru</h1>
+            <p>Mulai perjalanan kontribusi hijau Anda hari ini.</p>
           </div>
 
           <!-- Error Banner (hidden by default) -->
-          <div class="login-error-banner" id="registerErrorBanner" style="display:none">
-            <span class="login-error-icon">${icons.alert}</span>
-            <span class="login-error-text" id="registerErrorText"></span>
+          <div class="reference-card border-0 p-0 shadow-none" id="registerErrorBanner" style="display:none">
+            <div class="login-error-banner">
+              <span class="login-error-icon">${icons.alert}</span>
+              <span class="login-error-text" id="registerErrorText"></span>
+            </div>
           </div>
 
           <!-- Success State Container (hidden by default) -->
@@ -106,7 +119,7 @@ export function renderRegister() {
             </div>
             <h3 style="color:#111827; font-size:var(--font-lg); font-weight:700; margin-bottom:var(--space-2)">Registrasi Berhasil!</h3>
             <p id="successMessage" style="color:#4b5563; font-size:var(--font-sm); margin-bottom:var(--space-6); line-height:1.5;"></p>
-            <a href="#/login" class="btn btn-primary btn-block" style="background:#059669; border-color:#059669">
+            <a href="#/login" class="reference-btn-primary" style="margin-top:0">
               Masuk Sekarang
             </a>
           </div>
@@ -117,7 +130,7 @@ export function renderRegister() {
               <div class="input-with-icon">
                 <span class="input-icon-left">${icons.user}</span>
                 <input type="text" id="regFullName" class="form-input form-input-lg has-icon-left" 
-                  placeholder="Nama lengkap Anda" 
+                  placeholder="Masukkan nama lengkap Anda" 
                   required autocomplete="name" autofocus />
               </div>
             </div>
@@ -127,7 +140,7 @@ export function renderRegister() {
               <div class="input-with-icon">
                 <span class="input-icon-left">${icons.users}</span>
                 <input type="text" id="regUsername" class="form-input form-input-lg has-icon-left" 
-                  placeholder="Username (hanya huruf, angka, & _)" 
+                  placeholder="Masukkan username baru" 
                   required autocomplete="username" />
               </div>
             </div>
@@ -149,11 +162,39 @@ export function renderRegister() {
               <div class="input-with-icon">
                 <span class="input-icon-left">${icons.shield}</span>
                 <input type="password" id="regPassword" class="form-input form-input-lg has-icon-left has-icon-right" 
-                  placeholder="Minimal 6 karakter" 
+                  placeholder="Masukkan password baru" 
                   required autocomplete="new-password" />
                 <button type="button" class="input-icon-right-btn" id="toggleRegPassword" tabindex="-1" title="Tampilkan password">
                   ${icons.eye}
                 </button>
+              </div>
+              
+              <!-- Dynamic password criteria checker -->
+              <div class="password-criteria-grid">
+                <div class="password-criteria-item" id="critLength">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Min. 6 karakter</span>
+                </div>
+                <div class="password-criteria-item" id="critUppercase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Huruf besar (A-Z)</span>
+                </div>
+                <div class="password-criteria-item" id="critLowercase">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Huruf kecil (a-z)</span>
+                </div>
+                <div class="password-criteria-item" id="critNumber">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Angka (0-9)</span>
+                </div>
               </div>
             </div>
 
@@ -162,7 +203,7 @@ export function renderRegister() {
               <div class="input-with-icon">
                 <span class="input-icon-left">${icons.shield}</span>
                 <input type="password" id="regConfirmPassword" class="form-input form-input-lg has-icon-left has-icon-right" 
-                  placeholder="Ulangi password" 
+                  placeholder="Konfirmasi password baru" 
                   required autocomplete="new-password" />
                 <button type="button" class="input-icon-right-btn" id="toggleRegConfirmPassword" tabindex="-1" title="Tampilkan password">
                   ${icons.eye}
@@ -170,8 +211,8 @@ export function renderRegister() {
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg btn-block" id="registerBtn" style="margin-top: var(--space-4); background:#059669; border-color:#059669;">
-              <span class="btn-text">Daftar</span>
+            <button type="submit" class="reference-btn-primary" id="registerBtn">
+              <span class="btn-text">Daftar Sekarang →</span>
               <span class="btn-loading" style="display:none">
                 <div class="spinner" style="margin:0 auto;width:20px;height:20px;border-width:2px"></div>
               </span>
@@ -179,11 +220,22 @@ export function renderRegister() {
           </form>
 
           <div class="login-footer">
-            Sudah memiliki akun? <a href="#/login">Masuk</a>
+            Sudah punya akun? <a href="#/login">Masuk di sini</a>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Footer navbar -->
+    <footer class="auth-footer">
+      <div class="auth-footer-left">
+        &copy; 2026 SIMPAH. Hak Cipta Dilindungi.
+      </div>
+      <div class="auth-footer-right">
+        <a href="#">Syarat & Ketentuan</a>
+        <a href="#">Kebijakan Privasi</a>
+      </div>
+    </footer>
   `;
 
   // ── DOM Elements ────────────────────────────────────────────────
@@ -214,6 +266,38 @@ export function renderRegister() {
     confirmPasswordInput.type = isPassword ? 'text' : 'password';
     toggleConfirmPasswordBtn.innerHTML = isPassword ? icons.eyeOff || icons.eye : icons.eye;
   });
+
+  // ── Dynamic Password Criteria Checking ──────────────────────────
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    
+    // 1. Min 6 characters
+    const isMinLength = val.length >= 6;
+    toggleCriteriaClass('critLength', isMinLength);
+    
+    // 2. Has uppercase
+    const hasUppercase = /[A-Z]/.test(val);
+    toggleCriteriaClass('critUppercase', hasUppercase);
+    
+    // 3. Has lowercase
+    const hasLowercase = /[a-z]/.test(val);
+    toggleCriteriaClass('critLowercase', hasLowercase);
+    
+    // 4. Has number
+    const hasNumber = /[0-9]/.test(val);
+    toggleCriteriaClass('critNumber', hasNumber);
+  });
+
+  function toggleCriteriaClass(elementId, meetsCriteria) {
+    const el = document.getElementById(elementId);
+    if (el) {
+      if (meetsCriteria) {
+        el.classList.add('met');
+      } else {
+        el.classList.remove('met');
+      }
+    }
+  }
 
   // ── Form Submission ─────────────────────────────────────────────
   form.addEventListener('submit', async (e) => {
@@ -290,8 +374,8 @@ export function renderRegister() {
     const btnLoading = registerBtn.querySelector('.btn-loading');
     
     registerBtn.disabled = loading;
-    btnText.style.display = loading ? 'none' : '';
-    btnLoading.style.display = loading ? '' : 'none';
+    if (btnText) btnText.style.display = loading ? 'none' : '';
+    if (btnLoading) btnLoading.style.display = loading ? '' : 'none';
     
     fullNameInput.disabled = loading;
     usernameInput.disabled = loading;
@@ -300,13 +384,16 @@ export function renderRegister() {
     confirmPasswordInput.disabled = loading;
   }
 
+  // Helper inside form
+  const borderEl = document.getElementById('registerErrorBanner');
+
   function showError(message) {
     errorText.textContent = message;
-    errorBanner.style.display = 'flex';
+    borderEl.style.display = 'block';
   }
 
   function hideError() {
-    errorBanner.style.display = 'none';
+    borderEl.style.display = 'none';
     errorText.textContent = '';
   }
 
