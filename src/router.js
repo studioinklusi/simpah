@@ -4,8 +4,8 @@ import { getAuthProfile, isPublicRoute } from './lib/auth.js';
 const routes = {};
 let currentCleanup = null;
 
-export function registerRoute(path, handler) {
-  routes[path] = handler;
+export function registerRoute(path, handler, allowedRoles = null) {
+  routes[path] = { handler, allowedRoles };
 }
 
 export function navigate(path) {
@@ -49,19 +49,33 @@ export function startRouter(defaultRoute = '/portal') {
     }
 
     // Find matching route (exact match first, then prefix match)
-    let handler = routes[hash];
-    if (!handler) {
+    let routeConfig = routes[hash];
+    if (!routeConfig) {
       // Try prefix matching for nested routes
       const sortedRoutes = Object.keys(routes).sort((a, b) => b.length - a.length);
       for (const route of sortedRoutes) {
         if (hash.startsWith(route)) {
-          handler = routes[route];
+          routeConfig = routes[route];
           break;
         }
       }
     }
 
+    let handler = routeConfig ? (typeof routeConfig === 'function' ? routeConfig : routeConfig.handler) : null;
+    let allowedRoles = routeConfig && typeof routeConfig !== 'function' ? routeConfig.allowedRoles : null;
+
     if (handler) {
+      // ── Centralized Role Authorization Guard ────────────────────
+      if (allowedRoles) {
+        const user = getAuthProfile();
+        if (!user || !allowedRoles.includes(user.role)) {
+          // Unauthorized — redirect to user's default route
+          const defaultForRole = _getDefaultRouteForRole(user?.role);
+          window.location.hash = defaultForRole;
+          return;
+        }
+      }
+
       try {
         const cleanup = await handler(hash);
         if (typeof cleanup === 'function') {

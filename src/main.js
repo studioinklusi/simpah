@@ -61,28 +61,28 @@ async function bootstrap() {
     registerRoute('/login', () => renderLogin());
 
     // PWA routes
-    registerRoute('/pwa/home', () => renderPWAHome());
-    registerRoute('/pwa/sampah-masuk', () => renderSampahHub());
-    registerRoute('/pwa/input-sampah', () => renderInputSampah());
-    registerRoute('/pwa/input-pilah', () => renderInputPilah());
-    registerRoute('/pwa/input-residu', () => renderInputResidu());
-    registerRoute('/pwa/armada', () => renderArmada());
-    registerRoute('/pwa/insidental', () => renderInsidental());
-    registerRoute('/pwa/input-olah', () => renderInputOlah());
-    registerRoute('/pwa/riwayat', () => renderRiwayat());
+    registerRoute('/pwa/home', () => renderPWAHome(), ['warga', 'petugas', 'eksekutif', 'admin']);
+    registerRoute('/pwa/sampah-masuk', () => renderSampahHub(), ['petugas', 'admin']);
+    registerRoute('/pwa/input-sampah', () => renderInputSampah(), ['petugas', 'admin']);
+    registerRoute('/pwa/input-pilah', () => renderInputPilah(), ['petugas', 'admin']);
+    registerRoute('/pwa/input-residu', () => renderInputResidu(), ['petugas', 'admin']);
+    registerRoute('/pwa/armada', () => renderArmada(), ['petugas', 'admin']);
+    registerRoute('/pwa/insidental', () => renderInsidental(), ['petugas', 'admin']);
+    registerRoute('/pwa/input-olah', () => renderInputOlah(), ['petugas', 'admin']);
+    registerRoute('/pwa/riwayat', () => renderRiwayat(), ['petugas', 'eksekutif', 'admin']);
 
     // Dashboard routes
-    registerRoute('/dashboard', () => { window.location.hash = '#/dashboard/gis'; });
-    registerRoute('/dashboard/gis', () => renderGIS());
-    registerRoute('/dashboard/eksekutif', () => renderEksekutif());
-    registerRoute('/dashboard/laporan', () => renderLaporan());
-    registerRoute('/dashboard/validasi', () => renderValidasi());
-    registerRoute('/dashboard/mou', () => renderMou());
-    registerRoute('/dashboard/intervensi', () => renderIntervensi());
-    registerRoute('/dashboard/intervensi-fasum', () => renderIntervensiFasum());
-    registerRoute('/dashboard/masterdata', () => renderMasterData());
-    registerRoute('/dashboard/aduan', () => renderAduanManagement());
-    registerRoute('/dashboard/audit', () => renderAuditLog());
+    registerRoute('/dashboard', () => { window.location.hash = '#/dashboard/gis'; }, ['warga', 'petugas', 'eksekutif', 'admin']);
+    registerRoute('/dashboard/gis', () => renderGIS(), ['warga', 'petugas', 'eksekutif', 'admin']);
+    registerRoute('/dashboard/eksekutif', () => renderEksekutif(), ['eksekutif', 'admin']);
+    registerRoute('/dashboard/laporan', () => renderLaporan(), ['admin']);
+    registerRoute('/dashboard/validasi', () => renderValidasi(), ['admin', 'petugas']);
+    registerRoute('/dashboard/mou', () => renderMou(), ['admin']);
+    registerRoute('/dashboard/intervensi', () => renderIntervensi(), ['admin']);
+    registerRoute('/dashboard/intervensi-fasum', () => renderIntervensiFasum(), ['admin']);
+    registerRoute('/dashboard/masterdata', () => renderMasterData(), ['admin']);
+    registerRoute('/dashboard/aduan', () => renderAduanManagement(), ['warga', 'petugas', 'eksekutif', 'admin']);
+    registerRoute('/dashboard/audit', () => renderAuditLog(), ['admin']);
 
     // Portal routes
     registerRoute('/portal', () => { renderPortalBeranda(); initPortalNav(); });
