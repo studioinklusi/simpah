@@ -13,7 +13,8 @@ export function renderRegister() {
 
   const app = document.getElementById('app');
   app.innerHTML = `
-    <!-- Header Navbar -->
+    <div class="auth-page-wrapper">
+      <!-- Header Navbar -->
     <nav class="auth-navbar">
       <div class="auth-navbar-left">
         <div class="auth-navbar-left-logo">
@@ -226,16 +227,17 @@ export function renderRegister() {
       </div>
     </div>
 
-    <!-- Footer navbar -->
-    <footer class="auth-footer">
-      <div class="auth-footer-left">
-        &copy; 2026 SIMPAH. Hak Cipta Dilindungi.
-      </div>
-      <div class="auth-footer-right">
-        <a href="#">Syarat & Ketentuan</a>
-        <a href="#">Kebijakan Privasi</a>
-      </div>
-    </footer>
+      <!-- Footer navbar -->
+      <footer class="auth-footer">
+        <div class="auth-footer-left">
+          &copy; 2026 SIMPAH. Hak Cipta Dilindungi.
+        </div>
+        <div class="auth-footer-right">
+          <a href="#">Syarat & Ketentuan</a>
+          <a href="#">Kebijakan Privasi</a>
+        </div>
+      </footer>
+    </div>
   `;
 
   // ── DOM Elements ────────────────────────────────────────────────
