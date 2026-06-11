@@ -701,7 +701,7 @@
   border: 1px solid #e5e7eb !important;
   color: #111827 !important;
   border-radius: 14px !important;
-  padding: var(--space-3.5) var(--space-4) !important;
+  padding: var(--space-3-5) var(--space-4) !important;
   padding-left: 44px !important;
   transition: all 0.2s ease;
   font-size: var(--font-sm);
@@ -777,8 +777,8 @@
   color: #ffffff;
   font-weight: 600;
   font-size: var(--font-sm);
-  border-radius: var(--radius-full);
-  padding: var(--space-3.5) var(--space-6);
+  border-radius: var(--radius-full) !important;
+  padding: var(--space-3-5) var(--space-6) !important;
   width: 100%;
   transition: all 0.2s ease;
   cursor: pointer;
