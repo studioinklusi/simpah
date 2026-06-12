@@ -845,6 +845,51 @@
   color: #ef4444;
 }
 
+/* Demo Accounts inside Reference Card (Light Theme override) */
+.reference-card .demo-accounts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.reference-card .demo-account {
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+  background: #f3f4f6 !important;
+  color: #4b5563 !important;
+  font-size: var(--font-xs) !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  justify-content: flex-start !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.reference-card .demo-account svg {
+  color: #059669 !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.reference-card .demo-account:hover {
+  border-color: #10b981 !important;
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+}
+
+.reference-card .demo-account.selected {
+  border-color: #059669 !important;
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  box-shadow: 0 0 0 1px #059669 !important;
+}
+
+
 /* Footer layout */
 .auth-footer {
   position: relative;
