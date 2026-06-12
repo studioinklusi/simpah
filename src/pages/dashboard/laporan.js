@@ -5,10 +5,11 @@ import { getAllWasteRecords } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
+import { hasPermission } from '../../utils/permissions.js';
 
 export async function renderLaporan() {
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') { window.location.hash = '#/dashboard/gis'; return; }
+  if (!user || !hasPermission(user, 'EXPORT_REPORTS')) { window.location.hash = '#/dashboard/gis'; return; }
 
   const records = await getAllWasteRecords();
   const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

@@ -4,10 +4,11 @@ import { getCurrentUser, formatDate } from '../../utils/helpers.js';
 import { getAllMou, addMou, updateMou, deleteMou } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
+import { hasPermission } from '../../utils/permissions.js';
 
 export async function renderMou() {
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') { window.location.hash = '#/dashboard/gis'; return; }
+  if (!user || !hasPermission(user, 'MANAGE_MOU')) { window.location.hash = '#/dashboard/gis'; return; }
 
   let mous = await getAllMou();
 

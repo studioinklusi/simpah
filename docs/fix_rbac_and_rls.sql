@@ -77,10 +77,12 @@ CREATE POLICY "Allow write for admin/validator only" ON public_facilities
 -- 3. ENABLING RLS FOR UNPROTECTED TABLES (7 Tables)
 -- ------------------------------------------------------------------------------
 
--- 3.1. sorted_waste (Child of waste_records, restricts insert to petugas/admin)
+-- 3.1. sorted_waste (Child of waste_records, restricts insert/update to petugas/admin)
 ALTER TABLE sorted_waste ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "read_sorted_waste" ON sorted_waste;
 DROP POLICY IF EXISTS "insert_sorted_waste" ON sorted_waste;
+DROP POLICY IF EXISTS "admin_all_sorted_waste" ON sorted_waste;
+DROP POLICY IF EXISTS "petugas_write_own_sorted_waste" ON sorted_waste;
 
 CREATE POLICY "read_sorted_waste" ON sorted_waste 
   FOR SELECT TO authenticated USING (true);
@@ -89,10 +91,38 @@ CREATE POLICY "insert_sorted_waste" ON sorted_waste
   FOR INSERT TO authenticated 
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('petugas', 'admin')));
 
--- 3.2. incidental_events (Restricts insert to petugas/admin)
+CREATE POLICY "admin_all_sorted_waste" ON sorted_waste 
+  FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'))
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "petugas_write_own_sorted_waste" ON sorted_waste 
+  FOR ALL TO authenticated 
+  USING (
+    EXISTS (
+      SELECT 1 FROM waste_records 
+      WHERE id = waste_record_id 
+      AND user_id = auth.uid() 
+      AND verification_status = 'pending'
+    )
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM waste_records 
+      WHERE id = waste_record_id 
+      AND user_id = auth.uid() 
+      AND verification_status = 'pending'
+    )
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
+  );
+
+-- 3.2. incidental_events (Restricts insert/update to petugas/admin)
 ALTER TABLE incidental_events ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "read_incidental_events" ON incidental_events;
 DROP POLICY IF EXISTS "insert_incidental_events" ON incidental_events;
+DROP POLICY IF EXISTS "admin_all_incidental_events" ON incidental_events;
+DROP POLICY IF EXISTS "petugas_all_own_incidental_events" ON incidental_events;
 
 CREATE POLICY "read_incidental_events" ON incidental_events 
   FOR SELECT TO authenticated USING (true);
@@ -100,6 +130,22 @@ CREATE POLICY "read_incidental_events" ON incidental_events
 CREATE POLICY "insert_incidental_events" ON incidental_events 
   FOR INSERT TO authenticated 
   WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('petugas', 'admin')));
+
+CREATE POLICY "admin_all_incidental_events" ON incidental_events 
+  FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'))
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "petugas_all_own_incidental_events" ON incidental_events 
+  FOR ALL TO authenticated 
+  USING (
+    user_id = auth.uid() 
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
+  )
+  WITH CHECK (
+    user_id = auth.uid() 
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
+  );
 
 -- 3.3. audit_log (High protection: read by admin, write by authenticated system actions)
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
@@ -114,10 +160,11 @@ CREATE POLICY "insert_audit_log" ON audit_log
   FOR INSERT TO authenticated 
   WITH CHECK (true); -- Diperbolehkan merekam log tindakan user
 
--- 3.4. notifications (User reads own only, admin manages all)
+-- 3.4. notifications (User reads own only, admin manages all, user can update to read)
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "read_own_notifications" ON notifications;
 DROP POLICY IF EXISTS "admin_all_notifications" ON notifications;
+DROP POLICY IF EXISTS "update_own_notifications" ON notifications;
 
 CREATE POLICY "read_own_notifications" ON notifications 
   FOR SELECT TO authenticated 
@@ -126,6 +173,11 @@ CREATE POLICY "read_own_notifications" ON notifications
 CREATE POLICY "admin_all_notifications" ON notifications 
   FOR ALL TO authenticated 
   USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+CREATE POLICY "update_own_notifications" ON notifications 
+  FOR UPDATE TO authenticated 
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- 3.5. activity_feed (Read by authenticated, managed by system/admin)
 ALTER TABLE activity_feed ENABLE ROW LEVEL SECURITY;
@@ -200,4 +252,29 @@ CREATE POLICY "update_complaint_status" ON complaints
     EXISTS (
       SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'petugas')
     )
+  );
+
+-- Memperbolehkan admin mengelola keluhan sepenuhnya (termasuk menghapus laporan sampah spam)
+DROP POLICY IF EXISTS "admin_all_complaints" ON complaints;
+CREATE POLICY "admin_all_complaints" ON complaints 
+  FOR ALL TO authenticated 
+  USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'))
+  WITH CHECK (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- ------------------------------------------------------------------------------
+-- 5. WASTE RECORDS SECURITY ENHANCEMENTS (Petugas Update & Sync)
+-- ------------------------------------------------------------------------------
+-- Memperbolehkan petugas meng-update record sampah mereka sendiri selama statusnya masih pending (belum diverifikasi dinas)
+DROP POLICY IF EXISTS "petugas_update_own" ON waste_records;
+CREATE POLICY "petugas_update_own" ON waste_records
+  FOR UPDATE TO authenticated
+  USING (
+    user_id = auth.uid() 
+    AND verification_status = 'pending' 
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
+  )
+  WITH CHECK (
+    user_id = auth.uid() 
+    AND verification_status = 'pending' 
+    AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'petugas')
   );

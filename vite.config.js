@@ -1,8 +1,11 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: '/',
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : []
+  },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
@@ -51,6 +54,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser'
+    minify: 'esbuild'
   }
-});
+}));

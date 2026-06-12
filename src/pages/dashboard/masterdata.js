@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { LOCATION_TYPES, USER_ROLES } from '../../utils/sipsn.js';
-import { JOB_TYPES } from '../../utils/permissions.js';
+import { JOB_TYPES, hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import {
@@ -16,7 +16,7 @@ import {
 
 export async function renderMasterData() {
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') {
+  if (!user || !hasPermission(user, 'MANAGE_MASTER_DATA')) {
     window.location.hash = '#/dashboard/gis';
     return;
   }

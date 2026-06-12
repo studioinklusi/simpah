@@ -34,3 +34,10 @@ ml-backend/__pycache__/
 
 # MS Office Temporary Files
 ~$*
+
+# Sensitive & Temporary Files
+.temp/
+*daftar_akun_existing.md
+analisis_fitur_penduduk.md
+docs/daftar_akun_existing.md
+

@@ -3,10 +3,11 @@ import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { getAllPublicFacilities } from '../../db/store.js';
 import { renderDashboardLayout } from './layout.js';
+import { hasPermission } from '../../utils/permissions.js';
 
 export async function renderIntervensiFasum() {
   const user = getCurrentUser();
-  if (!user || user.role !== 'admin') { window.location.hash = '#/dashboard/gis'; return; }
+  if (!user || !hasPermission(user, 'MANAGE_INTERVENTION')) { window.location.hash = '#/dashboard/gis'; return; }
 
   const facilities = await getAllPublicFacilities();
   

@@ -67,7 +67,7 @@ ${dailyText || '- Belum ada data 30 hari terakhir'}
 
 // Fallback jika Edge Function tidak dapat diakses (langsung panggil API Qwen)
 async function callQwenDirectly(prompt, context) {
-  const QWEN_API_KEY = import.meta.env.VITE_QWEN_API_KEY || 'sk-80106e319b5e48e88f08044d462ec056';
+  const QWEN_API_KEY = import.meta.env.VITE_QWEN_API_KEY;
   
   if (!QWEN_API_KEY) {
      return "Maaf, Edge Function tidak aktif dan API Key Qwen lokal tidak ditemukan.";

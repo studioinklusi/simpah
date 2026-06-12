@@ -5,10 +5,11 @@ import { getWasteStats, getAllWasteRecords, getAllLocations, getAllMou, getAllUs
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { renderDashboardLayout } from './layout.js';
 import { supabase } from '../../lib/supabase.js';
+import { canViewExecutive } from '../../utils/permissions.js';
 
 export async function renderEksekutif() {
   const user = getCurrentUser();
-  if (!user || !['admin', 'eksekutif'].includes(user.role)) { window.location.hash = '#/dashboard/gis'; return; }
+  if (!user || !canViewExecutive(user)) { window.location.hash = '#/dashboard/gis'; return; }
 
   const stats = await getWasteStats();
   const mous = await getAllMou();
