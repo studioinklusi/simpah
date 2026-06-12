@@ -98,7 +98,8 @@ function generateWasteRecords(count = 180) {
       created_by: user.id,
       date_str: date.toISOString().split('T')[0],
       synced: Math.random() < 0.85,
-      verification_status: 'approved'
+      verification_status: 'approved',
+      is_demo: true
     });
   }
 
@@ -114,7 +115,8 @@ function generateWasteRecords(count = 180) {
     created_at: now.toISOString(),
     date_str: now.toISOString().split('T')[0],
     synced: true,
-    verification_status: 'pending'
+    verification_status: 'pending',
+    is_demo: true
   });
   
   records.push({
@@ -128,7 +130,8 @@ function generateWasteRecords(count = 180) {
     created_at: now.toISOString(),
     date_str: now.toISOString().split('T')[0],
     synced: true,
-    verification_status: 'pending'
+    verification_status: 'pending',
+    is_demo: true
   });
 
   return records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -143,7 +146,8 @@ function generateComplaints() {
       is_anonymous: false,
       category: 'Sampah menumpuk', description: 'Sampah di TPS depan pasar sudah menumpuk 3 hari tidak diangkut, menimbulkan bau tidak sedap.',
       lat: -7.3920, lng: 109.6935, address: 'TPS Pasar Banjarnegara',
-      photo_url: null, status: 'baru', created_at: '2026-04-19T08:30:00.000Z'
+      photo_url: null, status: 'baru', created_at: '2026-04-19T08:30:00.000Z',
+      is_demo: true
     },
     {
       id: 'cmp-002', tracking_number: 'ADU-260402-5678',
@@ -152,7 +156,8 @@ function generateComplaints() {
       is_anonymous: false,
       category: 'Pembuangan liar', description: 'Ada warga yang membuang sampah ke sungai di belakang perumahan Griya Asri.',
       lat: -7.4010, lng: 109.7020, address: 'Belakang Perumahan Griya Asri',
-      photo_url: null, status: 'diproses', created_at: '2026-04-18T14:15:00.000Z'
+      photo_url: null, status: 'diproses', created_at: '2026-04-18T14:15:00.000Z',
+      is_demo: true
     },
     {
       id: 'cmp-003', tracking_number: 'ADU-260403-9012',
@@ -161,7 +166,8 @@ function generateComplaints() {
       is_anonymous: true,
       category: 'Bau tidak sedap', description: 'Bau dari TPA Winong sangat menyengat ketika angin bertiup ke arah pemukiman.',
       lat: -7.3740, lng: 109.6800, address: 'Sekitar TPA Winong',
-      photo_url: null, status: 'selesai', created_at: '2026-04-15T10:00:00.000Z'
+      photo_url: null, status: 'selesai', created_at: '2026-04-15T10:00:00.000Z',
+      is_demo: true
     }
   ];
 }
@@ -174,7 +180,8 @@ function generateEvents() {
       location_name: 'Desa Semampir', participants: 45,
       lat: -7.3900, lng: 109.6960,
       user_id: 'usr-01', user_name: 'Siti Aminah',
-      created_at: '2026-04-10T07:00:00.000Z'
+      created_at: '2026-04-10T07:00:00.000Z',
+      is_demo: true
     },
     {
       id: 'evt-002', type: 'edukasi', title: 'Sosialisasi Pilah Sampah',
@@ -182,7 +189,8 @@ function generateEvents() {
       location_name: 'Balai Desa Parakancanggah', participants: 30,
       lat: -7.3950, lng: 109.6970,
       user_id: 'usr-04', user_name: 'Pemdes Mandiraja',
-      created_at: '2026-04-05T09:00:00.000Z'
+      created_at: '2026-04-05T09:00:00.000Z',
+      is_demo: true
     }
   ];
 }
@@ -196,17 +204,16 @@ export async function seedDatabase() {
     console.log('Database already seeded');
 
     // MIGRATION: Update legacy users to new 4 roles (WARGA, PETUGAS, EKSEKUTIF, ADMIN)
+    // Only updates roles if they're using old role names (e.g., 'dinas', 'kader', 'pemdes', 'pengepul')
     const user1 = await db.get('users', 'usr-01');
-    if (user1 && user1.role !== 'warga') {
+    const validNewRoles = ['warga', 'petugas', 'eksekutif', 'admin'];
+    if (user1 && !validNewRoles.includes(user1.role)) {
       const tx = db.transaction('users', 'readwrite');
       for (const user of USERS_DATA) {
         await tx.store.put(user);
       }
-      // Clean up extra legacy users
-      await tx.store.delete('usr-05');
-      await tx.store.delete('usr-06');
       await tx.done;
-      console.log('Successfully migrated legacy accounts to 4 roles (warga, petugas, eksekutif, admin)');
+      console.log('[Seed] Migrated legacy accounts to 4-role system');
     }
 
     return false;

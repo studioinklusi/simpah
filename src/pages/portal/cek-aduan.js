@@ -2,6 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getComplaintByTracking } from '../../db/store.js';
 import { renderPortalNav, renderPortalFooter, initPortalNav } from './beranda.js';
+import { escapeHTML } from '../../utils/sanitize.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru Diterima', color: '#3b82f6', icon: icons.download, bg: 'rgba(59,130,246,0.1)', step: 1 },
@@ -70,10 +71,10 @@ export function renderCekAduan() {
       .track-row { display:flex; justify-content:space-between; padding:var(--space-2) 0; font-size:var(--font-sm); }
       .track-row-label { color:var(--text-muted); }
       .track-row-value { font-weight:600; text-align:right; max-width:55%; }
-      .track-desc { background:var(--bg-primary); border-radius:var(--radius-lg); padding:var(--space-4); margin-top:var(--space-3); font-size:var(--font-sm); color:var(--text-secondary); line-height:1.6; border:1px solid var(--border-color); }
+      .track-desc { background:var(--bg-primary); border-radius:var(--radius-lg); padding:var(--space-4); margin-top:var(--space-3); font-size:var(--font-sm); color:var(--text-secondary); line-height:1.6; border:1px solid var(--border-color); white-space: pre-line; }
       .track-response { margin-top:var(--space-4); padding:var(--space-4); border-radius:var(--radius-lg); background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); }
       .track-response-title { font-size:var(--font-xs); font-weight:700; color:var(--primary-600); margin-bottom:var(--space-2); }
-      .track-response p { font-size:var(--font-sm); color:var(--text-secondary); line-height:1.6; }
+      .track-response p { font-size:var(--font-sm); color:var(--text-secondary); line-height:1.6; white-space: pre-line; }
 
       .track-empty { max-width:400px; margin:0 auto; text-align:center; padding:var(--space-8); }
       .track-empty-icon { font-size:48px; margin-bottom:var(--space-4); }
@@ -122,7 +123,7 @@ export function renderCekAduan() {
         <div class="track-empty">
           <div class="track-empty-icon" style="color:var(--text-muted)">${icons.search}</div>
           <h4>Aduan Tidak Ditemukan</h4>
-          <p>Nomor resi <strong>${query}</strong> tidak ditemukan. Pastikan nomor resi yang Anda masukkan benar.</p>
+          <p>Nomor resi <strong>${escapeHTML(query)}</strong> tidak ditemukan. Pastikan nomor resi yang Anda masukkan benar.</p>
         </div>
       `;
       return;
@@ -143,7 +144,7 @@ export function renderCekAduan() {
     container.innerHTML = `
       <div class="track-card">
         <div class="track-header">
-          <div class="track-resi">Nomor Resi<br/><strong>${complaint.tracking_number}</strong></div>
+          <div class="track-resi">Nomor Resi<br/><strong>${escapeHTML(complaint.tracking_number)}</strong></div>
           <span class="track-status-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.icon} ${cfg.label}</span>
         </div>
 
@@ -163,17 +164,17 @@ export function renderCekAduan() {
         </div>` : ''}
 
         <div class="track-detail">
-          <div class="track-row"><span class="track-row-label">Kategori</span><span class="track-row-value">${complaint.category}</span></div>
-          <div class="track-row"><span class="track-row-label">Pelapor</span><span class="track-row-value">${complaint.reporter_name || 'Anonim'}</span></div>
-          <div class="track-row"><span class="track-row-label">Tanggal Lapor</span><span class="track-row-value">${dateStr}</span></div>
-          <div class="track-row"><span class="track-row-label">Lokasi</span><span class="track-row-value">${complaint.address || '-'}</span></div>
+          <div class="track-row"><span class="track-row-label">Kategori</span><span class="track-row-value">${escapeHTML(complaint.category)}</span></div>
+          <div class="track-row"><span class="track-row-label">Pelapor</span><span class="track-row-value">${escapeHTML(complaint.reporter_name || 'Anonim')}</span></div>
+          <div class="track-row"><span class="track-row-label">Tanggal Lapor</span><span class="track-row-value">${escapeHTML(dateStr)}</span></div>
+          <div class="track-row"><span class="track-row-label">Lokasi</span><span class="track-row-value">${escapeHTML(complaint.address || '-')}</span></div>
 
-          <div class="track-desc">${complaint.description}</div>
+          <div class="track-desc">${escapeHTML(complaint.description)}</div>
 
           ${complaint.response ? `
           <div class="track-response">
             <div class="track-response-title" style="display:flex;align-items:center;gap:4px;">${icons.messageCircle} Tanggapan Dinas</div>
-            <p>${complaint.response}</p>
+            <p>${escapeHTML(complaint.response)}</p>
           </div>` : ''}
         </div>
       </div>

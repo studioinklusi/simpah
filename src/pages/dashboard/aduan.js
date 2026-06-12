@@ -6,6 +6,7 @@ import { hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import { renderPWALayout } from '../pwa/layout.js';
+import { escapeHTML } from '../../utils/sanitize.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: icons.download },
@@ -102,7 +103,7 @@ export async function renderAduanManagement() {
       .am-detail-row:last-child { border-bottom:none; }
       .am-detail-label { color:var(--text-muted); }
       .am-detail-value { font-weight:600; text-align:right; max-width:60%; }
-      .am-desc-box { background:var(--bg-secondary); padding:var(--space-4); border-radius:var(--radius-lg); margin:var(--space-4) 0; font-size:var(--font-sm); line-height:1.6; color:var(--text-secondary); }
+      .am-desc-box { background:var(--bg-secondary); padding:var(--space-4); border-radius:var(--radius-lg); margin:var(--space-4) 0; font-size:var(--font-sm); line-height:1.6; color:var(--text-secondary); white-space: pre-line; }
       .am-action-section { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border-color); }
       .am-action-section h4 { font-size:var(--font-sm); font-weight:700; margin-bottom:var(--space-3); }
       .am-action-btns { display:flex; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-3); }
@@ -147,14 +148,14 @@ export async function renderAduanManagement() {
       return `
         <div class="am-card" data-id="${c.id}">
           <div class="am-card-top">
-            <span class="am-card-resi">${c.tracking_number}</span>
+            <span class="am-card-resi">${escapeHTML(c.tracking_number)}</span>
             <span class="am-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.icon} ${cfg.label}</span>
           </div>
-          <div class="am-card-cat">${c.category}</div>
-          <div class="am-card-desc">${c.description}</div>
+          <div class="am-card-cat">${escapeHTML(c.category)}</div>
+          <div class="am-card-desc">${escapeHTML(c.description)}</div>
           <div class="am-card-footer">
-            <span class="am-card-reporter" style="display:inline-flex;align-items:center;gap:4px;">${icons.user} ${reporterDisplay}</span>
-            <span class="am-card-date">${dt}</span>
+            <span class="am-card-reporter" style="display:inline-flex;align-items:center;gap:4px;">${icons.user} ${escapeHTML(reporterDisplay)}</span>
+            <span class="am-card-date">${escapeHTML(dt)}</span>
           </div>
         </div>
       `;
@@ -189,19 +190,19 @@ export async function renderAduanManagement() {
     document.getElementById('aduanModalTitle').textContent = `Detail: ${c.tracking_number}`;
     const detailReporter = getReporterDisplay(c, canViewAll);
     document.getElementById('aduanModalBody').innerHTML = `
-      <div class="am-detail-row"><span class="am-detail-label">Resi</span><span class="am-detail-value" style="letter-spacing:0.06em">${c.tracking_number}</span></div>
+      <div class="am-detail-row"><span class="am-detail-label">Resi</span><span class="am-detail-value" style="letter-spacing:0.06em">${escapeHTML(c.tracking_number)}</span></div>
       <div class="am-detail-row"><span class="am-detail-label">Status</span><span class="am-detail-value"><span class="am-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.icon} ${cfg.label}</span></span></div>
-      <div class="am-detail-row"><span class="am-detail-label">Kategori</span><span class="am-detail-value">${c.category}</span></div>
-      <div class="am-detail-row"><span class="am-detail-label">Pelapor</span><span class="am-detail-value">${detailReporter}</span></div>
-      ${canViewAll && !c.is_anonymous ? `<div class="am-detail-row"><span class="am-detail-label">Telepon</span><span class="am-detail-value">${c.reporter_phone || '-'}</span></div>` : ''}
-      <div class="am-detail-row"><span class="am-detail-label">Tanggal</span><span class="am-detail-value">${dt}</span></div>
-      <div class="am-detail-row"><span class="am-detail-label">Alamat</span><span class="am-detail-value">${c.address || '-'}</span></div>
+      <div class="am-detail-row"><span class="am-detail-label">Kategori</span><span class="am-detail-value">${escapeHTML(c.category)}</span></div>
+      <div class="am-detail-row"><span class="am-detail-label">Pelapor</span><span class="am-detail-value">${escapeHTML(detailReporter)}</span></div>
+      ${canViewAll && !c.is_anonymous ? `<div class="am-detail-row"><span class="am-detail-label">Telepon</span><span class="am-detail-value">${escapeHTML(c.reporter_phone) || '-'}</span></div>` : ''}
+      <div class="am-detail-row"><span class="am-detail-label">Tanggal</span><span class="am-detail-value">${escapeHTML(dt)}</span></div>
+      <div class="am-detail-row"><span class="am-detail-label">Alamat</span><span class="am-detail-value">${escapeHTML(c.address) || '-'}</span></div>
       ${c.lat ? `<div class="am-detail-row"><span class="am-detail-label">GPS</span><span class="am-detail-value" style="font-size:var(--font-xs)">${Number(c.lat).toFixed(6)}, ${Number(c.lng).toFixed(6)}</span></div>` : ''}
       ${c.is_anonymous ? '<div class="am-detail-row"><span class="am-detail-label">Mode</span><span class="am-detail-value"><span class="am-badge" style="background:rgba(107,114,128,0.1);color:#6b7280">🔒 Anonim</span></span></div>' : ''}
 
-      <div class="am-desc-box"><strong>Deskripsi:</strong><br/>${c.description}</div>
+      <div class="am-desc-box"><strong>Deskripsi:</strong><br/>${escapeHTML(c.description)}</div>
 
-      ${c.response ? `<div class="am-desc-box" style="border-left:3px solid var(--primary-500)"><strong><span style="display:inline-flex;align-items:center;gap:4px;vertical-align:-4px">${icons.messageCircle}</span> Tanggapan Dinas:</strong><br/>${c.response}</div>` : ''}
+      ${c.response ? `<div class="am-desc-box" style="border-left:3px solid var(--primary-500)"><strong><span style="display:inline-flex;align-items:center;gap:4px;vertical-align:-4px">${icons.messageCircle}</span> Tanggapan Dinas:</strong><br/>${escapeHTML(c.response)}</div>` : ''}
 
       ${canManage ? `
       <div class="am-action-section">
@@ -213,7 +214,7 @@ export async function renderAduanManagement() {
         </div>
         <div class="form-group" style="margin-top:var(--space-3)">
           <label class="form-label" style="font-size:var(--font-xs)">Tanggapan / Catatan Tindak Lanjut</label>
-          <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${c.response || ''}</textarea>
+          <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${escapeHTML(c.response) || ''}</textarea>
         </div>
         <button class="btn btn-primary btn-block" id="saveStatusBtn" style="margin-top:var(--space-3);display:flex;align-items:center;justify-content:center;gap:8px;">${icons.checkCircle} Simpan Perubahan</button>
       </div>

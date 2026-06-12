@@ -7,15 +7,20 @@ import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 
 import { canValidate } from '../../utils/permissions.js';
+import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 
 let pendingRecords = [];
 let allRecordsCache = [];
 
 export async function renderValidasi() {
   const user = getCurrentUser();
-  if (!user || !canValidate(user)) { 
-    window.location.hash = '#/dashboard'; 
-    return; 
+  if (!user || !canValidate(user)) {
+    if (user?.role === 'petugas') {
+      window.location.hash = '#/pwa/home';
+    } else {
+      window.location.hash = '#/dashboard/eksekutif';
+    }
+    return;
   }
 
   await loadData();
@@ -84,41 +89,44 @@ function renderView() {
                 </tr>
               </thead>
               <tbody>
-                ${pendingRecords.map(r => `
-                  <tr id="row-${r.id}" class="val-row">
-                    <td style="font-size:12px">
-                      <div><strong>${formatDate(r.created_at).split(' ')[0]}</strong></div>
-                      <div style="color:var(--text-muted)">${formatDate(r.created_at).split(' ').slice(1).join(' ')}</div>
-                    </td>
-                    <td>
-                      <div><strong>${r.user_name || 'Anonim'}</strong></div>
-                      <div style="font-size:11px;color:var(--text-muted)">ID: ${r.user_id}</div>
-                    </td>
-                    <td>
-                      <div><strong>${r.location_name || '-'}</strong></div>
-                      ${r.lat ? `<div style="font-size:10px;color:var(--primary-500)">${icons.mapPin} ${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}</div>` : ''}
-                    </td>
-                    <td>
-                      <span class="badge ${r.type==='masuk'?'badge-success':r.type==='pilah'?'badge-primary':r.type==='campur'?'badge-warning':'badge-danger'}">
-                        ${r.type === 'campur' ? 'CAMPUR' : r.type.toUpperCase()}
-                      </span>
-                      <div style="font-size:11px;margin-top:4px">${getCatName(r.category_sipsn)}</div>
-                      ${r.notes ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;margin-top:2px">"${r.notes}"</div>` : ''}
-                    </td>
-                    <td style="text-align:right">
-                      <strong style="font-size:var(--font-lg);color:var(--text-primary)">${r.weight_kg} kg</strong>
-                    </td>
-                    <td>
-                      ${r.photo_url 
-                        ? `<img src="${r.photo_url}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer" onclick="window.open('${r.photo_url}','_blank')">` 
-                        : '<span style="font-size:10px;color:var(--text-muted)">Tidak ada foto</span>'}
-                    </td>
-                    <td style="text-align:center;white-space:nowrap;">
-                      <button class="btn btn-sm btn-icon" style="color:#ef4444;background:rgba(239,68,68,0.1)" title="Tolak Data" data-action="reject" data-id="${r.id}">${icons.xCircle}</button>
-                      <button class="btn btn-sm btn-icon" style="color:#10b981;background:rgba(16,185,129,0.1);margin-left:4px" title="Setujui Data" data-action="approve" data-id="${r.id}">${icons.checkCircle}</button>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${pendingRecords.map(r => {
+                  const safePhoto = escapeHTML(sanitizeURL(r.photo_url));
+                  return `
+                    <tr id="row-${r.id}" class="val-row">
+                      <td style="font-size:12px">
+                        <div><strong>${formatDate(r.created_at).split(' ')[0]}</strong></div>
+                        <div style="color:var(--text-muted)">${formatDate(r.created_at).split(' ').slice(1).join(' ')}</div>
+                      </td>
+                      <td>
+                        <div><strong>${escapeHTML(r.user_name || 'Anonim')}</strong></div>
+                        <div style="font-size:11px;color:var(--text-muted)">ID: ${escapeHTML(r.user_id)}</div>
+                      </td>
+                      <td>
+                        <div><strong>${escapeHTML(r.location_name || '-')}</strong></div>
+                        ${r.lat ? `<div style="font-size:10px;color:var(--primary-500)">${icons.mapPin} ${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}</div>` : ''}
+                      </td>
+                      <td>
+                        <span class="badge ${r.type==='masuk'?'badge-success':r.type==='pilah'?'badge-primary':r.type==='campur'?'badge-warning':'badge-danger'}">
+                          ${r.type === 'campur' ? 'CAMPUR' : r.type.toUpperCase()}
+                        </span>
+                        <div style="font-size:11px;margin-top:4px">${escapeHTML(getCatName(r.category_sipsn))}</div>
+                        ${r.notes ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;margin-top:2px">"${escapeHTML(r.notes)}"</div>` : ''}
+                      </td>
+                      <td style="text-align:right">
+                        <strong style="font-size:var(--font-lg);color:var(--text-primary)">${r.weight_kg} kg</strong>
+                      </td>
+                      <td>
+                        ${safePhoto 
+                          ? `<img src="${safePhoto}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer" onclick="window.open('${safePhoto}','_blank')">` 
+                          : '<span style="font-size:10px;color:var(--text-muted)">Tidak ada foto</span>'}
+                      </td>
+                      <td style="text-align:center;white-space:nowrap;">
+                        <button class="btn btn-sm btn-icon" style="color:#ef4444;background:rgba(239,68,68,0.1)" title="Tolak Data" data-action="reject" data-id="${r.id}">${icons.xCircle}</button>
+                        <button class="btn btn-sm btn-icon" style="color:#10b981;background:rgba(16,185,129,0.1);margin-left:4px" title="Setujui Data" data-action="approve" data-id="${r.id}">${icons.checkCircle}</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           `}

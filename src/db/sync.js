@@ -53,8 +53,8 @@ export async function triggerSync() {
 
       // Upload to Supabase per table
       for (const record of unsynced) {
-        // Abaikan data demo
-        if (record.id && record.id.length < 30) {
+        // Abaikan data demo (ditandai oleh seed dengan is_demo: true)
+        if (record.is_demo) {
           record.synced = true;
           await db.put(table, record);
           continue;

@@ -324,9 +324,24 @@ export function renderRegister() {
       return;
     }
 
-    // Password length check (minimum 6 characters for Supabase)
+    // Password criteria checks
     if (password.length < 6) {
       showError('Password harus minimal 6 karakter');
+      shakeCard();
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      showError('Password harus mengandung minimal satu huruf besar (A-Z)');
+      shakeCard();
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      showError('Password harus mengandung minimal satu huruf kecil (a-z)');
+      shakeCard();
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      showError('Password harus mengandung minimal satu angka (0-9)');
       shakeCard();
       return;
     }

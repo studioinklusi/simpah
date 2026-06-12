@@ -13,8 +13,8 @@ export const PERMISSIONS = {
   // === Aduan (Complaints) ===
   CREATE_COMPLAINT:        ['warga', 'petugas', 'eksekutif', 'admin'],
   VIEW_OWN_COMPLAINTS:     ['warga', 'petugas', 'eksekutif', 'admin'],
-  VIEW_ALL_COMPLAINTS:     ['admin'],
-  MANAGE_COMPLAINT_STATUS: ['admin'],
+  VIEW_ALL_COMPLAINTS:     ['eksekutif', 'admin'],
+  MANAGE_COMPLAINT_STATUS: ['eksekutif', 'admin'],
 
   // === Input Lapangan ===
   INPUT_WASTE_MASUK:       ['petugas', 'admin'],
@@ -110,9 +110,19 @@ export const JOB_TYPES = [
 export function getAllowedInputTypes(user) {
   if (!user) return [];
 
-  // Admin or no specific job_type → all types
-  if (user.role === 'admin' || (!user.job_type && user.role !== 'warga')) {
+  // Admin → all types
+  if (user.role === 'admin') {
     return ['masuk', 'pilah', 'olah', 'residu', 'armada', 'insidental'];
+  }
+
+  // Petugas without job_type → default to basic input only (safe fallback)
+  if (!user.job_type && user.role === 'petugas') {
+    return ['masuk'];
+  }
+
+  // Non-petugas non-admin → no input
+  if (user.role === 'warga' || user.role === 'eksekutif') {
+    return [];
   }
 
   switch (user.job_type) {

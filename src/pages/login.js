@@ -155,7 +155,8 @@ export function renderLogin() {
               Belum punya akun? <a href="#/register">Daftar di sini</a>
             </div>
 
-            <!-- Demo accounts section -->
+            ${import.meta.env.VITE_DEMO_MODE === 'true' ? `
+            <!-- Demo accounts section (hanya muncul saat VITE_DEMO_MODE=true) -->
             <div class="login-demo" style="margin-top: var(--space-6); border-top: 1px solid #e5e7eb; padding-top: var(--space-4)">
               <p style="font-size: var(--font-xs); color: #6b7280; font-weight: 600; margin-bottom: var(--space-3); text-align: left">Demo Akun (Klik untuk mengisi cepat):</p>
               <div class="demo-accounts">
@@ -182,6 +183,7 @@ export function renderLogin() {
                 </button>
               </div>
             </div>
+            ` : ''}
           </div>
         </div>
       </div>

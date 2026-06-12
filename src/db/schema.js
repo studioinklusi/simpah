@@ -77,7 +77,7 @@ export async function initDB() {
         comp.createIndex('created_at', 'created_at');
         comp.createIndex('tracking_number', 'tracking_number', { unique: true });
       } else {
-        const comp = upgradeTransaction.objectStore('complaints');
+        const comp = transaction.objectStore('complaints');
         if (!comp.indexNames.contains('tracking_number')) {
           comp.createIndex('tracking_number', 'tracking_number', { unique: true });
         }

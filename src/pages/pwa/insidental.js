@@ -7,6 +7,7 @@ import { addEvent, getAllEvents } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
+import { escapeHTML } from '../../utils/sanitize.js';
 
 export async function renderInsidental() {
   const user = getCurrentUser();
@@ -63,8 +64,8 @@ export async function renderInsidental() {
             <div class="record-item">
               <div class="record-icon" style="background:rgba(139,92,246,0.12)">${INCIDENTAL_TYPES.find(t=>t.id===e.type)?.icon || icons.box}</div>
               <div class="record-info">
-                <div class="record-title">${e.title}</div>
-                <div class="record-meta">${e.location_name || '-'} · ${formatDateTime(e.created_at)}</div>
+                <div class="record-title">${escapeHTML(e.title)}</div>
+                <div class="record-meta">${escapeHTML(e.location_name || '-')} · ${formatDateTime(e.created_at)}</div>
               </div>
               <div class="record-value" style="text-align:right">
                 ${e.photo_count ? `<div style="font-size:11px;color:var(--info-500);margin-bottom:2px">${icons.camera} ${e.photo_count}</div>` : ''}
