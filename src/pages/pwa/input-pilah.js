@@ -282,9 +282,12 @@ export async function renderInputPilah() {
         };
 
         if (accumDays > 1) {
+          const batchId = crypto.randomUUID();
           const dailyTotal = parseFloat((totalPilah / accumDays).toFixed(1));
           const dailyItems = items.map(i => ({ ...i, weight_kg: parseFloat((i.weight_kg / accumDays).toFixed(1)) }));
           const now = new Date();
+          const oldestDate = new Date(now);
+          oldestDate.setDate(oldestDate.getDate() - (accumDays - 1));
           
           for (let d = 0; d < accumDays; d++) {
             const backDate = new Date(now);
@@ -296,6 +299,11 @@ export async function renderInputPilah() {
               is_accumulation: true,
               accumulation_days: accumDays,
               accumulation_total_kg: totalPilah,
+              is_batch: true,
+              batch_id: batchId,
+              batch_days: accumDays,
+              batch_start_date: oldestDate.toISOString().split('T')[0],
+              batch_end_date: now.toISOString().split('T')[0],
               override_date: backDate.toISOString()
             }, user.id);
             if (d === 0) pilahRecordId = record.id;
@@ -324,8 +332,12 @@ export async function renderInputPilah() {
         };
 
         if (accumDays > 1) {
+          const batchId = crypto.randomUUID();
           const dailyResidu = parseFloat((residuVal / accumDays).toFixed(1));
           const now = new Date();
+          const oldestDate = new Date(now);
+          oldestDate.setDate(oldestDate.getDate() - (accumDays - 1));
+
           for (let d = 0; d < accumDays; d++) {
             const backDate = new Date(now);
             backDate.setDate(backDate.getDate() - d);
@@ -336,6 +348,11 @@ export async function renderInputPilah() {
               is_accumulation: true,
               accumulation_days: accumDays,
               accumulation_total_kg: residuVal,
+              is_batch: true,
+              batch_id: batchId,
+              batch_days: accumDays,
+              batch_start_date: oldestDate.toISOString().split('T')[0],
+              batch_end_date: now.toISOString().split('T')[0],
               override_date: backDate.toISOString()
             }, user.id);
           }

@@ -29,9 +29,77 @@ export async function renderValidasi() {
 
 async function loadData() {
   allRecordsCache = await getAllWasteRecords();
-  pendingRecords = allRecordsCache
+  const pendingRaw = allRecordsCache
     .filter(r => r.verification_status === 'pending')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  pendingRecords = groupPendingRecords(pendingRaw);
+}
+
+function groupPendingRecords(records) {
+  const groups = [];
+  const batchMap = new Map();
+
+  for (const r of records) {
+    if (r.is_batch && r.batch_id) {
+      const batchId = r.batch_id;
+      if (!batchMap.has(batchId)) {
+        batchMap.set(batchId, {
+          isBatchGroup: true,
+          batchId: batchId,
+          records: [],
+          // Common properties
+          id: r.id,
+          created_at: r.created_at,
+          user_id: r.user_id,
+          user_name: r.user_name,
+          location_id: r.location_id,
+          location_name: r.location_name,
+          type: r.type,
+          category_sipsn: r.category_sipsn,
+          lat: r.lat,
+          lng: r.lng,
+          photo_url: r.photo_url || '',
+          notes: r.notes || ''
+        });
+      }
+      const group = batchMap.get(batchId);
+      group.records.push(r);
+      if (r.photo_url && !group.photo_url) {
+        group.photo_url = r.photo_url;
+      }
+      if (new Date(r.created_at) > new Date(group.created_at)) {
+        group.created_at = r.created_at;
+      }
+    } else {
+      // Normal record
+      groups.push({
+        isBatchGroup: false,
+        id: r.id,
+        records: [r],
+        ...r
+      });
+    }
+  }
+
+  // Add the grouped batches to the list
+  for (const group of batchMap.values()) {
+    group.records.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    group.batch_start_date = group.records[0].created_at;
+    group.batch_end_date = group.records[group.records.length - 1].created_at;
+    group.batch_days = group.records.length;
+    group.total_weight = group.records.reduce((sum, rec) => sum + parseFloat(rec.weight_kg || 0), 0);
+    
+    const baseNotes = group.records.map(rec => rec.notes || '').filter(n => n.trim() !== '');
+    if (baseNotes.length > 0) {
+      group.notes = baseNotes[0].replace(/\[Akumulasi[^\]]+\]/, '').trim();
+    }
+    
+    groups.push(group);
+  }
+
+  // Sort groups by newest created_at
+  groups.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return groups;
 }
 
 function renderView() {
@@ -91,11 +159,19 @@ function renderView() {
               <tbody>
                 ${pendingRecords.map(r => {
                   const safePhoto = escapeHTML(sanitizeURL(r.photo_url));
+                  const isBatch = r.isBatchGroup;
+                  
                   return `
-                    <tr id="row-${r.id}" class="val-row">
+                    <tr id="row-${isBatch ? r.batchId : r.id}" class="val-row">
                       <td style="font-size:12px">
-                        <div><strong>${formatDate(r.created_at).split(' ')[0]}</strong></div>
-                        <div style="color:var(--text-muted)">${formatDate(r.created_at).split(' ').slice(1).join(' ')}</div>
+                        ${isBatch ? `
+                          <div style="margin-bottom:4px"><span class="badge badge-primary" style="font-size:9px;padding:2px 6px">Akumulasi ${r.batch_days} Hari</span></div>
+                          <div><strong>${formatDate(r.batch_start_date).split(' ')[0]} - ${formatDate(r.batch_end_date).split(' ')[0]}</strong></div>
+                          <div style="color:var(--text-muted);font-size:11px">${formatDate(r.batch_end_date).split(' ').slice(1).join(' ')}</div>
+                        ` : `
+                          <div><strong>${formatDate(r.created_at).split(' ')[0]}</strong></div>
+                          <div style="color:var(--text-muted)">${formatDate(r.created_at).split(' ').slice(1).join(' ')}</div>
+                        `}
                       </td>
                       <td>
                         <div><strong>${escapeHTML(r.user_name || 'Anonim')}</strong></div>
@@ -113,7 +189,12 @@ function renderView() {
                         ${r.notes ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;margin-top:2px">"${escapeHTML(r.notes)}"</div>` : ''}
                       </td>
                       <td style="text-align:right">
-                        <strong style="font-size:var(--font-lg);color:var(--text-primary)">${r.weight_kg} kg</strong>
+                        ${isBatch ? `
+                          <strong style="font-size:var(--font-lg);color:var(--text-primary)">${r.total_weight.toFixed(1)} kg</strong>
+                          <div style="font-size:10px;color:var(--text-muted)">(${r.batch_days} hari @ ${(r.total_weight / r.batch_days).toFixed(1)} kg)</div>
+                        ` : `
+                          <strong style="font-size:var(--font-lg);color:var(--text-primary)">${r.weight_kg} kg</strong>
+                        `}
                       </td>
                       <td>
                         ${safePhoto 
@@ -121,8 +202,8 @@ function renderView() {
                           : '<span style="font-size:10px;color:var(--text-muted)">Tidak ada foto</span>'}
                       </td>
                       <td style="text-align:center;white-space:nowrap;">
-                        <button class="btn btn-sm btn-icon" style="color:#ef4444;background:rgba(239,68,68,0.1)" title="Tolak Data" data-action="reject" data-id="${r.id}">${icons.xCircle}</button>
-                        <button class="btn btn-sm btn-icon" style="color:#10b981;background:rgba(16,185,129,0.1);margin-left:4px" title="Setujui Data" data-action="approve" data-id="${r.id}">${icons.checkCircle}</button>
+                        <button class="btn btn-sm btn-icon" style="color:#ef4444;background:rgba(239,68,68,0.1)" title="Tolak Data" data-action="reject" data-id="${isBatch ? r.batchId : r.id}" data-is-batch="${isBatch}">${icons.xCircle}</button>
+                        <button class="btn btn-sm btn-icon" style="color:#10b981;background:rgba(16,185,129,0.1);margin-left:4px" title="Setujui Data" data-action="approve" data-id="${isBatch ? r.batchId : r.id}" data-is-batch="${isBatch}">${icons.checkCircle}</button>
                       </td>
                     </tr>
                   `;
@@ -137,15 +218,20 @@ function renderView() {
 
   // Bind actions
   document.querySelectorAll('button[data-action="approve"]').forEach(btn => {
-    btn.addEventListener('click', (e) => handleAction(e.target.closest('button').dataset.id, 'approved'));
+    btn.addEventListener('click', (e) => {
+      const target = e.target.closest('button');
+      handleAction(target.dataset.id, 'approved', '', target.dataset.isBatch === 'true');
+    });
   });
   
   document.querySelectorAll('button[data-action="reject"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const id = e.target.closest('button').dataset.id;
+      const target = e.target.closest('button');
+      const id = target.dataset.id;
+      const isBatch = target.dataset.isBatch === 'true';
       const notes = prompt('Alasan penolakan data (Fraud/Duplikat/dll):');
       if (notes !== null) {
-        handleAction(id, 'rejected', notes);
+        handleAction(id, 'rejected', notes, isBatch);
       }
     });
   });
@@ -154,14 +240,19 @@ function renderView() {
   const approveAllBtn = document.getElementById('approveAllBtn');
   if (approveAllBtn) {
     approveAllBtn.addEventListener('click', async () => {
-      if (confirm(`Apakah Anda yakin ingin menyetujui ${pendingRecords.length} data sekaligus? Tindakan ini akan mengesahkan data ke sistem SIPSN.`)) {
+      if (confirm(`Apakah Anda yakin ingin menyetujui ${pendingRecords.length} kelompok/data sekaligus? Tindakan ini akan mengesahkan data ke sistem SIPSN.`)) {
         approveAllBtn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
         approveAllBtn.disabled = true;
         try {
           const user = getCurrentUser();
-          const promises = pendingRecords.map(r => updateWasteRecordStatus(r.id, 'approved', '', user.id));
+          const promises = [];
+          for (const item of pendingRecords) {
+            for (const r of item.records) {
+              promises.push(updateWasteRecordStatus(r.id, 'approved', '', user.id));
+            }
+          }
           await Promise.all(promises);
-          showToast(`${pendingRecords.length} data pahlawan lingkungan berhasil disetujui!`, 'success');
+          showToast(`Semua data pahlawan lingkungan berhasil disetujui!`, 'success');
           pendingRecords = [];
           const countEl = document.getElementById('statPending');
           if (countEl) countEl.innerText = 0;
@@ -175,25 +266,49 @@ function renderView() {
   }
 }
 
-async function handleAction(id, action, notes = '') {
+async function handleAction(id, action, notes = '', isBatch = false) {
   try {
     const user = getCurrentUser();
-    await updateWasteRecordStatus(id, action, notes, user.id);
-    showToast(action === 'approved' ? 'Data disetujui & masuk ke SIPSN' : 'Data ditolak', action === 'approved' ? 'success' : 'error');
     
-    // Animate removal
-    const row = document.getElementById(`row-${id}`);
-    if (row) {
-      row.style.opacity = '0';
-      row.style.transform = 'translateX(20px)';
-      setTimeout(() => {
-        row.remove();
-        // Update local state
-        pendingRecords = pendingRecords.filter(r => r.id !== id);
-        const countEl = document.getElementById('statPending');
-        if (countEl) countEl.innerText = pendingRecords.length;
-        if (pendingRecords.length === 0) renderView(); // Re-render to show empty state
-      }, 300);
+    if (isBatch) {
+      const group = pendingRecords.find(g => g.isBatchGroup && g.batchId === id);
+      if (!group) throw new Error('Batch not found');
+      
+      const promises = group.records.map(r => updateWasteRecordStatus(r.id, action, notes, user.id));
+      await Promise.all(promises);
+      
+      showToast(action === 'approved' ? `${group.records.length} data batch disetujui` : `${group.records.length} data batch ditolak`, action === 'approved' ? 'success' : 'error');
+      
+      // Animate removal
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(20px)';
+        setTimeout(() => {
+          row.remove();
+          pendingRecords = pendingRecords.filter(g => !(g.isBatchGroup && g.batchId === id));
+          const countEl = document.getElementById('statPending');
+          if (countEl) countEl.innerText = pendingRecords.length;
+          if (pendingRecords.length === 0) renderView();
+        }, 300);
+      }
+    } else {
+      await updateWasteRecordStatus(id, action, notes, user.id);
+      showToast(action === 'approved' ? 'Data disetujui & masuk ke SIPSN' : 'Data ditolak', action === 'approved' ? 'success' : 'error');
+      
+      // Animate removal
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(20px)';
+        setTimeout(() => {
+          row.remove();
+          pendingRecords = pendingRecords.filter(r => r.id !== id);
+          const countEl = document.getElementById('statPending');
+          if (countEl) countEl.innerText = pendingRecords.length;
+          if (pendingRecords.length === 0) renderView();
+        }, 300);
+      }
     }
   } catch (e) {
     console.error(e);

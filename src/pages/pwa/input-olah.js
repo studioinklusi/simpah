@@ -240,9 +240,13 @@ export async function renderInputOlah() {
       };
 
       if (accumDays > 1) {
+        const batchId = crypto.randomUUID();
         // Distribute weight evenly across past N days
         const dailyWeight = parseFloat((weight / accumDays).toFixed(1));
         const now = new Date();
+        const oldestDate = new Date(now);
+        oldestDate.setDate(oldestDate.getDate() - (accumDays - 1));
+
         for (let d = 0; d < accumDays; d++) {
           const backDate = new Date(now);
           backDate.setDate(backDate.getDate() - d);
@@ -253,6 +257,11 @@ export async function renderInputOlah() {
             is_accumulation: true,
             accumulation_days: accumDays,
             accumulation_total_kg: weight,
+            is_batch: true,
+            batch_id: batchId,
+            batch_days: accumDays,
+            batch_start_date: oldestDate.toISOString().split('T')[0],
+            batch_end_date: now.toISOString().split('T')[0],
             override_date: backDate.toISOString()
           }, user.id);
         }
