@@ -125,13 +125,32 @@ export async function renderMasterData() {
   async function loadTabContent(tab) {
     const container = document.getElementById('mdContent');
     container.innerHTML = '<div class="md-loading"><div class="spinner"></div></div>';
-    if (tab === 'locations') await renderLocationsTab(container);
-    else if (tab === 'fleet') await renderFleetTab(container);
-    else if (tab === 'users') await renderUsersTab(container);
-    else if (tab === 'population') await renderPopulationTab(container);
-    else if (tab === 'fasum') await renderFasumTab(container);
-    else if (tab === 'rbac') await renderRbacTab(container);
-    else if (tab === 'invitations') await renderInvitationsTab(container);
+    try {
+      if (tab === 'locations') await renderLocationsTab(container);
+      else if (tab === 'fleet') await renderFleetTab(container);
+      else if (tab === 'users') await renderUsersTab(container);
+      else if (tab === 'population') await renderPopulationTab(container);
+      else if (tab === 'fasum') await renderFasumTab(container);
+      else if (tab === 'rbac') await renderRbacTab(container);
+      else if (tab === 'invitations') await renderInvitationsTab(container);
+    } catch (err) {
+      console.error(`[MasterData] Error loading tab ${tab}:`, err);
+      let errorMessage = err.message || 'Terjadi kesalahan saat memuat data.';
+      
+      if (tab === 'invitations' && (errorMessage.toLowerCase().includes('relation') || errorMessage.toLowerCase().includes('does not exist'))) {
+        errorMessage = 'Tabel <code>invitation_codes</code> belum dibuat di database Supabase Anda. Harap jalankan script SQL migrasi di editor Supabase Anda terlebih dahulu.';
+      }
+      
+      container.innerHTML = `
+        <div class="md-empty" style="color:var(--text-muted); padding:var(--space-8); text-align:center;">
+          <div style="font-size:24px; margin-bottom:var(--space-2)">⚠️</div>
+          <p style="font-weight:600; color:var(--text-primary); margin-bottom:var(--space-1)">Gagal Memuat Data</p>
+          <p style="font-size:var(--font-xs); max-width:400px; margin:0 auto; line-height: 1.5;">${errorMessage}</p>
+          <button class="btn btn-secondary btn-sm" id="btnRetryTab" style="margin-top:var(--space-4)">Coba Lagi</button>
+        </div>
+      `;
+      document.getElementById('btnRetryTab')?.addEventListener('click', () => loadTabContent(tab));
+    }
   }
 
   // ---------- LOCATIONS TAB ----------
