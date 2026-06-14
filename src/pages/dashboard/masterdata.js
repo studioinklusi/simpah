@@ -59,8 +59,11 @@ export async function renderMasterData() {
       .master-data { max-width:1100px; }
       .md-header h2 { font-size:var(--font-xl); font-weight:700; margin-bottom:var(--space-1); }
       .md-header p { font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:var(--space-5); }
-      .md-tabs { display:flex; gap:var(--space-2); border-bottom:2px solid var(--border-color); margin-bottom:var(--space-5); flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-      .md-tabs::-webkit-scrollbar { display:none; }
+      .md-tabs { display:flex; gap:var(--space-2); border-bottom:2px solid var(--border-color); margin-bottom:var(--space-5); flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:thin; scrollbar-color:rgba(156,163,175,0.3) transparent; }
+      .md-tabs::-webkit-scrollbar { height:4px; }
+      .md-tabs::-webkit-scrollbar-track { background:transparent; }
+      .md-tabs::-webkit-scrollbar-thumb { background:rgba(156,163,175,0.3); border-radius:4px; }
+      .md-tabs::-webkit-scrollbar-thumb:hover { background:rgba(156,163,175,0.6); }
       .md-tab { padding:var(--space-3) var(--space-5); border:none; background:none; font-size:var(--font-sm); font-weight:600; cursor:pointer; color:var(--text-secondary); border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.2s; border-radius:var(--radius-md) var(--radius-md) 0 0; flex-shrink:0; white-space:nowrap; }
       .md-tab:hover { color:var(--text-primary); background:var(--gray-50); }
       .md-tab.active { color:var(--primary-600); border-bottom-color:var(--primary-500); background:rgba(16,185,129,0.05); }
