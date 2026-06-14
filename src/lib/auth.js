@@ -207,8 +207,8 @@ export function isPublicRoute(hash) {
 /**
  * Get the default landing route for a given role.
  */
-export function getDefaultRoute(role) {
-  return _getDefaultRoute(role);
+export function getDefaultRoute(roleOrProfile) {
+  return _getDefaultRoute(roleOrProfile);
 }
 
 // ── Custom Error ────────────────────────────────────────────────────────────
@@ -280,13 +280,20 @@ function _isPublicRoute(hash) {
   return PUBLIC_ROUTES.some(r => route === r || route.startsWith(r + '/'));
 }
 
-function _getDefaultRoute(role) {
-  switch (role) {
+function _getDefaultRoute(roleOrProfile) {
+  const profile = typeof roleOrProfile === 'string' ? { role: roleOrProfile } : roleOrProfile;
+  if (!profile) return '#/pwa/home';
+  
+  switch (profile.role) {
     case 'eksekutif':
       return '#/dashboard/eksekutif';
     case 'admin':
       return '#/dashboard/gis';
     case 'petugas':
+      if (profile.job_type === 'koordinator') {
+        return '#/dashboard/validasi';
+      }
+      return '#/pwa/home';
     case 'warga':
     default:
       return '#/pwa/home';

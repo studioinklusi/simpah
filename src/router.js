@@ -1,5 +1,5 @@
 // SIMPAH - Hash Router with Auth Guard
-import { getAuthProfile, isPublicRoute } from './lib/auth.js';
+import { getAuthProfile, isPublicRoute, getDefaultRoute } from './lib/auth.js';
 
 const routes = {};
 let currentCleanup = null;
@@ -42,8 +42,8 @@ export function startRouter(defaultRoute = '/login') {
     if (hash === '/login') {
       const user = getAuthProfile();
       if (user) {
-        const defaultForRole = _getDefaultRouteForRole(user.role);
-        window.location.hash = defaultForRole;
+        const defaultRoute = getDefaultRoute(user);
+        window.location.hash = defaultRoute;
         return;
       }
     }
@@ -70,8 +70,8 @@ export function startRouter(defaultRoute = '/login') {
         const user = getAuthProfile();
         if (!user || !allowedRoles.includes(user.role)) {
           // Unauthorized — redirect to user's default route
-          const defaultForRole = _getDefaultRouteForRole(user?.role);
-          window.location.hash = defaultForRole;
+          const defaultRoute = getDefaultRoute(user);
+          window.location.hash = defaultRoute;
           return;
         }
       }
@@ -119,18 +119,5 @@ export function startRouter(defaultRoute = '/login') {
 export function isActiveRoute(path) {
   const current = getCurrentRoute();
   return current === path || current.startsWith(path + '/');
-}
-
-function _getDefaultRouteForRole(role) {
-  switch (role) {
-    case 'eksekutif':
-      return '#/dashboard/eksekutif';
-    case 'admin':
-      return '#/dashboard/gis';
-    case 'petugas':
-    case 'warga':
-    default:
-      return '#/pwa/home';
-  }
 }
 
