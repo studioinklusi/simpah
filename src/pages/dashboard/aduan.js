@@ -1,7 +1,7 @@
 // SIMPAH - Manajemen Aduan (Complaint Management with Privacy Controls)
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
-import { getAllComplaints, getComplaintsByUser, updateComplaint } from '../../db/store.js';
+import { getAllComplaints, getComplaintsByUser, updateComplaint, addComplaint } from '../../db/store.js';
 import { hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -38,6 +38,11 @@ export async function renderAduanManagement() {
           <h2 style="display:flex;align-items:center;gap:8px;">${icons.clipboard} ${pageTitle}</h2>
           <p>${pageDesc}</p>
         </div>
+        ${!canViewAll ? `
+          <button class="btn btn-primary" id="createNewComplaintBtn" style="display:inline-flex;align-items:center;gap:8px">
+            ${icons.plus} Aduan Baru
+          </button>
+        ` : ''}
       </div>
 
       <!-- Stats Row -->
@@ -72,8 +77,9 @@ export async function renderAduanManagement() {
 
     <style>
       .aduan-mgmt { max-width:1100px; }
+      .am-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-5); gap:var(--space-3); flex-wrap:wrap; }
       .am-header h2 { font-size:var(--font-xl); font-weight:700; margin-bottom:var(--space-1); }
-      .am-header p { font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:var(--space-5); }
+      .am-header p { font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:var(--space-2); }
       .am-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--space-4); margin-bottom:var(--space-6); }
       .am-stat-card { background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-4); text-align:center; }
       .am-stat-icon { font-size:24px; margin-bottom:var(--space-1); }
@@ -247,6 +253,164 @@ export async function renderAduanManagement() {
       }
     });
   }
+
+  function openCreateComplaintModal() {
+    document.getElementById('aduanModalTitle').textContent = 'Buat Aduan Baru';
+    document.getElementById('aduanModalBody').innerHTML = `
+      <form id="newComplaintForm">
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Nama Pelapor</label>
+          <input type="text" id="newReporterName" class="form-input" value="${escapeHTML(user.full_name || '')}" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+          <div class="form-hint" style="font-size:var(--font-xs);color:var(--text-muted);margin-top:4px">Nama Anda (otomatis terisi)</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">No. Telepon</label>
+          <input type="tel" id="newReporterPhone" class="form-input" placeholder="08xxxxxxxxxx" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:center;gap:8px;background:var(--bg-secondary);padding:var(--space-3);border-radius:var(--radius-md);margin-bottom:var(--space-4);border:1px solid var(--border-color)">
+          <input type="checkbox" id="newIsAnonymous" style="width:18px;height:18px;accent-color:var(--primary-500);cursor:pointer" />
+          <label for="newIsAnonymous" style="margin:0;font-size:var(--font-sm);color:var(--text-primary);cursor:pointer">
+            Kirim sebagai Anonim (sembunyikan identitas Anda)
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Kategori Masalah <span style="color:var(--danger-500)">*</span></label>
+          <select id="newComplaintCategory" class="form-select" required style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)">
+            <option value="">Pilih kategori...</option>
+            <option value="Sampah menumpuk">Sampah menumpuk</option>
+            <option value="Pembuangan liar">Pembuangan liar</option>
+            <option value="Bau tidak sedap">Bau tidak sedap</option>
+            <option value="Sampah di sungai">Sampah di sungai</option>
+            <option value="TPS rusak">TPS rusak / tidak terawat</option>
+            <option value="Pengangkutan terlambat">Pengangkutan terlambat</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Deskripsi <span style="color:var(--danger-500)">*</span></label>
+          <textarea id="newComplaintDesc" class="form-textarea" rows="4" placeholder="Jelaskan permasalahan yang Anda temui..." required style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Alamat Lokasi</label>
+          <input type="text" id="newComplaintAddress" class="form-input" placeholder="Alamat atau patokan lokasi" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-5)">
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Foto (Opsional)</label>
+          <div class="photo-upload" id="newPhotoUploadArea" style="border:2px dashed var(--border-color);border-radius:var(--radius-lg);padding:var(--space-6);text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg-secondary)">
+            <div style="font-size:24px;margin-bottom:8px;color:var(--text-muted)">${icons.upload}</div>
+            <p style="font-size:var(--font-sm);font-weight:600;margin-bottom:4px">Klik atau seret foto ke sini</p>
+            <div class="upload-hint" style="font-size:var(--font-xs);color:var(--text-muted)">Format: JPG, PNG. Maks 5MB</div>
+            <input type="file" id="newPhotoInput" accept="image/*" capture="environment" style="display:none" />
+          </div>
+          <div id="newPhotoPreview" style="margin-top:var(--space-3);display:none;text-align:center">
+            <img id="newPhotoPreviewImg" style="max-width:100%;border-radius:var(--radius-lg);max-height:200px" />
+            <div style="margin-top:var(--space-2)">
+              <button type="button" class="btn btn-ghost btn-sm" id="newRemovePhoto" style="color:var(--danger-500)">Hapus foto</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="newSubmitComplaint" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%">
+          ${icons.messageCircle} Kirim Laporan
+        </button>
+      </form>
+    `;
+
+    document.getElementById('aduanModal').style.display = 'flex';
+
+    // Photo uploads handling
+    const uploadArea = document.getElementById('newPhotoUploadArea');
+    const photoInput = document.getElementById('newPhotoInput');
+    const preview = document.getElementById('newPhotoPreview');
+    const previewImg = document.getElementById('newPhotoPreviewImg');
+
+    uploadArea?.addEventListener('click', () => photoInput?.click());
+    uploadArea?.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--primary-400)'; });
+    uploadArea?.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+    uploadArea?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = '';
+      const file = e.dataTransfer.files[0];
+      if (file) handlePhoto(file);
+    });
+
+    photoInput?.addEventListener('change', (e) => {
+      if (e.target.files[0]) handlePhoto(e.target.files[0]);
+    });
+
+    document.getElementById('newRemovePhoto')?.addEventListener('click', () => {
+      preview.style.display = 'none';
+      uploadArea.style.display = '';
+      photoInput.value = '';
+    });
+
+    function handlePhoto(file) {
+      if (file.size > 5 * 1024 * 1024) { showToast('Ukuran foto maksimal 5MB', 'warning'); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        preview.style.display = 'block';
+        uploadArea.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Geolocation detection
+    let gpsData = null;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { gpsData = pos.coords; },
+        (err) => console.warn('GPS detection failed:', err.message),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+
+    // Submit handler
+    document.getElementById('newComplaintForm')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn = document.getElementById('newSubmitComplaint');
+      const oldBtnHTML = btn.innerHTML;
+      btn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
+      btn.disabled = true;
+
+      try {
+        const result = await addComplaint({
+          reporter_name: document.getElementById('newReporterName').value.trim() || 'Anonim',
+          reporter_phone: document.getElementById('newReporterPhone').value.trim(),
+          is_anonymous: document.getElementById('newIsAnonymous').checked,
+          category: document.getElementById('newComplaintCategory').value,
+          description: document.getElementById('newComplaintDesc').value.trim(),
+          address: document.getElementById('newComplaintAddress').value.trim(),
+          lat: gpsData?.latitude || null,
+          lng: gpsData?.longitude || null,
+          photo_url: previewImg?.src || null
+        }, user.id);
+
+        showToast(`Aduan berhasil dikirim! Resi: ${result.tracking_number}`, 'success');
+        closeModal();
+
+        // Refresh data
+        allComplaints = canViewAll
+          ? await getAllComplaints()
+          : await getComplaintsByUser(user.id);
+        renderStats();
+        renderList();
+      } catch (err) {
+        showToast('Gagal mengirim aduan: ' + err.message, 'error');
+        btn.innerHTML = oldBtnHTML;
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // Bind create button handler
+  document.getElementById('createNewComplaintBtn')?.addEventListener('click', openCreateComplaintModal);
 
   renderStats();
   renderList();
