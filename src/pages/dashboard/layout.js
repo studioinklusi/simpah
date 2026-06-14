@@ -26,10 +26,10 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           <div class="sidebar-section">
             <div class="sidebar-section-title">Pemantauan</div>
             ${canViewExecutive(user) ? `
-            <a href="#/dashboard/eksekutif" class="sidebar-link ${activeMenu === 'eksekutif' ? 'active' : ''}">
+            <a href="#/dashboard/eksekutif" class="sidebar-link ${isActiveRoute('/dashboard/eksekutif') ? 'active' : ''}">
               ${icons.chart} <span>Ringkasan Eksekutif</span>
             </a>` : ''}
-            <a href="#/dashboard/gis" class="sidebar-link ${activeMenu === 'gis' ? 'active' : ''}">
+            <a href="#/dashboard/gis" class="sidebar-link ${isActiveRoute('/dashboard/gis') ? 'active' : ''}">
               ${icons.map} <span>Peta GIS</span>
             </a>
           </div>
@@ -37,40 +37,40 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           <div class="sidebar-section">
             <div class="sidebar-section-title">Pengelolaan</div>
             ${isAdmin(user) ? `
-            <a href="#/dashboard/laporan" class="sidebar-link ${activeMenu === 'laporan' ? 'active' : ''}">
+            <a href="#/dashboard/laporan" class="sidebar-link ${isActiveRoute('/dashboard/laporan') ? 'active' : ''}">
               ${icons.file} <span>Laporan & Export</span>
             </a>` : ''}
             ${canValidate(user) ? `
-            <a href="#/dashboard/validasi" class="sidebar-link ${activeMenu === 'validasi' ? 'active' : ''}">
+            <a href="#/dashboard/validasi" class="sidebar-link ${isActiveRoute('/dashboard/validasi') ? 'active' : ''}">
               ${icons.checkCircle} <span>Validasi Data</span>
             </a>` : ''}
             ${isAdmin(user) ? `
-            <a href="#/dashboard/mou" class="sidebar-link ${activeMenu === 'mou' ? 'active' : ''}">
+            <a href="#/dashboard/mou" class="sidebar-link ${isActiveRoute('/dashboard/mou') ? 'active' : ''}">
               ${icons.clipboard} <span>Manajemen MoU</span>
             </a>
-            <a href="#/dashboard/intervensi" class="sidebar-link ${activeMenu === 'intervensi' ? 'active' : ''}">
+            <a href="#/dashboard/intervensi" class="sidebar-link ${isActiveRoute('/dashboard/intervensi') ? 'active' : ''}">
               ${icons.shield} <span>Intervensi Wilayah</span>
             </a>
-            <a href="#/dashboard/intervensi-fasum" class="sidebar-link ${activeMenu === 'intervensi-fasum' ? 'active' : ''}">
+            <a href="#/dashboard/intervensi-fasum" class="sidebar-link ${isActiveRoute('/dashboard/intervensi-fasum') ? 'active' : ''}">
               ${icons.grid} <span>Intervensi Fasum</span>
             </a>
-            <a href="#/dashboard/masterdata" class="sidebar-link ${activeMenu === 'masterdata' ? 'active' : ''}">
+            <a href="#/dashboard/masterdata" class="sidebar-link ${isActiveRoute('/dashboard/masterdata') ? 'active' : ''}">
               ${icons.settings} <span>Master Data</span>
             </a>
-            <a href="#/dashboard/audit" class="sidebar-link ${activeMenu === 'audit' ? 'active' : ''}">
+            <a href="#/dashboard/audit" class="sidebar-link ${isActiveRoute('/dashboard/audit') ? 'active' : ''}">
               ${icons.activity} <span>Audit Log</span>
             </a>` : ''}
           </div>
           ` : ''}
           <div class="sidebar-section">
             <div class="sidebar-section-title">Layanan</div>
-            <a href="#/dashboard/aduan" class="sidebar-link ${activeMenu === 'aduan' ? 'active' : ''}">
+            <a href="#/dashboard/aduan" class="sidebar-link ${isActiveRoute('/dashboard/aduan') ? 'active' : ''}">
               ${icons.messageCircle} <span>Aduan Warga</span>
             </a>
           </div>
           <div class="sidebar-section">
             <div class="sidebar-section-title">Operasional</div>
-            <a href="#/pwa/home" class="sidebar-link ${activeMenu === 'pwa' ? 'active' : ''}">
+            <a href="#/pwa/home" class="sidebar-link ${isActiveRoute('/pwa/home') ? 'active' : ''}">
               ${icons.activity} <span>Input Lapangan</span>
             </a>
           </div>
