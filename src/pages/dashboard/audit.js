@@ -94,6 +94,18 @@ export async function renderAuditLog() {
           <option value="">Semua Pengguna</option>
           ${users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('')}
         </select>
+        <select class="form-select" id="auditDateFilter" style="max-width:180px">
+          <option value="all">Semua Waktu</option>
+          <option value="today">Hari Ini</option>
+          <option value="7days">7 Hari Terakhir</option>
+          <option value="30days">30 Hari Terakhir</option>
+          <option value="custom">Kustom Tanggal...</option>
+        </select>
+        <div id="customDateRange" style="display:none; gap:var(--space-2); align-items:center;">
+          <input type="date" class="form-input" id="startDateInput" style="max-width:140px; padding: 6px 12px;" />
+          <span style="font-size:var(--font-xs);color:var(--text-muted)">s/d</span>
+          <input type="date" class="form-input" id="endDateInput" style="max-width:140px; padding: 6px 12px;" />
+        </div>
         <span style="font-size:var(--font-xs);color:var(--text-muted);margin-left:auto" id="auditCount">${logs.length} log ditampilkan</span>
       </div>
 
@@ -172,19 +184,52 @@ export async function renderAuditLog() {
   }
 
   // Filter handlers
-  document.getElementById('auditEntityFilter')?.addEventListener('change', (e) => {
-    applyFilters();
-  });
-  document.getElementById('auditUserFilter')?.addEventListener('change', (e) => {
-    applyFilters();
-  });
+  document.getElementById('auditEntityFilter')?.addEventListener('change', () => applyFilters());
+  document.getElementById('auditUserFilter')?.addEventListener('change', () => applyFilters());
+  document.getElementById('auditDateFilter')?.addEventListener('change', () => applyFilters());
+  document.getElementById('startDateInput')?.addEventListener('change', () => applyFilters());
+  document.getElementById('endDateInput')?.addEventListener('change', () => applyFilters());
 
   function applyFilters() {
     const entityFilter = document.getElementById('auditEntityFilter')?.value;
     const userFilter = document.getElementById('auditUserFilter')?.value;
+    const dateFilter = document.getElementById('auditDateFilter')?.value;
+    
+    // Custom date range inputs
+    const customRange = document.getElementById('customDateRange');
+    const startDate = document.getElementById('startDateInput')?.value;
+    const endDate = document.getElementById('endDateInput')?.value;
+
+    if (customRange) {
+      customRange.style.display = dateFilter === 'custom' ? 'inline-flex' : 'none';
+    }
+
     filteredLogs = logs.filter(l => {
+      // Entity Filter
       if (entityFilter && l.entity_type !== entityFilter) return false;
+      // User Filter
       if (userFilter && l.user_id !== userFilter) return false;
+
+      // Date Filter
+      if (l.timestamp) {
+        const logDateStr = l.timestamp.split('T')[0];
+        const logDate = new Date(l.timestamp);
+        
+        if (dateFilter === 'today') {
+          const todayStr = new Date().toISOString().split('T')[0];
+          if (logDateStr !== todayStr) return false;
+        } else if (dateFilter === '7days') {
+          const limit = new Date(Date.now() - 7 * 86400000);
+          if (logDate < limit) return false;
+        } else if (dateFilter === '30days') {
+          const limit = new Date(Date.now() - 30 * 86400000);
+          if (logDate < limit) return false;
+        } else if (dateFilter === 'custom') {
+          if (startDate && logDateStr < startDate) return false;
+          if (endDate && logDateStr > endDate) return false;
+        }
+      }
+
       return true;
     });
     renderTable();

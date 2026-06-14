@@ -3,9 +3,24 @@ import { icons } from '../../components/icons.js';
 import { confirmLogout } from '../../components/logout-modal.js';
 import { getCurrentUser, toggleTheme, getState } from '../../utils/helpers.js';
 import { isActiveRoute } from '../../router.js';
+import { renderDashboardLayout } from '../dashboard/layout.js';
 
 export function renderPWALayout(title, content, activeTab = 'home') {
   const user = getCurrentUser();
+
+  const isDesktopView = window.innerWidth > 768;
+  if (isDesktopView) {
+    const backButtonHTML = title !== 'Beranda' ? `
+      <div style="margin-bottom: var(--space-4);">
+        <button class="btn btn-ghost btn-sm" onclick="history.back()" style="display:inline-flex; align-items:center; gap:var(--space-1); font-weight:600; padding: var(--space-2) var(--space-3);">
+          ${icons.chevronLeft} Kembali
+        </button>
+      </div>
+    ` : '';
+    renderDashboardLayout(title, backButtonHTML + content, 'input-lapangan');
+    return;
+  }
+
   const app = document.getElementById('app');
   
   app.innerHTML = `

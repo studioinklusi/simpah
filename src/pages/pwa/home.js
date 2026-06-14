@@ -76,9 +76,9 @@ export async function renderPWAHome() {
         return buttons;
       })() : ''}
       ${canValidate(user) ? `
-      <a href="#/dashboard/validasi" class="quick-action-btn" style="border:1px solid var(--primary-500);background:rgba(16,185,129,0.05)">
-        <div class="quick-action-icon" style="background:var(--primary-500);color:white;box-shadow:0 4px 12px rgba(16,185,129,0.3)">${icons.checkCircle}</div>
-        <span class="quick-action-label" style="font-weight:700">Validasi Data</span>
+      <a href="#/dashboard/validasi" class="quick-action-btn">
+        <div class="quick-action-icon green">${icons.checkCircle}</div>
+        <span class="quick-action-label">Validasi Data</span>
       </a>
       ` : ''}
       ${user?.job_type !== 'angkut' ? `
