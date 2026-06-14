@@ -56,7 +56,7 @@ export async function renderMasterData() {
     </div>
 
     <style>
-      .master-data { max-width:1100px; }
+      .master-data { width:100%; max-width:1100px; }
       .md-header h2 { font-size:var(--font-xl); font-weight:700; margin-bottom:var(--space-1); }
       .md-header p { font-size:var(--font-sm); color:var(--text-secondary); margin-bottom:var(--space-5); }
       .md-tabs { display:flex; gap:var(--space-2); border-bottom:2px solid var(--border-color); margin-bottom:var(--space-5); flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:6px; scrollbar-width:thin; scrollbar-color:rgba(156,163,175,0.3) transparent; }
@@ -70,6 +70,7 @@ export async function renderMasterData() {
       .md-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3); }
       .md-toolbar h3 { font-size:var(--font-base); font-weight:600; }
       .md-count { font-size:var(--font-xs); color:var(--text-muted); background:var(--gray-100); padding:var(--space-1) var(--space-3); border-radius:var(--radius-full); }
+      .md-table-container { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:var(--space-4); }
       .md-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--border-color); border-radius:var(--radius-lg); overflow:hidden; }
       .md-table th { background:var(--gray-50); padding:var(--space-3) var(--space-4); font-size:var(--font-xs); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-secondary); text-align:left; border-bottom:1px solid var(--border-color); }
       .md-table td { padding:var(--space-3) var(--space-4); font-size:var(--font-sm); border-bottom:1px solid var(--border-color); vertical-align:middle; }
@@ -174,22 +175,24 @@ export async function renderMasterData() {
         </div>
         <button class="btn btn-primary btn-sm" id="addLocationBtn">${icons.plus} Tambah Lokasi</button>
       </div>
-      <table class="md-table">
-        <thead><tr><th>Nama</th><th>Tipe</th><th>Wilayah</th><th>Koordinat</th><th>Aksi</th></tr></thead>
-        <tbody>
-          ${locations.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data lokasi</td></tr>' :
-            locations.map(l => `<tr>
-              <td><strong>${l.name}</strong></td>
-              <td><span class="md-badge ${badgeColors[l.type] || 'blue'}">${l.type?.toUpperCase()}</span></td>
-              <td>${l.wilayah || '-'}</td>
-              <td style="font-size:var(--font-xs);color:var(--text-muted)">${l.lat && l.lng ? `${Number(l.lat).toFixed(4)}, ${Number(l.lng).toFixed(4)}` : '-'}</td>
-              <td><div class="md-actions">
-                <button class="md-btn-icon" title="Edit" data-edit-loc="${l.id}">${icons.edit}</button>
-                <button class="md-btn-icon danger" title="Hapus" data-del-loc="${l.id}">${icons.trash}</button>
-              </div></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
+      <div class="md-table-container">
+        <table class="md-table">
+          <thead><tr><th>Nama</th><th>Tipe</th><th>Wilayah</th><th>Koordinat</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${locations.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data lokasi</td></tr>' :
+              locations.map(l => `<tr>
+                <td><strong>${l.name}</strong></td>
+                <td><span class="md-badge ${badgeColors[l.type] || 'blue'}">${l.type?.toUpperCase()}</span></td>
+                <td>${l.wilayah || '-'}</td>
+                <td style="font-size:var(--font-xs);color:var(--text-muted)">${l.lat && l.lng ? `${Number(l.lat).toFixed(4)}, ${Number(l.lng).toFixed(4)}` : '-'}</td>
+                <td><div class="md-actions">
+                  <button class="md-btn-icon" title="Edit" data-edit-loc="${l.id}">${icons.edit}</button>
+                  <button class="md-btn-icon danger" title="Hapus" data-del-loc="${l.id}">${icons.trash}</button>
+                </div></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
     document.getElementById('addLocationBtn')?.addEventListener('click', () => openLocationForm());
     container.querySelectorAll('[data-edit-loc]').forEach(btn => btn.addEventListener('click', async () => {
@@ -274,22 +277,24 @@ export async function renderMasterData() {
         </div>
         <button class="btn btn-primary btn-sm" id="addFleetBtn">${icons.plus} Tambah Kendaraan</button>
       </div>
-      <table class="md-table">
-        <thead><tr><th>Plat Nomor</th><th>Jenis</th><th>Kapasitas</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody>
-          ${fleet.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data kendaraan</td></tr>' :
-            fleet.map(f => `<tr>
-              <td><strong>${f.plate_number}</strong></td>
-              <td>${f.vehicle_type || '-'}</td>
-              <td>${f.capacity_kg ? f.capacity_kg + ' kg' : '-'}</td>
-              <td><span class="md-badge ${f.status === 'active' ? 'green' : 'red'}">${f.status === 'active' ? 'Aktif' : 'Nonaktif'}</span></td>
-              <td><div class="md-actions">
-                <button class="md-btn-icon" title="Edit" data-edit-fleet="${f.id}">${icons.edit}</button>
-                <button class="md-btn-icon danger" title="Hapus" data-del-fleet="${f.id}">${icons.trash}</button>
-              </div></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
+      <div class="md-table-container">
+        <table class="md-table">
+          <thead><tr><th>Plat Nomor</th><th>Jenis</th><th>Kapasitas</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${fleet.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data kendaraan</td></tr>' :
+              fleet.map(f => `<tr>
+                <td><strong>${f.plate_number}</strong></td>
+                <td>${f.vehicle_type || '-'}</td>
+                <td>${f.capacity_kg ? f.capacity_kg + ' kg' : '-'}</td>
+                <td><span class="md-badge ${f.status === 'active' ? 'green' : 'red'}">${f.status === 'active' ? 'Aktif' : 'Nonaktif'}</span></td>
+                <td><div class="md-actions">
+                  <button class="md-btn-icon" title="Edit" data-edit-fleet="${f.id}">${icons.edit}</button>
+                  <button class="md-btn-icon danger" title="Hapus" data-del-fleet="${f.id}">${icons.trash}</button>
+                </div></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
     document.getElementById('addFleetBtn')?.addEventListener('click', () => openFleetForm());
     container.querySelectorAll('[data-edit-fleet]').forEach(btn => btn.addEventListener('click', () => {
@@ -368,22 +373,24 @@ export async function renderMasterData() {
         </div>
         <button class="btn btn-primary btn-sm" id="addUserBtn">${icons.plus} Tambah Pengguna</button>
       </div>
-      <table class="md-table">
-        <thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Wilayah</th><th>Aksi</th></tr></thead>
-        <tbody>
-          ${users.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data pengguna</td></tr>' :
-            users.map(u => `<tr>
-              <td><strong>${u.name}</strong></td>
-              <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
-              <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
-              <td>${u.wilayah || '-'}</td>
-              <td><div class="md-actions">
-                <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
-                ${u.role !== 'admin' ? `<button class="md-btn-icon danger" title="Hapus" data-del-user="${u.id}">${icons.trash}</button>` : ''}
-              </div></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
+      <div class="md-table-container">
+        <table class="md-table">
+          <thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Wilayah</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${users.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data pengguna</td></tr>' :
+              users.map(u => `<tr>
+                <td><strong>${u.name}</strong></td>
+                <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
+                <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
+                <td>${u.wilayah || '-'}</td>
+                <td><div class="md-actions">
+                  <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
+                  ${u.role !== 'admin' ? `<button class="md-btn-icon danger" title="Hapus" data-del-user="${u.id}">${icons.trash}</button>` : ''}
+                </div></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
     document.getElementById('addUserBtn')?.addEventListener('click', () => openUserForm());
     container.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
@@ -495,38 +502,40 @@ export async function renderMasterData() {
           <p style="font-size:var(--font-xs);color:var(--text-muted)">Data ini digunakan untuk menghitung potensi timbulan sampah & persentase kinerja per kecamatan di halaman Intervensi Wilayah.</p>
         </div>
       ` : `
-      <table class="md-table">
-        <thead>
-          <tr>
-            <th>Kecamatan</th>
-            <th style="text-align:right">Penduduk</th>
-            <th style="text-align:right">KK</th>
-            <th style="text-align:right">Luas (km²)</th>
-            <th style="text-align:right">Timbulan/kap</th>
-            <th style="text-align:right">Potensi/hari</th>
-            <th>Sumber</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${populations.map(p => {
-            const potensiHarian = (p.jumlah_penduduk * (p.timbulan_per_kapita || 0.7)).toFixed(0);
-            return `<tr>
-              <td><strong>${p.kecamatan}</strong></td>
-              <td style="text-align:right">${Number(p.jumlah_penduduk).toLocaleString('id-ID')} jiwa</td>
-              <td style="text-align:right">${Number(p.jumlah_kk).toLocaleString('id-ID')}</td>
-              <td style="text-align:right">${p.luas_km2 || '-'}</td>
-              <td style="text-align:right">${p.timbulan_per_kapita || 0.7} kg</td>
-              <td style="text-align:right;font-weight:600;color:var(--primary-600)">${Number(potensiHarian).toLocaleString('id-ID')} kg</td>
-              <td><span class="md-badge blue">${p.sumber_data || '-'} ${p.tahun_data || ''}</span></td>
-              <td><div class="md-actions">
-                <button class="md-btn-icon" title="Edit" data-edit-pop="${p.id}">${icons.edit}</button>
-                <button class="md-btn-icon danger" title="Hapus" data-del-pop="${p.id}">${icons.trash}</button>
-              </div></td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
+      <div class="md-table-container">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th>Kecamatan</th>
+              <th style="text-align:right">Penduduk</th>
+              <th style="text-align:right">KK</th>
+              <th style="text-align:right">Luas (km²)</th>
+              <th style="text-align:right">Timbulan/kap</th>
+              <th style="text-align:right">Potensi/hari</th>
+              <th>Sumber</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${populations.map(p => {
+              const potensiHarian = (p.jumlah_penduduk * (p.timbulan_per_kapita || 0.7)).toFixed(0);
+              return `<tr>
+                <td><strong>${p.kecamatan}</strong></td>
+                <td style="text-align:right">${Number(p.jumlah_penduduk).toLocaleString('id-ID')} jiwa</td>
+                <td style="text-align:right">${Number(p.jumlah_kk).toLocaleString('id-ID')}</td>
+                <td style="text-align:right">${p.luas_km2 || '-'}</td>
+                <td style="text-align:right">${p.timbulan_per_kapita || 0.7} kg</td>
+                <td style="text-align:right;font-weight:600;color:var(--primary-600)">${Number(potensiHarian).toLocaleString('id-ID')} kg</td>
+                <td><span class="md-badge blue">${p.sumber_data || '-'} ${p.tahun_data || ''}</span></td>
+                <td><div class="md-actions">
+                  <button class="md-btn-icon" title="Edit" data-edit-pop="${p.id}">${icons.edit}</button>
+                  <button class="md-btn-icon danger" title="Hapus" data-del-pop="${p.id}">${icons.trash}</button>
+                </div></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
       <div style="padding:var(--space-3);background:rgba(59,130,246,0.05);border-radius:var(--radius-md);margin-top:var(--space-4);font-size:var(--font-xs);color:var(--text-secondary);display:flex;align-items:flex-start;gap:var(--space-2)">
         ${icons.info} <span><strong>Info:</strong> Data kependudukan digunakan oleh halaman <em>Intervensi Wilayah</em> untuk menghitung potensi timbulan, % penanganan, dan % pengurangan per kecamatan. Pastikan nama kecamatan <strong>sama persis</strong> dengan field "Wilayah" di data Lokasi.</span>
       </div>
@@ -635,26 +644,28 @@ export async function renderMasterData() {
         </div>
         <button class="btn btn-primary btn-sm" id="addFasumBtn">${icons.plus} Tambah Fasum</button>
       </div>
-      <table class="md-table">
-        <thead><tr><th>Nama</th><th>Kategori</th><th>Wilayah</th><th>Kapasitas</th><th>Potensi Sampah</th><th>Aksi</th></tr></thead>
-        <tbody>
-          ${facilities.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data fasilitas umum</td></tr>' :
-            facilities.map(f => {
-              const potensiHarian = (f.capacity_value * (f.timbulan_per_unit || 0)).toFixed(1);
-              return `<tr>
-                <td><strong>${f.name}</strong></td>
-                <td><span class="md-badge blue">${f.category}</span></td>
-                <td>${f.kecamatan || '-'}</td>
-                <td>${f.capacity_value || 0} ${f.capacity_unit || ''}</td>
-                <td style="font-weight:600;color:var(--primary-600)">${potensiHarian} kg/hari</td>
-                <td><div class="md-actions">
-                  <button class="md-btn-icon" title="Edit" data-edit-fasum="${f.id}">${icons.edit}</button>
-                  <button class="md-btn-icon danger" title="Hapus" data-del-fasum="${f.id}">${icons.trash}</button>
-                </div></td>
-              </tr>`;
-            }).join('')}
-        </tbody>
-      </table>
+      <div class="md-table-container">
+        <table class="md-table">
+          <thead><tr><th>Nama</th><th>Kategori</th><th>Wilayah</th><th>Kapasitas</th><th>Potensi Sampah</th><th>Aksi</th></tr></thead>
+          <tbody>
+            ${facilities.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data fasilitas umum</td></tr>' :
+              facilities.map(f => {
+                const potensiHarian = (f.capacity_value * (f.timbulan_per_unit || 0)).toFixed(1);
+                return `<tr>
+                  <td><strong>${f.name}</strong></td>
+                  <td><span class="md-badge blue">${f.category}</span></td>
+                  <td>${f.kecamatan || '-'}</td>
+                  <td>${f.capacity_value || 0} ${f.capacity_unit || ''}</td>
+                  <td style="font-weight:600;color:var(--primary-600)">${potensiHarian} kg/hari</td>
+                  <td><div class="md-actions">
+                    <button class="md-btn-icon" title="Edit" data-edit-fasum="${f.id}">${icons.edit}</button>
+                    <button class="md-btn-icon danger" title="Hapus" data-del-fasum="${f.id}">${icons.trash}</button>
+                  </div></td>
+                </tr>`;
+              }).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
     document.getElementById('addFasumBtn')?.addEventListener('click', () => openFasumForm());
     container.querySelectorAll('[data-edit-fasum]').forEach(btn => btn.addEventListener('click', () => {
@@ -859,7 +870,7 @@ export async function renderMasterData() {
           ${icons.plus} Buat Kode Baru
         </button>
       </div>
-      <div style="overflow-x:auto">
+      <div class="md-table-container">
         <table class="md-table">
           <thead>
             <tr>
