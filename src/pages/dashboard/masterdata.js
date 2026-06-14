@@ -137,7 +137,12 @@ export async function renderMasterData() {
       console.error(`[MasterData] Error loading tab ${tab}:`, err);
       let errorMessage = err.message || 'Terjadi kesalahan saat memuat data.';
       
-      if (tab === 'invitations' && (errorMessage.toLowerCase().includes('relation') || errorMessage.toLowerCase().includes('does not exist'))) {
+      if (tab === 'invitations' && (
+        errorMessage.toLowerCase().includes('relation') || 
+        errorMessage.toLowerCase().includes('does not exist') ||
+        errorMessage.toLowerCase().includes('invitation_codes') ||
+        errorMessage.toLowerCase().includes('schema cache')
+      )) {
         errorMessage = 'Tabel <code>invitation_codes</code> belum dibuat di database Supabase Anda. Harap jalankan script SQL migrasi di editor Supabase Anda terlebih dahulu.';
       }
       
