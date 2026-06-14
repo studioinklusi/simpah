@@ -392,8 +392,37 @@
   color: var(--text-muted);
 }
 
-/* Hide bottom nav on desktop */
+/* Centered Mobile Frame for PWA on Desktop */
 @media (min-width: 769px) {
-  .bottom-nav { display: none; }
-  .pwa-layout { padding-bottom: 0; }
+  .pwa-layout {
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    background: var(--bg-card);
+    padding-bottom: calc(var(--bottom-nav-height) + var(--space-4));
+  }
+  [data-theme="dark"] .pwa-layout {
+    background: var(--gray-900);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  }
+  .pwa-header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    left: 0;
+    z-index: var(--z-sticky);
+  }
+  .bottom-nav {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+    display: flex;
+    z-index: var(--z-fixed);
+  }
 }

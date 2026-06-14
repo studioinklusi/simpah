@@ -321,6 +321,7 @@ export function renderRegister() {
 
   let isInvitationCodeValid = true;
   let resolvedRole = 'warga';
+  let resolvedJobType = null;
 
   invitationCodeInput.addEventListener('change', async () => {
     const code = invitationCodeInput.value.trim();
@@ -341,8 +342,26 @@ export function renderRegister() {
       if (res && res.is_valid) {
         isInvitationCodeValid = true;
         resolvedRole = res.role;
+        resolvedJobType = res.job_type;
         invitationFeedback.style.color = '#059669';
-        let roleName = res.role === 'petugas' ? `Petugas Lapangan (${res.job_type || 'Umum'})` : (res.role === 'eksekutif' ? 'Eksekutif' : res.role);
+        
+        let roleName = res.role;
+        if (res.role === 'petugas') {
+          const jobLabels = {
+            kader: 'Kader Lingkungan',
+            operator_tps: 'Operator TPS3R',
+            angkut: 'Petugas Pengangkut',
+            koordinator: 'Koordinator Lapangan'
+          };
+          roleName = jobLabels[res.job_type] || 'Petugas Lapangan';
+        } else if (res.role === 'eksekutif') {
+          roleName = 'Eksekutif';
+        } else if (res.role === 'admin') {
+          roleName = 'Administrator';
+        } else {
+          roleName = 'Warga';
+        }
+
         if (res.location_name) {
           roleName += ` - ${res.location_name}`;
         }
@@ -448,9 +467,19 @@ export function renderRegister() {
         successMessage.textContent = 'Akun Anda telah berhasil didaftarkan. Silakan periksa email Anda (termasuk folder spam) untuk memverifikasi alamat email sebelum melakukan login.';
       } else {
         let roleDisplay = 'Warga';
-        if (resolvedRole === 'petugas') roleDisplay = 'Petugas Lapangan';
-        else if (resolvedRole === 'eksekutif') roleDisplay = 'Eksekutif';
-        else if (resolvedRole === 'admin') roleDisplay = 'Administrator';
+        if (resolvedRole === 'petugas') {
+          const jobLabels = {
+            kader: 'Kader Lingkungan',
+            operator_tps: 'Operator TPS3R',
+            angkut: 'Petugas Pengangkut',
+            koordinator: 'Koordinator Lapangan'
+          };
+          roleDisplay = jobLabels[resolvedJobType] || 'Petugas Lapangan';
+        } else if (resolvedRole === 'eksekutif') {
+          roleDisplay = 'Eksekutif';
+        } else if (resolvedRole === 'admin') {
+          roleDisplay = 'Administrator';
+        }
 
         successMessage.textContent = `Akun Anda telah berhasil terdaftar sebagai ${roleDisplay} SIMPAH. Anda sekarang dapat masuk menggunakan email dan password Anda.`;
       }

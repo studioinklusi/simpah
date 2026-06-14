@@ -29,8 +29,8 @@ export async function renderAduanManagement() {
     ? 'Pantau, proses, dan tindak lanjuti laporan dari masyarakat.'
     : 'Lihat status dan riwayat aduan yang Anda buat.';
 
-  const isMobile = window.innerWidth <= 768;
-  const renderLayout = (['warga', 'petugas'].includes(user.role) && isMobile) ? renderPWALayout : renderDashboardLayout;
+  const isPWARole = ['warga', 'petugas'].includes(user.role) && user.job_type !== 'koordinator';
+  const renderLayout = isPWARole ? renderPWALayout : renderDashboardLayout;
 
   renderLayout('Aduan Warga', `
     <div class="aduan-mgmt page-enter">

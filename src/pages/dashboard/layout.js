@@ -80,7 +80,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <div class="sidebar-user-avatar">${user ? (user.full_name || 'U').charAt(0).toUpperCase() : 'U'}</div>
             <div class="sidebar-user-info">
               <div class="sidebar-user-name">${user?.full_name || 'Guest'}</div>
-              <div class="sidebar-user-role">${getRoleName(user?.role)}</div>
+              <div class="sidebar-user-role">${getRoleName(user)}</div>
             </div>
           </div>
         </div>
@@ -175,7 +175,17 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
 
 }
 
-function getRoleName(role) {
-  const names = { warga: 'Warga', petugas: 'Petugas Pengangkut', eksekutif: 'Eksekutif', admin: 'Administrator' };
-  return names[role] || 'User';
+function getRoleName(user) {
+  if (!user) return 'User';
+  if (user.role === 'petugas') {
+    const jobLabels = {
+      kader: 'Kader Lingkungan',
+      operator_tps: 'Operator TPS3R',
+      angkut: 'Petugas Pengangkut',
+      koordinator: 'Koordinator Lapangan'
+    };
+    return jobLabels[user.job_type] || 'Petugas Lapangan';
+  }
+  const names = { warga: 'Warga', eksekutif: 'Eksekutif', admin: 'Administrator' };
+  return names[user.role] || 'User';
 }
