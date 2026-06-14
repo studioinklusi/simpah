@@ -76,7 +76,7 @@ export async function renderGIS() {
   `, 'gis');
 
   // Init map after DOM is ready
-  setTimeout(() => initMap(locations, records, facilities), 100);
+  setTimeout(() => initMap(locations, records, facilities), 200);
 
   return () => {
     // cleanup map on page leave
@@ -273,4 +273,9 @@ async function initMap(locations, allRecords, facilities) {
     const coords = locations.map(l => [l.lat, l.lng]);
     map.fitBounds(L.latLngBounds(coords).pad(0.1));
   }
+
+  // Force map to recalculate container size after rendering settles
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 250);
 }
