@@ -704,6 +704,57 @@ export async function saveRolePermissions(roleCode, moduleIds) {
   }
 }
 
+// ========== INVITATION CODES (Supabase only) ==========
+export async function getAllInvitationCodes() {
+  const { data, error } = await supabase
+    .from('invitation_codes')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addInvitationCode(codeObj) {
+  if (!navigator.onLine) throw new Error('Penambahan kode undangan harus dalam keadaan online');
+  const { data, error } = await supabase
+    .from('invitation_codes')
+    .insert([codeObj])
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateInvitationCode(id, updates) {
+  if (!navigator.onLine) throw new Error('Perubahan kode undangan harus dalam keadaan online');
+  const updatedData = { ...updates, updated_at: new Date().toISOString() };
+  const { data, error } = await supabase
+    .from('invitation_codes')
+    .update(updatedData)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteInvitationCode(id) {
+  if (!navigator.onLine) throw new Error('Penghapusan kode undangan harus dalam keadaan online');
+  const { error } = await supabase
+    .from('invitation_codes')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function validateInvitationCode(code) {
+  const { data, error } = await supabase.rpc('check_invitation_code', {
+    input_code: code
+  });
+  if (error) throw error;
+  return data && data[0] ? data[0] : null;
+}
+
 // ========== Helpers ==========
 function generateId() {
   return crypto.randomUUID();

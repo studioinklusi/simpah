@@ -110,15 +110,21 @@ export async function login(emailOrUsername, password) {
  * Register a new user with email, password, username, and full name.
  * Default role is 'warga' set by database trigger.
  */
-export async function register(email, password, username, fullName) {
+export async function register(email, password, username, fullName, invitationCode = null) {
+  const metadata = {
+    username: username.trim().toLowerCase(),
+    full_name: fullName.trim(),
+  };
+
+  if (invitationCode && invitationCode.trim()) {
+    metadata.invitation_code = invitationCode.trim().toUpperCase();
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {
-        username: username.trim().toLowerCase(),
-        full_name: fullName.trim(),
-      }
+      data: metadata
     }
   });
 

@@ -11,7 +11,8 @@ import {
   getAllUsers, addUser, updateUser, deleteUser,
   getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
   getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility,
-  getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions
+  getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions,
+  getAllInvitationCodes, addInvitationCode, updateInvitationCode, deleteInvitationCode
 } from '../../db/store.js';
 
 export async function renderMasterData() {
@@ -35,6 +36,7 @@ export async function renderMasterData() {
         <button class="md-tab" data-tab="population" style="display:inline-flex;align-items:center;gap:8px">${icons.chart} Kependudukan</button>
         <button class="md-tab" data-tab="fasum" style="display:inline-flex;align-items:center;gap:8px">${icons.grid} Fasilitas Umum</button>
         <button class="md-tab" data-tab="rbac" style="display:inline-flex;align-items:center;gap:8px">${icons.shield} Hak Akses</button>
+        <button class="md-tab" data-tab="invitations" style="display:inline-flex;align-items:center;gap:8px">🎟️ Kode Undangan</button>
       </div>
 
       <div class="md-content" id="mdContent">
@@ -129,6 +131,7 @@ export async function renderMasterData() {
     else if (tab === 'population') await renderPopulationTab(container);
     else if (tab === 'fasum') await renderFasumTab(container);
     else if (tab === 'rbac') await renderRbacTab(container);
+    else if (tab === 'invitations') await renderInvitationsTab(container);
   }
 
   // ---------- LOCATIONS TAB ----------
@@ -807,6 +810,248 @@ export async function renderMasterData() {
         loadTabContent('rbac');
       } catch (err) {
         showToast('Gagal: ' + err.message, 'error');
+      }
+    });
+  }
+
+  // ---------- INVITATIONS TAB ----------
+  async function renderInvitationsTab(container) {
+    const [invitations, locations] = await Promise.all([
+      getAllInvitationCodes(),
+      getAllLocations()
+    ]);
+
+    container.innerHTML = `
+      <div class="md-toolbar">
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <h3 style="display:flex;align-items:center;gap:8px">🎟️ Daftar Kode Undangan</h3>
+          <span class="md-count">${invitations.length} kode</span>
+        </div>
+        <button class="btn btn-primary" id="addInvitationBtn" style="display:inline-flex;align-items:center;gap:8px">
+          ${icons.plus} Buat Kode Baru
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th>Kode</th>
+              <th>Role / Job Type</th>
+              <th>Lokasi Default</th>
+              <th>Penggunaan</th>
+              <th>Kedaluwarsa</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invitations.length === 0 ? `
+              <tr>
+                <td colspan="7" class="md-empty">Belum ada kode undangan yang dibuat.</td>
+              </tr>
+            ` : invitations.map(inv => {
+              const expiresStr = inv.expires_at ? new Date(inv.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Tidak Terbatas';
+              const maxUsesStr = inv.max_uses === 0 ? '∞' : inv.max_uses;
+              const isExpired = inv.expires_at && new Date(inv.expires_at) < new Date();
+              const isExhausted = inv.max_uses > 0 && inv.current_uses >= inv.max_uses;
+              
+              let statusBadge = '<span class="md-badge green">Aktif</span>';
+              if (!inv.is_active) statusBadge = '<span class="md-badge red">Nonaktif</span>';
+              else if (isExpired) statusBadge = '<span class="md-badge red">Expired</span>';
+              else if (isExhausted) statusBadge = '<span class="md-badge amber">Habis</span>';
+
+              const loc = locations.find(l => l.id === inv.location_id);
+              const locName = loc ? loc.name : '-';
+              
+              const roleDisplay = inv.role === 'petugas' ? `Petugas (${inv.job_type || 'Umum'})` : (inv.role === 'eksekutif' ? 'Eksekutif' : inv.role);
+
+              return `
+                <tr>
+                  <td style="font-weight:700;color:var(--text-primary);letter-spacing:0.5px">${inv.code}</td>
+                  <td>${roleDisplay}</td>
+                  <td>${locName}</td>
+                  <td><strong>${inv.current_uses}</strong> / ${maxUsesStr}</td>
+                  <td>${expiresStr}</td>
+                  <td>${statusBadge}</td>
+                  <td>
+                    <div class="md-actions">
+                      <button class="md-btn-icon copy-inv-btn" data-code="${inv.code}" title="Salin Kode">${icons.clipboard}</button>
+                      <button class="md-btn-icon edit-inv-btn" data-id="${inv.id}" title="Edit">${icons.edit}</button>
+                      <button class="md-btn-icon danger delete-inv-btn" data-id="${inv.id}" title="Hapus">${icons.trash}</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Bind event handlers
+    document.getElementById('addInvitationBtn')?.addEventListener('click', () => showInvitationModal(null, locations));
+
+    container.querySelectorAll('.copy-inv-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.code);
+        showToast(`Kode "${btn.dataset.code}" disalin ke clipboard`, 'success');
+      });
+    });
+
+    container.querySelectorAll('.edit-inv-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inv = invitations.find(item => item.id === btn.dataset.id);
+        showInvitationModal(inv, locations);
+      });
+    });
+
+    container.querySelectorAll('.delete-inv-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (confirm('Yakin ingin menghapus kode undangan ini?')) {
+          try {
+            await deleteInvitationCode(btn.dataset.id);
+            showToast('Kode undangan berhasil dihapus', 'success');
+            loadTabContent('invitations');
+          } catch (err) {
+            showToast('Gagal menghapus: ' + err.message, 'error');
+          }
+        }
+      });
+    });
+  }
+
+  // ---------- INVITATIONS MODAL ----------
+  function showInvitationModal(inv, locations) {
+    const isEdit = !!inv;
+    
+    const bodyHTML = `
+      <form id="invitationForm" class="md-form">
+        <div class="form-group">
+          <label class="form-label">Kode Undangan</label>
+          <div style="display:flex;gap:var(--space-2)">
+            <input type="text" id="fInvCode" class="form-input" style="text-transform:uppercase;font-family:monospace;letter-spacing:1px;font-weight:700" value="${inv?.code || ''}" placeholder="Contoh: PETUGAS-KADER" required ${isEdit ? 'disabled' : ''} />
+            ${isEdit ? '' : `<button type="button" class="btn btn-secondary" id="btnGenCode" style="white-space:nowrap">Acak Kode</button>`}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role (Peran)</label>
+          <select id="fInvRole" class="form-input" required>
+            <option value="" disabled selected>Pilih Role</option>
+            <option value="petugas" ${inv?.role === 'petugas' ? 'selected' : ''}>Petugas Lapangan</option>
+            <option value="eksekutif" ${inv?.role === 'eksekutif' ? 'selected' : ''}>Eksekutif</option>
+            <option value="warga" ${inv?.role === 'warga' ? 'selected' : ''}>Warga</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="groupJobType" style="display:${inv?.role === 'petugas' ? 'block' : 'none'}">
+          <label class="form-label">Job Type (Tipe Pekerjaan)</label>
+          <select id="fInvJobType" class="form-input">
+            <option value="" selected>Pilih Tipe Pekerjaan (Opsional)</option>
+            <option value="kader" ${inv?.job_type === 'kader' ? 'selected' : ''}>Kader Lingkungan</option>
+            <option value="angkut" ${inv?.job_type === 'angkut' ? 'selected' : ''}>Driver Armada</option>
+            <option value="operator_tps" ${inv?.job_type === 'operator_tps' ? 'selected' : ''}>Operator TPS3R</option>
+            <option value="koordinator" ${inv?.job_type === 'koordinator' ? 'selected' : ''}>Koordinator Lapangan</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Lokasi Default (Opsional)</label>
+          <select id="fInvLocation" class="form-input">
+            <option value="" selected>Pilih Lokasi</option>
+            ${locations.map(loc => `<option value="${loc.id}" ${inv?.location_id === loc.id ? 'selected' : ''}>${loc.name} (${loc.type})</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="grid-2" style="gap:var(--space-3)">
+          <div class="form-group">
+            <label class="form-label">Kuota Pemakaian</label>
+            <input type="number" id="fInvMaxUses" class="form-input" min="0" value="${inv?.max_uses !== undefined ? inv.max_uses : 0}" placeholder="0 = Tak Terbatas" />
+            <small style="color:var(--text-muted);font-size:11px">Isi 0 untuk penggunaan tanpa batas</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal Kedaluwarsa</label>
+            <input type="date" id="fInvExpiresAt" class="form-input" value="${inv?.expires_at ? new Date(inv.expires_at).toISOString().split('T')[0] : ''}" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Deskripsi / Catatan</label>
+          <textarea id="fInvDesc" class="form-input" rows="2" placeholder="Tulis catatan (misal: kode untuk kader RW 02)...">${inv?.description || ''}</textarea>
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="fInvActive" ${inv?.is_active !== false ? 'checked' : ''} style="width:16px;height:16px" />
+          <label for="fInvActive" style="font-weight:600;font-size:var(--font-sm);cursor:pointer">Kode Aktif</label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnCancelInv">Batal</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? 'Simpan Perubahan' : 'Buat Kode'}</button>
+        </div>
+      </form>
+    `;
+
+    openModal(isEdit ? 'Edit Kode Undangan' : 'Buat Kode Undangan Baru', bodyHTML);
+
+    // Event listener cancel
+    document.getElementById('btnCancelInv')?.addEventListener('click', closeModal);
+
+    // Toggle Job Type dropdown based on role
+    const roleSelect = document.getElementById('fInvRole');
+    const groupJobType = document.getElementById('groupJobType');
+    roleSelect.addEventListener('change', () => {
+      if (roleSelect.value === 'petugas') {
+        groupJobType.style.display = 'block';
+      } else {
+        groupJobType.style.display = 'none';
+        document.getElementById('fInvJobType').value = '';
+      }
+    });
+
+    // Generate random code helper
+    const btnGenCode = document.getElementById('btnGenCode');
+    if (btnGenCode) {
+      btnGenCode.addEventListener('click', () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('fInvCode').value = code;
+      });
+    }
+
+    // Submit handler
+    document.getElementById('invitationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const payload = {
+        code: document.getElementById('fInvCode').value.trim().toUpperCase(),
+        role: roleSelect.value,
+        job_type: roleSelect.value === 'petugas' ? document.getElementById('fInvJobType').value || null : null,
+        location_id: document.getElementById('fInvLocation').value || null,
+        max_uses: parseInt(document.getElementById('fInvMaxUses').value) || 0,
+        expires_at: document.getElementById('fInvExpiresAt').value ? new Date(document.getElementById('fInvExpiresAt').value).toISOString() : null,
+        description: document.getElementById('fInvDesc').value.trim() || null,
+        is_active: document.getElementById('fInvActive').checked
+      };
+
+      try {
+        if (isEdit) {
+          await updateInvitationCode(inv.id, payload);
+          showToast('Kode undangan berhasil diperbarui', 'success');
+        } else {
+          // Set created_by using current user ID
+          const currentUser = getCurrentUser();
+          payload.created_by = currentUser?.id || null;
+          await addInvitationCode(payload);
+          showToast('Kode undangan berhasil dibuat', 'success');
+        }
+        closeModal();
+        loadTabContent('invitations');
+      } catch (err) {
+        showToast('Gagal menyimpan: ' + err.message, 'error');
       }
     });
   }

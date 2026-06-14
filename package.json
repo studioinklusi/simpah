@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
   },
   "keywords": [
     "waste-management",
@@ -25,5 +28,8 @@
     "vite": "^6.3.2",
     "vite-plugin-pwa": "^1.0.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
   }
 }

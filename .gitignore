@@ -41,3 +41,7 @@ ml-backend/__pycache__/
 analisis_fitur_penduduk.md
 docs/daftar_akun_existing.md
 
+# Playwright
+playwright-report/
+test-results/
+

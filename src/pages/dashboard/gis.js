@@ -88,7 +88,9 @@ export async function renderGIS() {
 }
 
 async function initMap(locations, allRecords, facilities) {
-  const L = await import('leaflet');
+  const leafletModule = await import('leaflet');
+  const L = leafletModule.default || leafletModule;
+  window.L = L;
   await import('leaflet.heat');
 
   // Remove old map if exists

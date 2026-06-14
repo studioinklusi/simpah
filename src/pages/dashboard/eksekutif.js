@@ -477,10 +477,10 @@ function renderTopKader(records, users) {
         <td>
           <div style="display:flex;align-items:center;gap:8px">
             <div style="width:24px;height:24px;border-radius:50%;background:var(--primary-100);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold">
-              ${user ? user.full_name.charAt(0).toUpperCase() : '?'}
+              ${user ? (user.full_name || user.name || '?').charAt(0).toUpperCase() : '?'}
             </div>
             <div>
-              <strong style="font-size:var(--font-sm)">${user?.full_name || id}</strong>
+              <strong style="font-size:var(--font-sm)">${user?.full_name || user?.name || id}</strong>
               <div style="font-size:10px;color:var(--text-muted)">${user?.role || 'Kader'}</div>
             </div>
           </div>

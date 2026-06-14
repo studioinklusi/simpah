@@ -2,6 +2,7 @@
 import { icons } from '../components/icons.js';
 import { register as authRegister, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
 import { showToast } from '../components/toast.js';
+import { validateInvitationCode } from '../db/store.js';
 
 export function renderRegister() {
   // If already logged in, redirect to default page
@@ -124,6 +125,23 @@ export function renderRegister() {
           </div>
 
           <form id="registerForm" class="login-form">
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-1)">
+                <label class="form-label" style="margin-bottom:0">Kode Undangan (Opsional)</label>
+                <span style="font-size:var(--font-xs); color:var(--text-muted)">Khusus Petugas & Eksekutif</span>
+              </div>
+              <div class="input-with-icon">
+                <span class="input-icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                <input type="text" id="regInvitationCode" class="form-input form-input-lg has-icon-left" 
+                  placeholder="Masukkan kode (jika ada)" 
+                  autocomplete="off" style="text-transform: uppercase;" />
+              </div>
+              <div id="invitationFeedback" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); align-items:center; gap:4px">
+              </div>
+            </div>
+
             <div class="form-group">
               <label class="form-label">Nama Lengkap</label>
               <div class="input-with-icon">
@@ -240,6 +258,8 @@ export function renderRegister() {
 
   // ── DOM Elements ────────────────────────────────────────────────
   const form = document.getElementById('registerForm');
+  const invitationCodeInput = document.getElementById('regInvitationCode');
+  const invitationFeedback = document.getElementById('invitationFeedback');
   const fullNameInput = document.getElementById('regFullName');
   const usernameInput = document.getElementById('regUsername');
   const emailInput = document.getElementById('regEmail');
@@ -299,6 +319,55 @@ export function renderRegister() {
     }
   }
 
+  let isInvitationCodeValid = true;
+  let resolvedRole = 'warga';
+
+  invitationCodeInput.addEventListener('change', async () => {
+    const code = invitationCodeInput.value.trim();
+    if (!code) {
+      invitationFeedback.style.display = 'none';
+      invitationFeedback.innerHTML = '';
+      isInvitationCodeValid = true;
+      resolvedRole = 'warga';
+      return;
+    }
+
+    invitationFeedback.style.display = 'flex';
+    invitationFeedback.style.color = '#4b5563';
+    invitationFeedback.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:1.5px;margin:0"></div> Memvalidasi kode...`;
+
+    try {
+      const res = await validateInvitationCode(code);
+      if (res && res.is_valid) {
+        isInvitationCodeValid = true;
+        resolvedRole = res.role;
+        invitationFeedback.style.color = '#059669';
+        let roleName = res.role === 'petugas' ? `Petugas Lapangan (${res.job_type || 'Umum'})` : (res.role === 'eksekutif' ? 'Eksekutif' : res.role);
+        if (res.location_name) {
+          roleName += ` - ${res.location_name}`;
+        }
+        invitationFeedback.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Kode Valid: Terdaftar sebagai <strong>${roleName}</strong></span>
+        `;
+      } else {
+        isInvitationCodeValid = false;
+        resolvedRole = 'warga';
+        invitationFeedback.style.color = '#b91c1c';
+        invitationFeedback.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#b91c1c;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>${res?.error_message || 'Kode undangan tidak valid'}</span>
+        `;
+      }
+    } catch (err) {
+      console.error('Validation error:', err);
+      isInvitationCodeValid = false;
+      resolvedRole = 'warga';
+      invitationFeedback.style.color = '#b91c1c';
+      invitationFeedback.innerHTML = `<span>Gagal memverifikasi kode</span>`;
+    }
+  });
+
   // ── Form Submission ─────────────────────────────────────────────
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -353,11 +422,19 @@ export function renderRegister() {
       return;
     }
 
+    // Check code validity before proceeding
+    if (!isInvitationCodeValid) {
+      showError('Kode undangan yang Anda masukkan tidak valid. Silakan periksa kembali atau kosongkan.');
+      shakeCard();
+      return;
+    }
+
     // 2. Perform Register
     setLoading(true);
 
     try {
-      const data = await authRegister(email, password, username, fullName);
+      const invitationCode = invitationCodeInput.value.trim();
+      const data = await authRegister(email, password, username, fullName, invitationCode);
       showToast('Registrasi berhasil!', 'success');
 
       // Check if user is active or needs confirmation
@@ -370,7 +447,12 @@ export function renderRegister() {
       if (!isConfirmed && data.user?.confirmation_sent_at) {
         successMessage.textContent = 'Akun Anda telah berhasil didaftarkan. Silakan periksa email Anda (termasuk folder spam) untuk memverifikasi alamat email sebelum melakukan login.';
       } else {
-        successMessage.textContent = 'Akun Anda telah berhasil terdaftar sebagai Warga SIMPAH. Anda sekarang dapat masuk menggunakan email dan password Anda.';
+        let roleDisplay = 'Warga';
+        if (resolvedRole === 'petugas') roleDisplay = 'Petugas Lapangan';
+        else if (resolvedRole === 'eksekutif') roleDisplay = 'Eksekutif';
+        else if (resolvedRole === 'admin') roleDisplay = 'Administrator';
+
+        successMessage.textContent = `Akun Anda telah berhasil terdaftar sebagai ${roleDisplay} SIMPAH. Anda sekarang dapat masuk menggunakan email dan password Anda.`;
       }
 
       successState.style.display = 'block';
@@ -397,6 +479,7 @@ export function renderRegister() {
     emailInput.disabled = loading;
     passwordInput.disabled = loading;
     confirmPasswordInput.disabled = loading;
+    invitationCodeInput.disabled = loading;
   }
 
   // Helper inside form
