@@ -45,23 +45,78 @@ export async function renderAduanManagement() {
         ` : ''}
       </div>
 
-      <!-- Stats Row -->
-      <div class="am-stats" id="aduanStats"></div>
+      <div class="am-body">
+        <div class="am-main-content">
+          <!-- Stats Row -->
+          <div class="am-stats" id="aduanStats"></div>
 
-      <!-- Filter -->
-      <div class="am-filter">
-        <div class="am-filter-group">
-          <button class="am-filter-btn active" data-filter="all">Semua</button>
-          <button class="am-filter-btn" data-filter="baru" style="display:inline-flex;align-items:center;gap:4px;">${icons.download} Baru</button>
-          <button class="am-filter-btn" data-filter="diproses" style="display:inline-flex;align-items:center;gap:4px;">${icons.clock} Diproses</button>
-          <button class="am-filter-btn" data-filter="ditindaklanjuti" style="display:inline-flex;align-items:center;gap:4px;">${icons.tool} Ditindaklanjuti</button>
-          <button class="am-filter-btn" data-filter="selesai" style="display:inline-flex;align-items:center;gap:4px;">${icons.checkCircle} Selesai</button>
-          <button class="am-filter-btn" data-filter="ditolak" style="display:inline-flex;align-items:center;gap:4px;">${icons.xCircle} Ditolak</button>
+          <!-- Filter -->
+          <div class="am-filter">
+            <div class="am-filter-group">
+              <button class="am-filter-btn active" data-filter="all">Semua</button>
+              <button class="am-filter-btn" data-filter="baru" style="display:inline-flex;align-items:center;gap:4px;">${icons.download} Baru</button>
+              <button class="am-filter-btn" data-filter="diproses" style="display:inline-flex;align-items:center;gap:4px;">${icons.clock} Diproses</button>
+              <button class="am-filter-btn" data-filter="ditindaklanjuti" style="display:inline-flex;align-items:center;gap:4px;">${icons.tool} Ditindaklanjuti</button>
+              <button class="am-filter-btn" data-filter="selesai" style="display:inline-flex;align-items:center;gap:4px;">${icons.checkCircle} Selesai</button>
+              <button class="am-filter-btn" data-filter="ditolak" style="display:inline-flex;align-items:center;gap:4px;">${icons.xCircle} Ditolak</button>
+            </div>
+          </div>
+
+          <!-- List -->
+          <div id="aduanList"></div>
         </div>
-      </div>
 
-      <!-- List -->
-      <div id="aduanList"></div>
+        ${!canViewAll ? `
+        <div class="am-sidebar">
+          <!-- Widget 1: Alur Penanganan -->
+          <div class="am-widget">
+            <h4>Alur Penanganan Aduan</h4>
+            <ul class="am-flow-list">
+              <li>
+                <span class="am-flow-step">1</span>
+                <div>
+                  <strong>Aduan Terkirim</strong>
+                  <p>Laporan masuk ke sistem dan mendapatkan nomor resi pelacakan.</p>
+                </div>
+              </li>
+              <li>
+                <span class="am-flow-step">2</span>
+                <div>
+                  <strong>Verifikasi & Proses</strong>
+                  <p>Petugas memvalidasi laporan dan mengalokasikannya ke unit terkait.</p>
+                </div>
+              </li>
+              <li>
+                <span class="am-flow-step">3</span>
+                <div>
+                  <strong>Tindak Lanjut Selesai</strong>
+                  <p>Aksi lapangan dijalankan dan status diperbarui hingga selesai.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          
+          <!-- Widget 2: Kontak Darurat -->
+          <div class="am-widget">
+            <h4>Kontak Darurat Sampah</h4>
+            <div class="am-contact-item">
+              ${icons.phone}
+              <div>
+                <strong>Hotline DLH</strong>
+                <p>(0286) 591234</p>
+              </div>
+            </div>
+            <div class="am-contact-item">
+              ${icons.messageSquare}
+              <div>
+                <strong>WhatsApp Center</strong>
+                <p>+62 812-3456-7890</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
     </div>
 
     <!-- Detail Modal -->
@@ -100,6 +155,36 @@ export async function renderAduanManagement() {
       .am-card-reporter { font-size:var(--font-xs); color:var(--text-muted); }
       .am-badge { display:inline-flex; align-items:center; gap:var(--space-1); padding:var(--space-1) var(--space-3); border-radius:var(--radius-full); font-size:var(--font-xs); font-weight:700; }
       .am-empty { text-align:center; padding:var(--space-10); color:var(--text-muted); }
+      .am-body { display:flex; gap:var(--space-6); margin-top:var(--space-2); }
+      .am-main-content { flex:3; min-width:0; }
+      .am-sidebar { flex:1; display:flex; flex-direction:column; gap:var(--space-4); min-width:280px; }
+      .am-widget { background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-4); }
+      .am-widget h4 { font-size:var(--font-sm); font-weight:700; margin-bottom:var(--space-3); color:var(--text-primary); border-bottom:1px solid var(--border-color); padding-bottom:8px; }
+      
+      /* Flow List */
+      .am-flow-list { list-style:none; display:flex; flex-direction:column; gap:var(--space-3); }
+      .am-flow-list li { display:flex; gap:var(--space-3); align-items:flex-start; }
+      .am-flow-step { width:24px; height:24px; border-radius:50%; background:rgba(16,185,129,0.1); color:var(--primary-600); display:flex; align-items:center; justify-content:center; font-size:var(--font-xs); font-weight:700; flex-shrink:0; }
+      .am-flow-list li strong { font-size:var(--font-xs); color:var(--text-primary); display:block; }
+      .am-flow-list li p { font-size:11px; color:var(--text-secondary); line-height:1.4; margin:0; }
+      
+      /* Contact Item */
+      .am-contact-item { display:flex; gap:var(--space-3); align-items:center; margin-bottom:var(--space-3); }
+      .am-contact-item:last-child { margin-bottom:0; }
+      .am-contact-item svg { width:18px; height:18px; color:var(--primary-500); }
+      .am-contact-item strong { font-size:var(--font-xs); color:var(--text-primary); display:block; }
+      .am-contact-item p { font-size:var(--font-xs); color:var(--text-secondary); margin:0; }
+      
+      /* Empty State */
+      .am-empty-state { text-align:center; padding:var(--space-12) var(--space-8); background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-xl); margin:var(--space-4) 0; }
+      .am-empty-icon { font-size:48px; color:var(--text-muted); margin-bottom:var(--space-4); display:inline-block; }
+      .am-empty-state h3 { font-size:var(--font-lg); font-weight:700; margin-bottom:var(--space-2); color:var(--text-primary); }
+      .am-empty-state p { font-size:var(--font-sm); color:var(--text-secondary); max-width:400px; margin:0 auto; line-height:1.5; }
+
+      @media (max-width: 900px) {
+        .am-body { flex-direction:column; }
+        .am-sidebar { width:100%; min-width:0; }
+      }
       .am-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s; }
       .am-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:92%; max-width:580px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:scaleIn 0.2s; }
       .am-modal-header { display:flex; justify-content:space-between; align-items:center; padding:var(--space-5) var(--space-6); border-bottom:1px solid var(--border-color); }
@@ -144,7 +229,22 @@ export async function renderAduanManagement() {
     filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const container = document.getElementById('aduanList');
     if (filtered.length === 0) {
-      container.innerHTML = '<div class="am-empty"><p>Tidak ada aduan untuk filter ini.</p></div>';
+      container.innerHTML = `
+        <div class="am-empty-state">
+          <div class="am-empty-icon">${icons.clipboard || '📋'}</div>
+          <h3>Belum Ada Laporan</h3>
+          <p>${activeFilter === 'all' 
+            ? 'Anda belum pernah mengirimkan laporan pengaduan sampah. Semua laporan Anda akan tercatat di sini.' 
+            : `Tidak ada laporan dengan status <strong>${STATUS_CONFIG[activeFilter].label}</strong> saat ini.`
+          }</p>
+          ${!canViewAll && activeFilter === 'all' ? `
+            <button class="btn btn-primary btn-sm" id="emptyStateCreateBtn" style="margin-top:var(--space-4);display:inline-flex;align-items:center;gap:8px">
+              ${icons.plus} Buat Aduan Pertama
+            </button>
+          ` : ''}
+        </div>
+      `;
+      document.getElementById('emptyStateCreateBtn')?.addEventListener('click', openCreateComplaintModal);
       return;
     }
     container.innerHTML = filtered.map(c => {
