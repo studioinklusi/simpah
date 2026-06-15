@@ -368,6 +368,7 @@ export async function renderInputPilah() {
       showToast('Data pemilahan berhasil disimpan!', 'success');
       setTimeout(() => { window.location.hash = '#/pwa/sampah-masuk'; }, 800);
     } catch (err) {
+      console.error('Submit error in input-pilah:', err);
       showToast('Gagal: ' + err.message, 'error');
       btn.innerHTML = `${icons.recycle} Simpan Data Pilah`;
       btn.disabled = false;

@@ -7,6 +7,7 @@ async function loginAs(page, emailOrUsername, password) {
   await page.fill('#loginPassword', password);
   await page.click('button:has-text("Masuk Sekarang")');
   await expect(page).not.toHaveURL(/.*#\/login/, { timeout: 10000 });
+  await page.waitForTimeout(600);
 }
 
 test.describe('Modul 6: Dashboard Eksekutif & Analitik', () => {

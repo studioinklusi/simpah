@@ -92,7 +92,7 @@ export function startRouter(defaultRoute = '/login') {
     // Manage AI Assistant Widget visibility based on auth status and route
     const user = getAuthProfile();
     const widget = document.querySelector('.ai-chat-widget');
-    if (user && !isPublicRoute(hash)) {
+    if (user && !isPublicRoute(hash) && !hash.startsWith('/pwa')) {
       if (!widget) {
         try {
           const { renderAIChatWidget } = await import('./components/ai-chat.js');

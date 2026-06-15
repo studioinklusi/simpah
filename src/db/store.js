@@ -498,6 +498,22 @@ export async function addEvent(event, userId) {
 
 // ========== Users ==========
 export async function getAllUsers() {
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabase.from('profiles').select('*');
+      if (!error && data) {
+        const db = await getDB();
+        const tx = db.transaction('users', 'readwrite');
+        for (const item of data) {
+          await tx.store.put(item);
+        }
+        await tx.done;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Gagal mengambil profiles dari Supabase, menggunakan data lokal', e);
+    }
+  }
   return getAll('users');
 }
 

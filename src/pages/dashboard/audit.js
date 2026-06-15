@@ -35,7 +35,7 @@ export async function renderAuditLog() {
 
   const [logs, users] = await Promise.all([getAuditLog(), getAllUsers()]);
   const userMap = {};
-  users.forEach(u => { userMap[u.id] = u.name; });
+  users.forEach(u => { userMap[u.id] = u; });
 
   // Group logs by date
   const today = new Date().toISOString().split('T')[0];
@@ -155,7 +155,18 @@ export async function renderAuditLog() {
     body.innerHTML = filteredLogs.slice(0, 100).map(log => {
       const entity = ENTITY_LABELS[log.entity_type] || { label: log.entity_type, icon: icons.box, color: '#6b7280' };
       const action = ACTION_LABELS[log.action] || { label: log.action, color: '#6b7280', bg: 'rgba(107,114,128,0.1)' };
-      const userName = userMap[log.user_id] || log.user_id;
+      const userObj = userMap[log.user_id];
+      let displayUser = log.user_id;
+      let displaySub = log.user_id;
+      
+      if (log.user_id === 'system') {
+        displayUser = 'Sistem / Automasi';
+        displaySub = 'system';
+      } else if (userObj) {
+        displayUser = userObj.name || userObj.username || log.user_id;
+        displaySub = userObj.username ? `${userObj.username}@simpah.dev` : log.user_id;
+      }
+
       const time = log.timestamp ? formatDateTime(log.timestamp) : '-';
       const hasGPS = log.lat && log.lng;
 
@@ -163,8 +174,8 @@ export async function renderAuditLog() {
         <tr>
           <td style="font-size:var(--font-xs);white-space:nowrap">${time}</td>
           <td>
-            <strong style="font-size:var(--font-sm)">${userName}</strong>
-            <div style="font-size:10px;color:var(--text-muted)">${log.user_id}</div>
+            <strong style="font-size:var(--font-sm)">${displayUser}</strong>
+            <div style="font-size:10px;color:var(--text-muted)">${displaySub}</div>
           </td>
           <td>
             <span style="display:inline-flex;align-items:center;gap:4px;color:${entity.color};font-weight:600;font-size:var(--font-sm)">

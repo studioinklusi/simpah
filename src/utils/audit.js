@@ -1,6 +1,30 @@
 // SIMPAH - Audit Trail Helper
 import { getDB } from '../db/schema.js';
 
+let lastGPSFetchTime = 0;
+let lastGPSResult = null;
+const GPS_CACHE_TTL = 30000; // 30 seconds cache for GPS or error/timeout
+
+async function getCachedGPS() {
+  const now = Date.now();
+  if (now - lastGPSFetchTime < GPS_CACHE_TTL && lastGPSResult !== null) {
+    if (lastGPSResult instanceof Error) {
+      throw lastGPSResult;
+    }
+    return lastGPSResult;
+  }
+  
+  lastGPSFetchTime = now;
+  try {
+    const pos = await getCurrentPositionQuick();
+    lastGPSResult = pos;
+    return pos;
+  } catch (err) {
+    lastGPSResult = err;
+    throw err;
+  }
+}
+
 export async function createAuditEntry(entityType, entityId, action, userId, data = null) {
   try {
     const db = await getDB();
@@ -8,7 +32,7 @@ export async function createAuditEntry(entityType, entityId, action, userId, dat
     
     // Try to get current GPS position
     try {
-      const pos = await getCurrentPositionQuick();
+      const pos = await getCachedGPS();
       lat = pos.latitude;
       lng = pos.longitude;
     } catch (e) {

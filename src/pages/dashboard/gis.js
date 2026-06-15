@@ -95,8 +95,14 @@ async function initMap(locations, allRecords, facilities) {
 
   // Remove old map if exists
   if (window._simpahMap) {
-    window._simpahMap.remove();
+    try {
+      window._simpahMap.remove();
+    } catch (e) {}
     window._simpahMap = null;
+  }
+
+  if (!document.getElementById('gisMap')) {
+    return;
   }
 
   const map = L.map('gisMap', {
