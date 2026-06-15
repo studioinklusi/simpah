@@ -1,5 +1,6 @@
 import { icons } from './icons.js';
 import { askAIAssistant } from '../lib/ai.js';
+import { getAuthProfile } from '../lib/auth.js';
 
 export function renderAIChatWidget() {
   const container = document.createElement('div');
@@ -265,6 +266,28 @@ export function renderAIChatWidget() {
   const handleSend = async () => {
     const text = input.value.trim();
     if (!text || isSending) return;
+
+    const user = getAuthProfile();
+    const isRestricted = user && !['admin', 'eksekutif'].includes(user.role);
+
+    if (isRestricted) {
+      const today = new Date().toISOString().split('T')[0];
+      const storageKey = `ai_usage_${user.id}_${today}`;
+      const usageCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+      
+      if (usageCount >= 5) {
+        input.value = '';
+        appendMessage(text, 'user');
+        showTyping();
+        setTimeout(() => {
+          removeTyping();
+          appendMessage("Maaf, kuota harian Anda telah habis (maksimal 5 pertanyaan per hari untuk role selain Admin & Eksekutif). Kuota akan di-reset besok.", 'bot');
+        }, 600);
+        return;
+      }
+      
+      localStorage.setItem(storageKey, (usageCount + 1).toString());
+    }
 
     input.value = '';
     isSending = true;
