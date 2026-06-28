@@ -458,34 +458,40 @@ function renderTopLocations(records, locations) {
 function renderTopKader(records, users) {
   const kaderStats = {};
   records.forEach(r => {
-    if (r.created_by && r.created_by !== 'system') {
-      kaderStats[r.created_by] = (kaderStats[r.created_by] || 0) + 1;
+    const id = r.user_id || r.created_by;
+    if (id && id !== 'system') {
+      if (!kaderStats[id]) {
+        kaderStats[id] = { count: 0, name: r.user_name || 'Kader' };
+      }
+      kaderStats[id].count += 1;
     }
   });
 
   const sorted = Object.entries(kaderStats)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 5);
 
   const body = document.getElementById('topKaderBody');
   if (!body) return;
 
-  body.innerHTML = sorted.map(([id, count]) => {
+  body.innerHTML = sorted.map(([id, data]) => {
     const user = users.find(u => u.id === id);
+    const displayName = user?.full_name || user?.name || data.name;
+    
     return `
       <tr>
         <td>
           <div style="display:flex;align-items:center;gap:8px">
             <div style="width:24px;height:24px;border-radius:50%;background:var(--primary-100);color:var(--primary-600);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold">
-              ${user ? (user.full_name || user.name || '?').charAt(0).toUpperCase() : '?'}
+              ${displayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <strong style="font-size:var(--font-sm)">${user?.full_name || user?.name || id}</strong>
+              <strong style="font-size:var(--font-sm)">${displayName}</strong>
               <div style="font-size:10px;color:var(--text-muted)">${user?.role || 'Kader'}</div>
             </div>
           </div>
         </td>
-        <td style="text-align:right;font-weight:600">${count}x</td>
+        <td style="text-align:right;font-weight:600">${data.count}x</td>
       </tr>
     `;
   }).join('');
