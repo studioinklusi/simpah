@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alur Aplikasi SIMPAH — Dokumentasi Lengkap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0f1e;
+      --bg-secondary: #111827;
+      --bg-card: #1a2236;
+      --bg-card-hover: #1f2a42;
+      --border: #2a3550;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --accent-pink: #ec4899;
+      --gradient-blue: linear-gradient(135deg, #3b82f6, #06b6d4);
+      --gradient-green: linear-gradient(135deg, #10b981, #34d399);
+      --gradient-orange: linear-gradient(135deg, #f59e0b, #fb923c);
+      --gradient-purple: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      --gradient-red: linear-gradient(135deg, #ef4444, #f87171);
+      --gradient-pink: linear-gradient(135deg, #ec4899, #f472b6);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+      --shadow-glow-blue: 0 0 40px rgba(59,130,246,0.15);
+      --shadow-glow-green: 0 0 40px rgba(16,185,129,0.15);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16,185,129,0.1), transparent),
+        radial-gradient(ellipse 50% 40% at 20% 90%, rgba(139,92,246,0.08), transparent);
+      pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 800px; }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+    .hero-badge .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff 30%, #3b82f6 70%, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-blue);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Navigation */
+    .toc {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 15, 30, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .toc a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 99px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .toc a:hover {
+      color: var(--text-primary);
+      background: rgba(59,130,246,0.15);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Section */
+    .section {
+      padding: 5rem 0;
+    }
+    .section + .section {
+      border-top: 1px solid var(--border);
+    }
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent-blue);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+    }
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin-bottom: 3rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      transition: all 0.3s;
+    }
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(59,130,246,0.3);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow-blue);
+    }
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      flex-shrink: 0;
+    }
+    .card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+
+    /* Flow Diagram */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .flow-step {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+      position: relative;
+    }
+    .flow-marker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 40px;
+    }
+    .flow-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+    .flow-line {
+      width: 2px;
+      flex: 1;
+      min-height: 40px;
+      background: var(--border);
+      position: relative;
+      z-index: 1;
+    }
+    .flow-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      flex: 1;
+      margin-bottom: 1rem;
+    }
+    .flow-content h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    .flow-content p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .badge-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .badge-green { background: rgba(16,185,129,0.15); color: #34d399; }
+    .badge-orange { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+    .badge-purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .badge-gray { background: rgba(100,116,139,0.15); color: #94a3b8; }
+
+    /* Role Cards */
+    .role-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .role-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+    .role-header {
+      padding: 1.5rem;
+      position: relative;
+    }
+    .role-header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .role-body {
+      padding: 0 1.5rem 1.5rem;
+    }
+    .role-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 0.5rem;
+    }
+    .role-name {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    .role-desc {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    .role-features {
+      list-style: none;
+      margin-top: 1rem;
+    }
+    .role-features li {
+      padding: 0.5rem 0;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(42,53,80,0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .role-features li:last-child { border: none; }
+    .role-features .feat-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    /* Architecture Diagram */
+    .arch-layer {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .arch-layer-label {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      padding: 2px 12px;
+      border-radius: 99px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .arch-items {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .arch-item {
+      padding: 0.75rem 1.25rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .arch-connector {
+      text-align: center;
+      padding: 0.5rem 0;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+    }
+
+    /* Table */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    thead { background: var(--bg-card); }
+    th {
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid rgba(42,53,80,0.4);
+      color: var(--text-secondary);
+    }
+    tr:hover td { background: rgba(59,130,246,0.04); }
+
+    /* Callout */
+    .callout {
+      border-radius: var(--radius-sm);
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+      font-size: 0.9rem;
+    }
+    .callout-info {
+      background: rgba(59,130,246,0.08);
+      border-color: var(--accent-blue);
+      color: #93c5fd;
+    }
+    .callout-success {
+      background: rgba(16,185,129,0.08);
+      border-color: var(--accent-green);
+      color: #6ee7b7;
+    }
+    .callout-warn {
+      background: rgba(245,158,11,0.08);
+      border-color: var(--accent-orange);
+      color: #fcd34d;
+    }
+    .callout strong { color: var(--text-primary); }
+
+    /* Data flow visual */
+    .data-flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+    .df-node {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      text-align: center;
+      min-width: 140px;
+    }
+    .df-node-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .df-node-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .df-node-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .df-arrow {
+      font-size: 1.3rem;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+    }
+
+    /* Sub-role grid */
+    .sub-role {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+    }
+    .sub-role-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.5rem;
+    }
+    .sub-role-header .icon {
+      font-size: 1.2rem;
+    }
+    .sub-role-header strong {
+      font-size: 0.95rem;
+    }
+    .sub-role p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .sub-role .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--accent-blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate {
+      animation: fadeUp 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    @media (max-width: 768px) {
+      .hero { min-height: 50vh; padding: 3rem 1.5rem; }
+      .container { padding: 0 1rem; }
+      .section { padding: 3rem 0; }
+      .toc { justify-content: flex-start; }
+      .data-flow-row { flex-direction: column; }
+      .df-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Versi 1.2 — Production Ready
+    </div>
+    <h1>Alur Aplikasi SIMPAH</h1>
+    <p>Sistem Informasi Monitoring Pengelolaan Sampah — Dokumentasi lengkap arsitektur, alur pengguna, dan fitur sistem untuk Dinas PPKPLH Kabupaten Banjarnegara.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">4</div>
+        <div class="hero-stat-label">Role Utama</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">7</div>
+        <div class="hero-stat-label">Tipe Akun</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">20+</div>
+        <div class="hero-stat-label">Halaman</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">3</div>
+        <div class="hero-stat-label">Layer Keamanan</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TABLE OF CONTENTS ═══════════ -->
+<nav class="toc">
+  <a href="#arsitektur">Arsitektur</a>
+  <a href="#alur-auth">Login & Registrasi</a>
+  <a href="#roles">Peran Pengguna</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#pwa">PWA Mobile</a>
+  <a href="#portal">Portal Publik</a>
+  <a href="#data-flow">Alur Data</a>
+  <a href="#keamanan">Keamanan</a>
+  <a href="#akun">Akun Demo</a>
+</nav>
+
+<!-- ═══════════ SECTION 1: ARSITEKTUR ═══════════ -->
+<section id="arsitektur" class="section">
+  <div class="container">
+    <div class="section-label">🏗️ Bagian 1</div>
+    <h2 class="section-title">Arsitektur Sistem</h2>
+    <p class="section-desc">SIMPAH dibangun dengan arsitektur modern yang menggabungkan PWA untuk akses mobile dan Dashboard web untuk pengelolaan data terpusat.</p>
+
+    <!-- Architecture Layers -->
+    <div class="arch-layer" style="border-color:rgba(59,130,246,0.3)">
+      <span class="arch-layer-label" style="background:rgba(59,130,246,0.2);color:#60a5fa">Frontend — Vite + Vanilla JS</span>
+      <div class="arch-items">
+        <div class="arch-item">📱 PWA Mobile</div>
+        <div class="arch-item">📊 Dashboard Web</div>
+        <div class="arch-item">🌐 Portal Publik</div>
+        <div class="arch-item">🤖 AI Chat Widget</div>
+        <div class="arch-item">🗺️ Leaflet GIS Map</div>
+        <div class="arch-item">📈 Chart.js</div>
+      </div>
+    </div>
+    <div class="arch-connector">⬇</div>
+    <div class="arch-layer" style="border-color:rgba(245,158,11,0.3)">
+      <span class="arch-layer-label" style="background:rgba(245,158,11,0.2);color:#fbbf24">Middleware — Service Worker & IndexedDB</span>
+      <div class="arch-items">
+        <div class="arch-item">📦 IndexedDB (Offline Cache)</div>
+        <div class="arch-item">🔄 Background Sync</div>
+        <div class="arch-item">⚡ Service Worker (Workbox)</div>
+        <div class="arch-item">#️⃣ Hash Router</div>
+      </div>
+    </div>
+    <div class="arch-connector">⬇</div>
+    <div class="arch-layer" style="border-color:rgba(16,185,129,0.3)">
+      <span class="arch-layer-label" style="background:rgba(16,185,129,0.2);color:#34d399">Backend — Supabase (PostgreSQL)</span>
+      <div class="arch-items">
+        <div class="arch-item">🔐 Supabase Auth</div>
+        <div class="arch-item">🗄️ PostgreSQL Database</div>
+        <div class="arch-item">🛡️ Row Level Security (RLS)</div>
+        <div class="arch-item">🔗 REST API</div>
+      </div>
+    </div>
+    <div class="arch-connector">⬇</div>
+    <div class="arch-layer" style="border-color:rgba(139,92,246,0.3)">
+      <span class="arch-layer-label" style="background:rgba(139,92,246,0.2);color:#a78bfa">Hosting & Deployment</span>
+      <div class="arch-items">
+        <div class="arch-item">▲ Vercel (Frontend Hosting)</div>
+        <div class="arch-item">🐙 GitHub (Version Control)</div>
+        <div class="arch-item">⚡ Auto Deploy (CI/CD)</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:2rem">
+      <strong>💡 Progressive Web App (PWA):</strong> Aplikasi bisa diinstal di perangkat mobile layaknya aplikasi native (Add to Home Screen), bekerja secara offline untuk input data lapangan, dan melakukan sinkronisasi otomatis saat koneksi internet kembali tersedia.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 2: ALUR AUTH ═══════════ -->
+<section id="alur-auth" class="section">
+  <div class="container">
+    <div class="section-label">🔐 Bagian 2</div>
+    <h2 class="section-title">Alur Login & Registrasi</h2>
+    <p class="section-desc">Sistem autentikasi SIMPAH menggunakan Supabase Auth dengan dukungan login via username maupun email, serta sistem kode undangan untuk onboarding petugas baru.</p>
+
+    <div class="grid-2">
+      <!-- Login Flow -->
+      <div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:8px">🔑 Alur Login</h3>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-blue)">1</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Buka Halaman Login</h4>
+              <p>Pengguna mengakses <code>/login</code> atau membuka aplikasi PWA.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-blue)">2</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Masukkan Kredensial</h4>
+              <p>Username saja (misal: <code>admin1</code>) atau email lengkap (<code>admin1@simpah.dev</code>). Sistem otomatis menambahkan domain <code>@simpah.dev</code> jika hanya username.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-blue)">3</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Verifikasi Supabase Auth</h4>
+              <p>Kredensial diverifikasi oleh Supabase Auth. Jika berhasil, profil pengguna dimuat dari tabel <code>profiles</code>.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-green)">✓</div>
+            </div>
+            <div class="flow-content">
+              <h4>Redirect Berdasarkan Role</h4>
+              <p><strong>Admin</strong> → Dashboard GIS &nbsp;|&nbsp; <strong>Eksekutif</strong> → Ringkasan Eksekutif<br><strong>Koordinator</strong> → Validasi Data &nbsp;|&nbsp; <strong>Petugas/Warga</strong> → PWA Home</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Register Flow -->
+      <div>
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:8px">📝 Alur Registrasi</h3>
+        <div class="flow">
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-purple)">1</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Buka Halaman Daftar</h4>
+              <p>Klik "Buat akun baru" di halaman login → menuju <code>/register</code>.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-purple)">2</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Isi Data & Kode Undangan (Opsional)</h4>
+              <p>Isi nama, username, email, dan password. Jika memiliki <strong>Kode Undangan</strong> dari Admin, role akan otomatis sesuai kode.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-purple)">3</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-content">
+              <h4>Trigger Database</h4>
+              <p>Fungsi <code>handle_new_user()</code> dijalankan secara otomatis. <strong>Tanpa kode</strong> → role <code>warga</code>. <strong>Dengan kode valid</strong> → role + job_type sesuai kode.</p>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-marker">
+              <div class="flow-dot" style="background:var(--gradient-green)">✓</div>
+            </div>
+            <div class="flow-content">
+              <h4>Akun Aktif</h4>
+              <p>Pengguna bisa langsung login dan menggunakan fitur sesuai role yang ditetapkan.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 3: ROLES ═══════════ -->
+<section id="roles" class="section">
+  <div class="container">
+    <div class="section-label">👥 Bagian 3</div>
+    <h2 class="section-title">Peran Pengguna & Hak Akses</h2>
+    <p class="section-desc">SIMPAH menggunakan sistem 2-layer: 4 role utama + 4 spesialisasi (job type) untuk petugas lapangan. Setiap role memiliki hak akses dan fitur yang berbeda.</p>
+
+    <div class="grid-2" style="margin-bottom:2rem">
+      <!-- ADMIN -->
+      <div class="role-card">
+        <div class="role-header" style="background:linear-gradient(135deg, rgba(59,130,246,0.1), rgba(6,182,212,0.05))">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-blue)"></div>
+          <div class="role-tag" style="color:var(--accent-blue)">Role: admin</div>
+          <div class="role-name">🛡️ Administrator</div>
+          <div class="role-desc">Super Admin dengan akses penuh ke seluruh sistem dashboard dan PWA mobile.</div>
+        </div>
+        <div class="role-body">
+          <ul class="role-features">
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">📊</div> Ringkasan Eksekutif & Peta GIS</li>
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">✅</div> Validasi & Persetujuan Data</li>
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">📋</div> Manajemen MoU & Master Data</li>
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">📈</div> Intervensi Wilayah & Fasum</li>
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">📄</div> Laporan, Export & Audit Log</li>
+            <li><div class="feat-icon" style="background:rgba(59,130,246,0.15)">👥</div> Kelola Pengguna, RBAC & Kode Undangan</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- EKSEKUTIF -->
+      <div class="role-card">
+        <div class="role-header" style="background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(52,211,153,0.05))">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-green)"></div>
+          <div class="role-tag" style="color:var(--accent-green)">Role: eksekutif</div>
+          <div class="role-name">📊 Eksekutif (Bupati/Kadis)</div>
+          <div class="role-desc">Pemantauan data makro dan laporan — mode Read-Only tanpa akses menulis.</div>
+        </div>
+        <div class="role-body">
+          <ul class="role-features">
+            <li><div class="feat-icon" style="background:rgba(16,185,129,0.15)">📈</div> Ringkasan Eksekutif (Statistik & Grafik)</li>
+            <li><div class="feat-icon" style="background:rgba(16,185,129,0.15)">🗺️</div> Peta GIS Pemantauan</li>
+            <li><div class="feat-icon" style="background:rgba(16,185,129,0.15)">📄</div> Laporan & Export Data</li>
+            <li><div class="feat-icon" style="background:rgba(16,185,129,0.15)">🏘️</div> Intervensi Wilayah & Fasum</li>
+            <li><div class="feat-icon" style="background:rgba(16,185,129,0.15)">📋</div> Riwayat Input Sampah</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PETUGAS -->
+    <div class="role-card" style="margin-bottom:2rem">
+      <div class="role-header" style="background:linear-gradient(135deg, rgba(245,158,11,0.1), rgba(251,146,60,0.05))">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient-orange)"></div>
+        <div class="role-tag" style="color:var(--accent-orange)">Role: petugas</div>
+        <div class="role-name">⚙️ Petugas Lapangan</div>
+        <div class="role-desc">Akses aplikasi mobile PWA untuk input data operasional harian di lapangan. Terbagi dalam 4 spesialisasi dengan izin input berbeda.</div>
+      </div>
+      <div class="role-body">
+        <div class="grid-2" style="gap:1rem;margin-top:0.5rem">
+          <div class="sub-role">
+            <div class="sub-role-header">
+              <span class="icon">📋</span>
+              <strong>Koordinator Lapangan</strong>
+            </div>
+            <p>Pengawas dan verifikator data lapangan. Memvalidasi input dari petugas lain.</p>
+            <div class="badges">
+              <span class="badge badge-blue">Validasi Data</span>
+            </div>
+          </div>
+          <div class="sub-role">
+            <div class="sub-role-header">
+              <span class="icon">🚛</span>
+              <strong>Petugas Angkut</strong>
+            </div>
+            <p>Sopir/petugas pengangkutan sampah dan pengelolaan armada kendaraan.</p>
+            <div class="badges">
+              <span class="badge badge-orange">Masuk</span>
+              <span class="badge badge-orange">Residu</span>
+              <span class="badge badge-orange">Armada</span>
+            </div>
+          </div>
+          <div class="sub-role">
+            <div class="sub-role-header">
+              <span class="icon">🏭</span>
+              <strong>Operator TPS3R / Bank Sampah</strong>
+            </div>
+            <p>Petugas pengelola fasilitas TPS3R dan Bank Sampah. Operasi lengkap.</p>
+            <div class="badges">
+              <span class="badge badge-orange">Masuk</span>
+              <span class="badge badge-orange">Pilah</span>
+              <span class="badge badge-orange">Olah</span>
+              <span class="badge badge-orange">Residu</span>
+            </div>
+          </div>
+          <div class="sub-role">
+            <div class="sub-role-header">
+              <span class="icon">🌿</span>
+              <strong>Kader Lingkungan</strong>
+            </div>
+            <p>Penggerak lingkungan tingkat RT/RW, melaporkan kegiatan insidental warga.</p>
+            <div class="badges">
+              <span class="badge badge-orange">Masuk</span>
+              <span class="badge badge-orange">Pilah</span>
+              <span class="badge badge-orange">Olah</span>
+              <span class="badge badge-orange">Insidental</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WARGA -->
+    <div class="role-card">
+      <div class="role-header" style="background:linear-gradient(135deg, rgba(100,116,139,0.1), rgba(148,163,184,0.05))">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(135deg,#64748b,#94a3b8)"></div>
+        <div class="role-tag" style="color:var(--text-muted)">Role: warga</div>
+        <div class="role-name">🏠 Warga Masyarakat</div>
+        <div class="role-desc">Masyarakat umum yang dapat melaporkan aduan sampah, memantau status pelaporan, dan melihat peta GIS fasilitas kebersihan.</div>
+      </div>
+      <div class="role-body">
+        <ul class="role-features">
+          <li><div class="feat-icon" style="background:rgba(100,116,139,0.15)">📝</div> Buat Aduan Sampah (dengan foto & lokasi GPS)</li>
+          <li><div class="feat-icon" style="background:rgba(100,116,139,0.15)">🔍</div> Pantau Status Aduan Pribadi</li>
+          <li><div class="feat-icon" style="background:rgba(100,116,139,0.15)">🗺️</div> Lihat Peta GIS Fasilitas Kebersihan</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 4: DASHBOARD ═══════════ -->
+<section id="dashboard" class="section">
+  <div class="container">
+    <div class="section-label">📊 Bagian 4</div>
+    <h2 class="section-title">Fitur Dashboard Web</h2>
+    <p class="section-desc">Dashboard web menyediakan antarmuka lengkap untuk monitoring, pengelolaan, dan pelaporan data persampahan di tingkat kabupaten.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon" style="background:rgba(59,130,246,0.15)">📈</div>
+        <h3>Ringkasan Eksekutif</h3>
+        <p>Statistik makro berupa grafik tren tonase harian/bulanan, perbandingan antar-wilayah, % penanganan vs target KLHK, dan distribusi kategori sampah SIPSN.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-blue">Eksekutif</span> <span class="badge badge-blue">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(16,185,129,0.15)">🗺️</div>
+        <h3>Peta GIS</h3>
+        <p>Peta interaktif dengan marker untuk TPS3R, Bank Sampah, TPA, Pengepul. Dilengkapi overlay heatmap titik timbulan sampah dan layer wilayah kecamatan.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-green">Semua Role</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(139,92,246,0.15)">📄</div>
+        <h3>Laporan & Export</h3>
+        <p>Generate laporan berkop surat resmi Dinas, rekap tabel pivot, dan cetak langsung dari browser menggunakan CSS <code>@media print</code>. Tanpa dependensi PDF eksternal.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-purple">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(245,158,11,0.15)">✅</div>
+        <h3>Validasi Data</h3>
+        <p>Admin dan Koordinator memeriksa dan menyetujui/menolak data input sampah dari petugas. Data yang disetujui masuk ke perhitungan statistik resmi.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-orange">Admin</span> <span class="badge badge-orange">Koordinator</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(236,72,153,0.15)">📋</div>
+        <h3>Manajemen MoU</h3>
+        <p>Kelola kontrak dan perjanjian kerja sama dengan pihak pengangkut/transporter. Pantau masa berlaku, status, dan armada yang terikat kontrak.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-purple">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(239,68,68,0.15)">🗑️</div>
+        <h3>Intervensi Wilayah</h3>
+        <p>Ranking kecamatan/desa berdasarkan skor pengelolaan sampah. Kalkulasi otomatis potensi timbulan dari data populasi penduduk (SNI 0.7 kg/kapita/hari).</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-red">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(6,182,212,0.15)">🏢</div>
+        <h3>Intervensi Fasum</h3>
+        <p>Pemantauan fasilitas umum penghasil sampah non-domestik: wisata, hotel, industri, dan MBG. Deteksi fasum yang belum melakukan pengolahan limbah secara mandiri.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-blue">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(16,185,129,0.15)">⚙️</div>
+        <h3>Master Data</h3>
+        <p>CRUD untuk pengguna, lokasi TPS/Bank Sampah, kendaraan armada, populasi kecamatan, fasilitas umum, hak akses RBAC, dan kode undangan registrasi.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-green">Admin</span></div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(100,116,139,0.15)">📜</div>
+        <h3>Audit Log</h3>
+        <p>Catatan seluruh aktivitas sistem: siapa, kapan, apa yang diubah. Untuk akuntabilitas dan jejak audit pengelolaan data.</p>
+        <div style="margin-top:0.75rem"><span class="badge badge-gray">Admin</span></div>
+      </div>
+    </div>
+
+    <div class="callout callout-success" style="margin-top:2rem">
+      <strong>🤖 AI Chat Assistant:</strong> Dashboard dilengkapi widget asisten AI yang membantu admin menganalisis data, menjawab pertanyaan seputar statistik, dan memberikan rekomendasi pengelolaan sampah secara interaktif.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 5: PWA MOBILE ═══════════ -->
+<section id="pwa" class="section">
+  <div class="container">
+    <div class="section-label">📱 Bagian 5</div>
+    <h2 class="section-title">Fitur PWA Mobile</h2>
+    <p class="section-desc">Antarmuka mobile-first untuk petugas dan warga. Bisa diinstal di smartphone dan bekerja secara offline di area tanpa sinyal internet.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-icon" style="background:rgba(59,130,246,0.15)">🏠</div>
+        <h3>PWA Home</h3>
+        <p>Halaman utama mobile menampilkan ringkasan statistik harian, tombol akses cepat ke menu input, dan status sinkronisasi data.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(16,185,129,0.15)">⚖️</div>
+        <h3>Input Sampah Masuk</h3>
+        <p>Form pencatatan timbangan sampah masuk dengan kategori SIPSN (9 jenis: Sisa Makanan, Kertas, Plastik, dll). Mendukung batch input untuk efisiensi.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(139,92,246,0.15)">♻️</div>
+        <h3>Input Pilah</h3>
+        <p>Pencatatan hasil pemilahan sampah berdasarkan kategori daur ulang. Memisahkan sampah organik dan anorganik yang berhasil dipilah.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(245,158,11,0.15)">🔥</div>
+        <h3>Input Olah</h3>
+        <p>Pencatatan hasil pengolahan sampah: komposting, pencacahan, atau proses daur ulang lainnya dengan berat output.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(239,68,68,0.15)">🗑️</div>
+        <h3>Input Residu</h3>
+        <p>Pencatatan sisa sampah yang tidak bisa diolah dan harus dibuang ke TPA. Melacak persentase residu dari total input.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(6,182,212,0.15)">🚛</div>
+        <h3>Kelola Armada</h3>
+        <p>Manajemen status kendaraan angkut: kesiapan operasional, plat nomor, kapasitas, dan riwayat pengangkutan.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(236,72,153,0.15)">🎪</div>
+        <h3>Kegiatan Insidental</h3>
+        <p>Pencatatan kegiatan non-rutin: kerja bakti, sosialisasi pemilahan, edukasi warga, atau pembersihan lingkungan.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(100,116,139,0.15)">📋</div>
+        <h3>Riwayat Input</h3>
+        <p>Daftar seluruh rekam data yang telah diinput oleh petugas, lengkap dengan status verifikasi (pending, approved, rejected).</p>
+      </div>
+    </div>
+
+    <div class="callout callout-warn" style="margin-top:2rem">
+      <strong>📡 Mode Offline:</strong> Semua form input PWA dapat digunakan tanpa koneksi internet. Data disimpan di IndexedDB browser dan akan otomatis disinkronkan ke server Supabase saat koneksi kembali tersedia (Background Sync).
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 6: PORTAL PUBLIK ═══════════ -->
+<section id="portal" class="section">
+  <div class="container">
+    <div class="section-label">🌐 Bagian 6</div>
+    <h2 class="section-title">Portal Publik</h2>
+    <p class="section-desc">Portal informasi publik yang dapat diakses tanpa login oleh masyarakat umum untuk pelaporan dan edukasi.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon" style="background:rgba(59,130,246,0.15)">🏠</div>
+        <h3>Beranda Portal</h3>
+        <p>Halaman utama portal publik dengan informasi umum tentang pengelolaan sampah di Kabupaten Banjarnegara.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(239,68,68,0.15)">📢</div>
+        <h3>Formulir Aduan</h3>
+        <p>Warga dapat melaporkan tumpukan sampah, pembuangan liar, atau bau tidak sedap lengkap dengan foto dan koordinat GPS.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(245,158,11,0.15)">🔍</div>
+        <h3>Cek Status Aduan</h3>
+        <p>Lacak perkembangan aduan dengan nomor tracking unik. Status: Baru → Diproses → Selesai.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(16,185,129,0.15)">📚</div>
+        <h3>Edukasi</h3>
+        <p>Konten edukasi tentang pemilahan sampah, 3R (Reduce, Reuse, Recycle), dan tips pengelolaan sampah rumah tangga.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(139,92,246,0.15)">🖼️</div>
+        <h3>Galeri Kegiatan</h3>
+        <p>Dokumentasi foto kegiatan pengelolaan sampah: kerja bakti, sosialisasi, dan program lingkungan lainnya.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(6,182,212,0.15)">📜</div>
+        <h3>Regulasi</h3>
+        <p>Informasi peraturan daerah dan regulasi terkait pengelolaan sampah yang berlaku di Kabupaten Banjarnegara.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 7: DATA FLOW ═══════════ -->
+<section id="data-flow" class="section">
+  <div class="container">
+    <div class="section-label">🔄 Bagian 7</div>
+    <h2 class="section-title">Alur Data Sampah</h2>
+    <p class="section-desc">Bagaimana data mengalir dari pencatatan di lapangan hingga menjadi laporan dan insight bagi pengambil keputusan.</p>
+
+    <!-- Main data flow -->
+    <div class="data-flow-row">
+      <div class="df-node" style="border-color:rgba(245,158,11,0.4)">
+        <div class="df-node-icon">📱</div>
+        <div class="df-node-label">Input Lapangan</div>
+        <div class="df-node-sub">Petugas via PWA</div>
+      </div>
+      <div class="df-arrow">→</div>
+      <div class="df-node" style="border-color:rgba(139,92,246,0.4)">
+        <div class="df-node-icon">📦</div>
+        <div class="df-node-label">IndexedDB</div>
+        <div class="df-node-sub">Cache Offline</div>
+      </div>
+      <div class="df-arrow">→</div>
+      <div class="df-node" style="border-color:rgba(59,130,246,0.4)">
+        <div class="df-node-icon">☁️</div>
+        <div class="df-node-label">Supabase</div>
+        <div class="df-node-sub">Sync Online</div>
+      </div>
+      <div class="df-arrow">→</div>
+      <div class="df-node" style="border-color:rgba(245,158,11,0.4)">
+        <div class="df-node-icon">✅</div>
+        <div class="df-node-label">Validasi</div>
+        <div class="df-node-sub">Admin / Koordinator</div>
+      </div>
+      <div class="df-arrow">→</div>
+      <div class="df-node" style="border-color:rgba(16,185,129,0.4)">
+        <div class="df-node-icon">📊</div>
+        <div class="df-node-label">Dashboard</div>
+        <div class="df-node-sub">Analitik & Laporan</div>
+      </div>
+    </div>
+
+    <!-- Detail Steps -->
+    <div class="grid-2" style="margin-top:2rem">
+      <div class="card" style="border-left:3px solid var(--accent-orange)">
+        <h3 style="font-size:1rem">📥 Tahap 1: Pencatatan</h3>
+        <p style="margin-top:0.5rem">Petugas lapangan membuka form di PWA → pilih lokasi, kategori SIPSN, berat (kg) → simpan. Data masuk ke IndexedDB lokal dengan status <code>verification_status: pending</code>.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent-purple)">
+        <h3 style="font-size:1rem">🔄 Tahap 2: Sinkronisasi</h3>
+        <p style="margin-top:0.5rem">Saat perangkat terhubung internet, service worker memicu <em>Background Sync</em>. Data dikirim dari IndexedDB ke PostgreSQL Supabase melalui REST API.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent-blue)">
+        <h3 style="font-size:1rem">✅ Tahap 3: Validasi</h3>
+        <p style="margin-top:0.5rem">Admin atau Koordinator membuka halaman Validasi Data → memeriksa kewajaran data → menyetujui (<code>approved</code>) atau menolak (<code>rejected</code>) dengan catatan.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent-green)">
+        <h3 style="font-size:1rem">📊 Tahap 4: Pelaporan</h3>
+        <p style="margin-top:0.5rem">Data yang sudah <code>approved</code> masuk ke perhitungan Ringkasan Eksekutif, Intervensi Wilayah, dan Laporan cetak resmi. Termasuk analisis gap terhadap target KLHK.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 8: KEAMANAN ═══════════ -->
+<section id="keamanan" class="section">
+  <div class="container">
+    <div class="section-label">🛡️ Bagian 8</div>
+    <h2 class="section-title">3 Layer Keamanan</h2>
+    <p class="section-desc">Sistem keamanan berlapis yang melindungi data dari akses tidak sah di setiap tingkat aplikasi.</p>
+
+    <div class="grid-3">
+      <div class="card" style="border-top:3px solid var(--accent-blue)">
+        <div class="card-icon" style="background:rgba(59,130,246,0.15)">🔒</div>
+        <h3>Layer 1: Database CHECK</h3>
+        <p>Constraint di PostgreSQL memastikan hanya nilai role valid (<code>warga</code>, <code>petugas</code>, <code>eksekutif</code>, <code>admin</code>) yang bisa tersimpan. Mencegah injeksi role ilegal.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent-green)">
+        <div class="card-icon" style="background:rgba(16,185,129,0.15)">🛡️</div>
+        <h3>Layer 2: Row Level Security</h3>
+        <p>RLS di Supabase membatasi akses data di tingkat baris. Petugas hanya bisa melihat data miliknya sendiri, admin bisa melihat semua, eksekutif hanya data yang sudah approved.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent-purple)">
+        <div class="card-icon" style="background:rgba(139,92,246,0.15)">🎛️</div>
+        <h3>Layer 3: Frontend RBAC</h3>
+        <p>Permission matrix di JavaScript mengontrol visibilitas menu dan fitur. Ditambah RBAC dinamis via tabel <code>role_permissions</code> untuk konfigurasi menu dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 9: AKUN DEMO ═══════════ -->
+<section id="akun" class="section">
+  <div class="container">
+    <div class="section-label">🔑 Bagian 9</div>
+    <h2 class="section-title">Daftar Akun Demo</h2>
+    <p class="section-desc">Gunakan akun-akun berikut untuk menguji fitur aplikasi. Format email: <code>&lt;username&gt;@simpah.dev</code> — Password cadangan: <code>simpah123</code>.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Pengguna</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Spesialisasi</th>
+            <th>Password</th>
+            <th>Halaman Default</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td style="color:var(--text-primary);font-weight:600">Admin SIMPAH</td>
+            <td><code>admin1</code></td>
+            <td><span class="badge badge-blue">admin</span></td>
+            <td>—</td>
+            <td><code>admin123</code></td>
+            <td>Dashboard GIS</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td style="color:var(--text-primary);font-weight:600">Bupati Banjarnegara</td>
+            <td><code>eksekutif1</code></td>
+            <td><span class="badge badge-green">eksekutif</span></td>
+            <td>—</td>
+            <td><code>eksekutif123</code></td>
+            <td>Ringkasan Eksekutif</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td style="color:var(--text-primary);font-weight:600">Koordinator Lapangan</td>
+            <td><code>koordinator1</code></td>
+            <td><span class="badge badge-orange">petugas</span></td>
+            <td>📋 koordinator</td>
+            <td><code>koordinator123</code></td>
+            <td>Validasi Data</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td style="color:var(--text-primary);font-weight:600">Petugas Pengangkut</td>
+            <td><code>petugas1</code></td>
+            <td><span class="badge badge-orange">petugas</span></td>
+            <td>🚛 angkut</td>
+            <td><code>petugas123</code></td>
+            <td>PWA Home</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td style="color:var(--text-primary);font-weight:600">Operator TPS3R</td>
+            <td><code>operator1</code></td>
+            <td><span class="badge badge-orange">petugas</span></td>
+            <td>🏭 operator_tps</td>
+            <td><code>operator123</code></td>
+            <td>PWA Home</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td style="color:var(--text-primary);font-weight:600">Kader Lingkungan</td>
+            <td><code>kader1</code></td>
+            <td><span class="badge badge-orange">petugas</span></td>
+            <td>🌿 kader</td>
+            <td><code>kader123</code></td>
+            <td>PWA Home</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td style="color:var(--text-primary);font-weight:600">Warga Banjarnegara</td>
+            <td><code>warga1</code></td>
+            <td><span class="badge badge-gray">warga</span></td>
+            <td>—</td>
+            <td><code>warga123</code></td>
+            <td>PWA Home</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <p style="margin-bottom:0.5rem"><strong style="color:var(--text-primary)">SIMPAH</strong> — Sistem Informasi Monitoring Pengelolaan Sampah</p>
+  <p>Dinas Perumahan, Kawasan Permukiman dan Lingkungan Hidup (DPPKPLH) Kabupaten Banjarnegara</p>
+  <p style="margin-top:1rem;font-size:0.78rem">Dokumen ini di-generate secara otomatis — Versi 1.2 · Juni 2026</p>
+</footer>
+
+<!-- Scroll animation -->
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('animate');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.card, .role-card, .arch-layer, .flow-step, .callout').forEach(el => observer.observe(el));
+
+  // Smooth scroll
+  document.querySelectorAll('.toc a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>
