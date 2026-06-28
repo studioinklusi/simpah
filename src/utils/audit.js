@@ -59,43 +59,6 @@ export async function createAuditEntry(entityType, entityId, action, userId, dat
 }
 
 export async function getAuditLog(filters = {}) {
-  if (navigator.onLine) {
-    try {
-      const { data, error } = await supabase
-        .from('audit_log')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-
-      if (!error && data) {
-        const db = await getDB();
-        const tx = db.transaction('audit_log', 'readwrite');
-        
-        // Map created_at to timestamp and save to IndexedDB cache
-        const mapped = data.map(item => ({
-          ...item,
-          timestamp: item.timestamp || item.created_at
-        }));
-
-        for (const item of mapped) {
-          await tx.store.put(item);
-        }
-        await tx.done;
-
-        let logs = [...mapped];
-        if (filters.entityType) {
-          logs = logs.filter(l => l.entity_type === filters.entityType);
-        }
-        if (filters.userId) {
-          logs = logs.filter(l => l.user_id === filters.userId);
-        }
-        return logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      }
-    } catch (e) {
-      console.warn('Gagal memuat audit log dari Supabase, fallback ke data lokal', e);
-    }
-  }
-
   const db = await getDB();
   let logs = await db.getAll('audit_log');
   
