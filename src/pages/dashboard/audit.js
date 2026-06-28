@@ -92,7 +92,7 @@ export async function renderAuditLog() {
         </select>
         <select class="form-select" id="auditUserFilter" style="max-width:200px">
           <option value="">Semua Pengguna</option>
-          ${users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join('')}
+          ${users.map(u => `<option value="${u.id}">${u.full_name || u.name} (${u.role})</option>`).join('')}
         </select>
         <select class="form-select" id="auditDateFilter" style="max-width:180px">
           <option value="all">Semua Waktu</option>
@@ -163,7 +163,7 @@ export async function renderAuditLog() {
         displayUser = 'Sistem / Automasi';
         displaySub = 'system';
       } else if (userObj) {
-        displayUser = userObj.name || userObj.username || log.user_id;
+        displayUser = userObj.full_name || userObj.name || userObj.username || log.user_id;
         displaySub = userObj.username ? `${userObj.username}@simpah.dev` : log.user_id;
       }
 
