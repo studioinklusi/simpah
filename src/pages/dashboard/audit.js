@@ -34,8 +34,11 @@ export async function renderAuditLog() {
   }
 
   const [logs, users] = await Promise.all([getAuditLog(), getAllUsers()]);
+  console.log('[DEBUG AUDIT] Logs:', logs);
+  console.log('[DEBUG AUDIT] Users fetched:', users);
   const userMap = {};
   users.forEach(u => { userMap[u.id] = u; });
+  console.log('[DEBUG AUDIT] UserMap compiled keys:', Object.keys(userMap));
 
   // Group logs by date
   const today = new Date().toISOString().split('T')[0];
