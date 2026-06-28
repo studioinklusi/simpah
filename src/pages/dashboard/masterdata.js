@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { LOCATION_TYPES, USER_ROLES } from '../../utils/sipsn.js';
-import { JOB_TYPES, hasPermission } from '../../utils/permissions.js';
+import { JOB_TYPES, hasPermission, getAllowedInputTypes } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import {
@@ -799,6 +799,33 @@ export async function renderMasterData() {
                 return `<span class="badge badge-neutral" style="font-size:11px">${mod ? mod.name : pid}</span>`;
               }).join('')}
             </div>
+            ${role.code === 'petugas' ? `
+            <div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--gray-200)">
+              <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+                👥 Tipe Petugas & Izin Input Lapangan
+              </div>
+              <div style="display:grid;gap:var(--space-3)">
+                ${JOB_TYPES.map(jt => {
+                  const inputs = getAllowedInputTypes({ role: 'petugas', job_type: jt.id });
+                  const isKoordinator = jt.id === 'koordinator';
+                  const jobIcons = { koordinator: '📋', angkut: '🚛', operator_tps: '🏭', kader: '🌿' };
+                  return `
+                  <div style="padding:var(--space-3);background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100)">
+                    <div style="font-weight:600;font-size:13px;color:var(--gray-900);margin-bottom:2px;display:flex;align-items:center;gap:6px">
+                      ${jobIcons[jt.id] || '👤'} ${jt.label}
+                    </div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:var(--space-2)">${jt.desc}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px">
+                      ${isKoordinator ? '<span class="badge badge-primary" style="font-size:10px">Validasi Data</span>' : ''}
+                      ${inputs.map(inp => '<span class="badge badge-neutral" style="font-size:10px">' + inp.charAt(0).toUpperCase() + inp.slice(1) + '</span>').join('')}
+                      ${!isKoordinator && inputs.length === 0 ? '<span style="font-size:11px;color:var(--text-muted)">Tidak ada izin input</span>' : ''}
+                    </div>
+                  </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+            ` : ''}
           </div>
           `;
         }).join('')}

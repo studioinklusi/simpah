@@ -66,7 +66,6 @@ export async function renderInputPilah() {
               </div>
             `).join('')}
           </div>
-          </div>
         </div>
 
         <div class="form-group" style="margin-top:var(--space-4);">

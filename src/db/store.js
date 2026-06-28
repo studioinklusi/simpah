@@ -541,9 +541,10 @@ export async function deleteUser(id) {
 export async function getWasteStats() {
   const allRecords = await getAllWasteRecords();
   
-  // Filter only approved/legacy records for stats and ensure date_str exists
+  // Include all records except rejected ones for stats
+  // (pending records should be visible to the inputting user)
   const records = allRecords
-    .filter(r => !r.verification_status || r.verification_status === 'approved')
+    .filter(r => r.verification_status !== 'rejected')
     .map(r => ({ ...r, date_str: r.date_str || r.record_date }));
 
   const now = new Date();
