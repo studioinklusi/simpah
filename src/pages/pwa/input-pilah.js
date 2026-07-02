@@ -3,7 +3,7 @@ import { icons } from '../../components/icons.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
-import { addWasteRecord, addSortedWaste, getAllLocations } from '../../db/store.js';
+import { addWasteRecord, addSortedWaste, getAllLocations, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
@@ -12,7 +12,11 @@ export async function renderInputPilah() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
   
-  const locations = await getAllLocations();
+  const [locations, masterWilayah] = await Promise.all([
+    getAllLocations(),
+    getAllMasterWilayah()
+  ]);
+  const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
   let gpsData = null;
   let photoPicker = null;
   
@@ -30,13 +34,47 @@ export async function renderInputPilah() {
       </div>
 
       <form id="pilahForm">
-        <div class="form-group">
-          <label class="form-label">Lokasi</label>
-          <select id="locationSelect" class="form-select">
-            <option value="">Pilih lokasi...</option>
-            ${locations.filter(l => ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}">${l.name}</option>`).join('')}
-          </select>
-        </div>
+        <!-- Location (Wilayah & Fasilitas) -->
+        ${userDesa ? `
+          <div class="form-group">
+            <label class="form-label">Wilayah Pencatatan</label>
+            <div class="form-input locked-wilayah-display" style="background:var(--gray-100); display:flex; align-items:center; gap:var(--space-2); border-color:var(--border-color); font-weight:600;">
+              ${icons.mapPin}
+              <span>Desa ${userDesa.desa_kelurahan}, Kec. ${userDesa.kecamatan}</span>
+            </div>
+            <input type="hidden" id="desaSelect" value="${userDesa.id}" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
+            <select id="locationSelect" class="form-select">
+              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+              ${locations.filter(l => l.desa_id === userDesa.id && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('')}
+            </select>
+          </div>
+        ` : `
+          <div class="form-group">
+            <label class="form-label">Kecamatan</label>
+            <select id="kecamatanSelect" class="form-select">
+              <option value="">Pilih Kecamatan...</option>
+              ${[...new Set(masterWilayah.map(w => w.kecamatan))].sort().map(k => `<option value="${k}">${k}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="form-group" id="desaGroup" style="display:none">
+            <label class="form-label">Desa / Kelurahan</label>
+            <select id="desaSelect" class="form-select">
+              <option value="">Pilih Desa...</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="locationGroup" style="display:none">
+            <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
+            <select id="locationSelect" class="form-select">
+              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+            </select>
+          </div>
+        `}
 
         <!-- Source -->
         <div class="form-group">
@@ -161,6 +199,48 @@ export async function renderInputPilah() {
   // Init photo picker
   photoPicker = initPhotoPicker('pilah');
 
+  // Wire up cascading dropdown events
+  const kecSelect = document.getElementById('kecamatanSelect');
+  const desaSelect = document.getElementById('desaSelect');
+  const locSelect = document.getElementById('locationSelect');
+  const desaGroup = document.getElementById('desaGroup');
+  const locGroup = document.getElementById('locationGroup');
+
+  if (kecSelect) {
+    kecSelect.addEventListener('change', () => {
+      const selectedKec = kecSelect.value;
+      if (!selectedKec) {
+        desaGroup.style.display = 'none';
+        locGroup.style.display = 'none';
+        desaSelect.innerHTML = '<option value="">Pilih Desa...</option>';
+        locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
+        return;
+      }
+
+      const filteredDesa = masterWilayah.filter(w => w.kecamatan === selectedKec);
+      desaSelect.innerHTML = '<option value="">Pilih Desa...</option>' + 
+        filteredDesa.map(w => `<option value="${w.id}">${w.desa_kelurahan}</option>`).join('');
+      
+      desaGroup.style.display = 'block';
+      locGroup.style.display = 'none';
+    });
+
+    desaSelect.addEventListener('change', () => {
+      const selectedDesaId = desaSelect.value;
+      if (!selectedDesaId) {
+        locGroup.style.display = 'none';
+        locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
+        return;
+      }
+
+      const filteredLocs = locations.filter(l => l.desa_id === selectedDesaId && ['tps3r', 'bank_sampah'].includes(l.type));
+      locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
+        filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('');
+      
+      locGroup.style.display = 'block';
+    });
+  }
+
   // Plus Minus Controls
   document.querySelectorAll('.pilah-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -257,8 +337,19 @@ export async function renderInputPilah() {
     btn.disabled = true;
 
     try {
+      const desaEl = document.getElementById('desaSelect');
+      const desaId = desaEl ? desaEl.value : null;
+
+      if (!desaId) {
+        showToast('Pilih wilayah Desa / Kelurahan terlebih dahulu', 'warning');
+        btn.innerHTML = 'Simpan Data Pilah';
+        btn.disabled = false;
+        return;
+      }
+
       const photos = photoPicker?.getPhotos() || [];
       const locationEl = document.getElementById('locationSelect');
+      const selectedOption = (locationEl && locationEl.selectedIndex >= 0) ? locationEl.options[locationEl.selectedIndex] : null;
       let pilahRecordId = null;
       
       const isAccum = document.getElementById('accumToggle').checked;
@@ -269,10 +360,11 @@ export async function renderInputPilah() {
           type: 'pilah',
           source_type: document.getElementById('sourceSelect').value,
           category_sipsn: items.length === 1 ? items[0].category_sipsn : 'MIX',
-          lat: gpsData?.latitude || null,
-          lng: gpsData?.longitude || null,
-          location_id: locationEl.value || null,
-          location_name: locationEl.value ? locationEl.options[locationEl.selectedIndex].text : '',
+          lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
+          lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
+          location_id: (locationEl && locationEl.value) ? locationEl.value : null,
+          location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+          desa_id: desaId,
           notes: document.getElementById('notesInput').value.trim(),
           photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
           photo_count: photos.length,
@@ -320,10 +412,11 @@ export async function renderInputPilah() {
           type: 'residu',
           source_type: document.getElementById('sourceSelect').value,
           category_sipsn: 'MIX',
-          lat: gpsData?.latitude || null,
-          lng: gpsData?.longitude || null,
-          location_id: locationEl.value || null,
-          location_name: locationEl.value ? locationEl.options[locationEl.selectedIndex].text : '',
+          lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
+          lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
+          location_id: (locationEl && locationEl.value) ? locationEl.value : null,
+          location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+          desa_id: desaId,
           photos: !pilahRecordId ? photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })) : [],
           photo_count: !pilahRecordId ? photos.length : 0,
           user_id: user.id,

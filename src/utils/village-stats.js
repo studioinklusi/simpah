@@ -2,25 +2,42 @@
 // Mengagregasi data dari IndexedDB menjadi profil per wilayah
 // Termasuk kalkulasi potensi timbulan berdasarkan data kependudukan
 
-import { getAllWasteRecords, getAllLocations, getAllComplaints, getAllVillagePopulation, getAllPublicFacilities } from '../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllComplaints, getAllMasterWilayah, getAllPublicFacilities } from '../db/store.js';
 import { calculateVillageScore, evaluateVillage } from './intervention-rules.js';
 
 // Standar timbulan nasional (KLHK) — kg/orang/hari
 const DEFAULT_TIMBULAN_PER_KAPITA = 0.70;
 
 export async function getVillageProfiles() {
-  const [records, locations, complaints, populationData, facilities] = await Promise.all([
+  const [records, locations, complaints, masterWilayah, facilities] = await Promise.all([
     getAllWasteRecords(),
     getAllLocations(),
     getAllComplaints(),
-    getAllVillagePopulation(),
+    getAllMasterWilayah(),
     getAllPublicFacilities(),
   ]);
 
-  // Build population lookup by kecamatan name (case-insensitive)
-  const populationMap = {};
-  populationData.forEach(p => {
-    populationMap[p.kecamatan.toLowerCase()] = p;
+  // Build master_wilayah lookup maps
+  const wilayahMap = {};
+  const kecamatanSet = new Set();
+  const kecamatanDemographics = {};
+
+  masterWilayah.forEach(w => {
+    wilayahMap[w.id] = w;
+    kecamatanSet.add(w.kecamatan);
+
+    const kecKey = w.kecamatan.toLowerCase();
+    if (!kecamatanDemographics[kecKey]) {
+      kecamatanDemographics[kecKey] = {
+        jumlah_penduduk: 0,
+        jumlah_kk: 0,
+        luas_km2: 0,
+        timbulan_per_kapita: w.timbulan_per_kapita || DEFAULT_TIMBULAN_PER_KAPITA
+      };
+    }
+    kecamatanDemographics[kecKey].jumlah_penduduk += w.jumlah_penduduk || 0;
+    kecamatanDemographics[kecKey].jumlah_kk += w.jumlah_kk || 0;
+    kecamatanDemographics[kecKey].luas_km2 += w.luas_km2 || 0;
   });
 
   // Build public facilities potential lookup by kecamatan
@@ -37,18 +54,12 @@ export async function getVillageProfiles() {
     locationMap[loc.id] = loc;
   });
 
-  // Discover all unique wilayah from locations
-  const wilayahSet = new Set();
-  locations.forEach(loc => {
-    if (loc.wilayah) wilayahSet.add(loc.wilayah);
-  });
-
-  // Build per-wilayah profiles
+  // Build per-wilayah profiles for ALL 20 KECAMATAN in Banjarnegara
   const profiles = {};
 
-  wilayahSet.forEach(wilayah => {
-    profiles[wilayah] = {
-      wilayah,
+  kecamatanSet.forEach(kecamatan => {
+    profiles[kecamatan] = {
+      wilayah: kecamatan,
       // Infrastructure counts
       tps_count: 0,
       tps3r_count: 0,
@@ -89,8 +100,18 @@ export async function getVillageProfiles() {
 
   // Aggregate waste records
   validRecords.forEach(r => {
-    const loc = r.location_id ? locationMap[r.location_id] : null;
-    const wilayah = loc?.wilayah;
+    let wilayah = null;
+    if (r.desa_id && wilayahMap[r.desa_id]) {
+      wilayah = wilayahMap[r.desa_id].kecamatan;
+    } else if (r.location_id && locationMap[r.location_id]) {
+      const loc = locationMap[r.location_id];
+      if (loc.desa_id && wilayahMap[loc.desa_id]) {
+        wilayah = wilayahMap[loc.desa_id].kecamatan;
+      } else {
+        wilayah = loc.wilayah;
+      }
+    }
+    
     if (!wilayah || !profiles[wilayah]) return;
 
     const p = profiles[wilayah];
@@ -121,8 +142,14 @@ export async function getVillageProfiles() {
 
   // Aggregate locations infrastructure
   locations.forEach(loc => {
-    if (!loc.wilayah || !profiles[loc.wilayah]) return;
-    const p = profiles[loc.wilayah];
+    let wilayah = null;
+    if (loc.desa_id && wilayahMap[loc.desa_id]) {
+      wilayah = wilayahMap[loc.desa_id].kecamatan;
+    } else {
+      wilayah = loc.wilayah;
+    }
+    if (!wilayah || !profiles[wilayah]) return;
+    const p = profiles[wilayah];
     p.location_names.push({ name: loc.name, type: loc.type });
     if (loc.type === 'tps') p.tps_count++;
     if (loc.type === 'tps3r') p.tps3r_count++;
@@ -136,7 +163,7 @@ export async function getVillageProfiles() {
   complaints.forEach(c => {
     // Try matching complaint to wilayah by checking address or nearest location
     let matched = false;
-    for (const wil of wilayahSet) {
+    for (const wil of kecamatanSet) {
       if (c.address && c.address.toLowerCase().includes(wil.toLowerCase())) {
         const p = profiles[wil];
         p.complaint_count++;
@@ -149,8 +176,8 @@ export async function getVillageProfiles() {
       }
     }
     // If no match, try by proximity to first wilayah (fallback to first)
-    if (!matched && wilayahSet.size > 0) {
-      const firstWil = [...wilayahSet][0];
+    if (!matched && kecamatanSet.size > 0) {
+      const firstWil = [...kecamatanSet][0];
       profiles[firstWil].complaint_count++;
       profiles[firstWil].complaints.push(c);
       if (c.status === 'baru' || c.status === 'diproses') {
@@ -192,15 +219,15 @@ export async function getVillageProfiles() {
     const pct_tanpa_gps = p.record_count > 0 ? (p.tanpa_gps_count / p.record_count) * 100 : 0;
     const pct_belum_sync = p.record_count > 0 ? (p.belum_sync_count / p.record_count) * 100 : 0;
 
-    // ── Data Kependudukan (dari Supabase atau fallback estimasi) ──
-    const popData = populationMap[p.wilayah.toLowerCase()];
-    const has_population_data = !!popData;
+    // ── Data Kependudukan (dari Supabase atau master_wilayah) ──
+    const popData = kecamatanDemographics[p.wilayah.toLowerCase()];
+    const has_population_data = !!popData && popData.jumlah_penduduk > 0;
     const jumlah_penduduk = popData?.jumlah_penduduk || 0;
     const jumlah_kk = popData?.jumlah_kk || 0;
     const luas_km2 = popData?.luas_km2 || 0;
     const timbulan_per_kapita = popData?.timbulan_per_kapita || DEFAULT_TIMBULAN_PER_KAPITA;
-    const tahun_data = popData?.tahun_data || null;
-    const sumber_data = popData?.sumber_data || null;
+    const tahun_data = 2026;
+    const sumber_data = 'Master Wilayah';
 
     // ── Potensi Timbulan & Kinerja ──
     const numMonths = Math.max(uniqueMonths.size, 1);

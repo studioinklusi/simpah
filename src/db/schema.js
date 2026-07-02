@@ -2,7 +2,7 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'simpah-db';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 export async function initDB() {
   const db = await openDB(DB_NAME, DB_VERSION, {
@@ -97,6 +97,13 @@ export async function initDB() {
         const events = db.createObjectStore('incidental_events', { keyPath: 'id' });
         events.createIndex('type', 'type');
         events.createIndex('created_at', 'created_at');
+      }
+
+      // Master Wilayah (Kecamatan & Desa)
+      if (!db.objectStoreNames.contains('master_wilayah')) {
+        const wilayah = db.createObjectStore('master_wilayah', { keyPath: 'id' });
+        wilayah.createIndex('kecamatan', 'kecamatan');
+        wilayah.createIndex('desa_kelurahan', 'desa_kelurahan');
       }
     }
   });

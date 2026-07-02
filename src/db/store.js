@@ -224,6 +224,67 @@ export async function deleteLocation(id) {
   await deleteById('locations', id);
 }
 
+// ========== Master Wilayah ==========
+export async function getAllMasterWilayah() {
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabase.from('master_wilayah').select('*').order('kecamatan').order('desa_kelurahan');
+      if (!error && data) {
+        // Cache to IDB
+        const db = await getDB();
+        const tx = db.transaction('master_wilayah', 'readwrite');
+        await tx.store.clear();
+        data.forEach(item => tx.store.put(item));
+        await tx.done;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Failed to fetch master_wilayah from Supabase, falling back to IDB', e);
+    }
+  }
+  return getAll('master_wilayah');
+}
+
+export async function addMasterWilayah(wilayahData) {
+  if (!navigator.onLine) throw new Error('Penambahan wilayah harus dalam keadaan online');
+  
+  const id = wilayahData.id || crypto.randomUUID();
+  const dataToInsert = { 
+    ...wilayahData, 
+    id, 
+    created_at: new Date().toISOString(), 
+    updated_at: new Date().toISOString() 
+  };
+  
+  const { data, error } = await supabase.from('master_wilayah').insert(dataToInsert).select().single();
+  if (error) throw new Error(error.message);
+  
+  await put('master_wilayah', data);
+  return data;
+}
+
+export async function updateMasterWilayah(id, updates) {
+  if (!navigator.onLine) throw new Error('Perubahan wilayah harus dalam keadaan online');
+  
+  const updatedData = { ...updates, updated_at: new Date().toISOString() };
+  
+  const { data, error } = await supabase.from('master_wilayah').update(updatedData).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  
+  await put('master_wilayah', data);
+  return data;
+}
+
+export async function deleteMasterWilayah(id) {
+  if (!navigator.onLine) throw new Error('Penghapusan wilayah harus dalam keadaan online');
+  
+  const { error } = await supabase.from('master_wilayah').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  
+  await deleteById('master_wilayah', id);
+}
+
+
 // ========== Fleet ==========
 export async function getAllFleet() {
   if (navigator.onLine) {

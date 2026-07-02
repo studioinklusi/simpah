@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
-import { addWasteRecord, getAllLocations, getAllFleet, getAllMou } from '../../db/store.js';
+import { addWasteRecord, getAllLocations, getAllFleet, getAllMou, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
@@ -11,9 +11,14 @@ export async function renderInputSampah() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  const locations = await getAllLocations();
-  const fleet = await getAllFleet();
-  const mous = await getAllMou();
+  const [locations, fleet, mous, masterWilayah] = await Promise.all([
+    getAllLocations(),
+    getAllFleet(),
+    getAllMou(),
+    getAllMasterWilayah()
+  ]);
+  
+  const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
   let gpsData = null;
   let mouValid = true; // Track MoU validation state
   let photoPicker = null;
@@ -94,14 +99,47 @@ export async function renderInputSampah() {
           </div>
         </div>
 
-        <!-- Location -->
-        <div class="form-group">
-          <label class="form-label">Lokasi TPS/TPS3R</label>
-          <select id="locationSelect" class="form-select form-input-lg">
-            <option value="">Pilih lokasi...</option>
-            ${locations.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('')}
-          </select>
-        </div>
+        <!-- Location (Wilayah & Fasilitas) -->
+        ${userDesa ? `
+          <div class="form-group">
+            <label class="form-label">Wilayah Pencatatan</label>
+            <div class="form-input form-input-lg locked-wilayah-display" style="background:var(--gray-100); display:flex; align-items:center; gap:var(--space-2); border-color:var(--border-color); font-weight:600;">
+              ${icons.mapPin}
+              <span>Desa ${userDesa.desa_kelurahan}, Kec. ${userDesa.kecamatan}</span>
+            </div>
+            <input type="hidden" id="desaSelect" value="${userDesa.id}" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Lokasi TPS/TPS3R (Opsional)</label>
+            <select id="locationSelect" class="form-select form-input-lg">
+              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+              ${locations.filter(l => l.desa_id === userDesa.id).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('')}
+            </select>
+          </div>
+        ` : `
+          <div class="form-group">
+            <label class="form-label">Kecamatan</label>
+            <select id="kecamatanSelect" class="form-select form-input-lg">
+              <option value="">Pilih Kecamatan...</option>
+              ${[...new Set(masterWilayah.map(w => w.kecamatan))].sort().map(k => `<option value="${k}">${k}</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="form-group" id="desaGroup" style="display:none">
+            <label class="form-label">Desa / Kelurahan</label>
+            <select id="desaSelect" class="form-select form-input-lg">
+              <option value="">Pilih Desa...</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="locationGroup" style="display:none">
+            <label class="form-label">Lokasi TPS/TPS3R (Opsional)</label>
+            <select id="locationSelect" class="form-select form-input-lg">
+              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+            </select>
+          </div>
+        `}
 
         <!-- Fleet (optional) -->
         <div class="form-group">
@@ -152,6 +190,48 @@ export async function renderInputSampah() {
 
   // Init photo picker
   photoPicker = initPhotoPicker('sampah');
+
+  // Wire up cascading dropdown events
+  const kecSelect = document.getElementById('kecamatanSelect');
+  const desaSelect = document.getElementById('desaSelect');
+  const locSelect = document.getElementById('locationSelect');
+  const desaGroup = document.getElementById('desaGroup');
+  const locGroup = document.getElementById('locationGroup');
+
+  if (kecSelect) {
+    kecSelect.addEventListener('change', () => {
+      const selectedKec = kecSelect.value;
+      if (!selectedKec) {
+        desaGroup.style.display = 'none';
+        locGroup.style.display = 'none';
+        desaSelect.innerHTML = '<option value="">Pilih Desa...</option>';
+        locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
+        return;
+      }
+
+      const filteredDesa = masterWilayah.filter(w => w.kecamatan === selectedKec);
+      desaSelect.innerHTML = '<option value="">Pilih Desa...</option>' + 
+        filteredDesa.map(w => `<option value="${w.id}">${w.desa_kelurahan}</option>`).join('');
+      
+      desaGroup.style.display = 'block';
+      locGroup.style.display = 'none';
+    });
+
+    desaSelect.addEventListener('change', () => {
+      const selectedDesaId = desaSelect.value;
+      if (!selectedDesaId) {
+        locGroup.style.display = 'none';
+        locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
+        return;
+      }
+
+      const filteredLocs = locations.filter(l => l.desa_id === selectedDesaId);
+      locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
+        filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
+      
+      locGroup.style.display = 'block';
+    });
+  }
 
   // Wire up unit toggle
   document.querySelectorAll('.weight-unit-btn').forEach(btn => {
@@ -302,10 +382,18 @@ export async function renderInputSampah() {
     const activeUnit = document.querySelector('.weight-unit-btn.active').dataset.unit;
     const weightKg = activeUnit === 'ton' ? weightInput * 1000 : weightInput;
 
+    const desaEl = document.getElementById('desaSelect');
+    const desaId = desaEl ? desaEl.value : null;
+
+    if (!desaId) {
+      showToast('Pilih wilayah Desa / Kelurahan terlebih dahulu', 'warning');
+      return;
+    }
+
     const locationEl = document.getElementById('locationSelect');
     const fleetEl = document.getElementById('fleetSelect');
-    const selectedOption = locationEl.options[locationEl.selectedIndex];
-    const selectedFleet = fleetEl.options[fleetEl.selectedIndex];
+    const selectedOption = (locationEl && locationEl.selectedIndex >= 0) ? locationEl.options[locationEl.selectedIndex] : null;
+    const selectedFleet = (fleetEl && fleetEl.selectedIndex >= 0) ? fleetEl.options[fleetEl.selectedIndex] : null;
 
     const photos = photoPicker?.getPhotos() || [];
 
@@ -317,10 +405,11 @@ export async function renderInputSampah() {
       weight_kg: weightKg,
       lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
       lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
-      location_id: locationEl.value || null,
-      location_name: locationEl.value ? selectedOption.text : '',
-      fleet_id: fleetEl.value || null,
-      fleet_plate: fleetEl.value ? selectedFleet.dataset.plate : '',
+      location_id: (locationEl && locationEl.value) ? locationEl.value : null,
+      location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+      desa_id: desaId,
+      fleet_id: (fleetEl && fleetEl.value) ? fleetEl.value : null,
+      fleet_plate: (fleetEl && fleetEl.value) ? selectedFleet.dataset.plate : '',
       notes: document.getElementById('notesInput').value.trim(),
       photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
       photo_count: photos.length,
