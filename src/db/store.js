@@ -224,12 +224,39 @@ export async function deleteLocation(id) {
   await deleteById('locations', id);
 }
 
+const FALLBACK_WILAYAH = [
+  { id: 'wil-001', kecamatan: 'Banjarnegara', desa_kelurahan: 'Krandegan', jumlah_penduduk: 7200, jumlah_kk: 1850, luas_km2: 2.5 },
+  { id: 'wil-002', kecamatan: 'Banjarnegara', desa_kelurahan: 'Parakancanggah', jumlah_penduduk: 8500, jumlah_kk: 2200, luas_km2: 3.1 },
+  { id: 'wil-003', kecamatan: 'Banjarnegara', desa_kelurahan: 'Semampir', jumlah_penduduk: 6800, jumlah_kk: 1750, luas_km2: 2.2 },
+  { id: 'wil-013', kecamatan: 'Purwareja Klampok', desa_kelurahan: 'Purwareja', jumlah_penduduk: 6500, jumlah_kk: 1680, luas_km2: 2.1 },
+  { id: 'wil-014', kecamatan: 'Purwareja Klampok', desa_kelurahan: 'Klampok', jumlah_penduduk: 8200, jumlah_kk: 2100, luas_km2: 3.4 },
+  { id: 'wil-021', kecamatan: 'Mandiraja', desa_kelurahan: 'Mandiraja Wetan', jumlah_penduduk: 7100, jumlah_kk: 1830, luas_km2: 3.1 },
+  { id: 'wil-022', kecamatan: 'Mandiraja', desa_kelurahan: 'Mandiraja Kulon', jumlah_penduduk: 6800, jumlah_kk: 1750, luas_km2: 2.9 },
+  { id: 'wil-035', kecamatan: 'Bawang', desa_kelurahan: 'Bawang', jumlah_penduduk: 6200, jumlah_kk: 1590, luas_km2: 3.2 },
+  { id: 'wil-047', kecamatan: 'Wanadadi', desa_kelurahan: 'Wanadadi', jumlah_penduduk: 5800, jumlah_kk: 1490, luas_km2: 2.5 },
+  { id: 'wil-056', kecamatan: 'Sigaluh', desa_kelurahan: 'Sigaluh', jumlah_penduduk: 4800, jumlah_kk: 1230, luas_km2: 3.2 },
+  { id: 'wil-065', kecamatan: 'Banjarmangu', desa_kelurahan: 'Banjarmangu', jumlah_penduduk: 4500, jumlah_kk: 1150, luas_km2: 3.5 },
+  { id: 'wil-072', kecamatan: 'Batur', desa_kelurahan: 'Batur', jumlah_penduduk: 6200, jumlah_kk: 1590, luas_km2: 5.2 },
+  { id: 'wil-078', kecamatan: 'Kalibening', desa_kelurahan: 'Kalibening', jumlah_penduduk: 5100, jumlah_kk: 1310, luas_km2: 4.2 },
+  { id: 'wil-084', kecamatan: 'Karangkobar', desa_kelurahan: 'Karangkobar', jumlah_penduduk: 5500, jumlah_kk: 1410, luas_km2: 3.1 },
+  { id: 'wil-089', kecamatan: 'Madukara', desa_kelurahan: 'Madukara', jumlah_penduduk: 4900, jumlah_kk: 1260, luas_km2: 3.2 },
+  { id: 'wil-094', kecamatan: 'Pagedongan', desa_kelurahan: 'Pagedongan', jumlah_penduduk: 4500, jumlah_kk: 1150, luas_km2: 4.8 },
+  { id: 'wil-098', kecamatan: 'Pagentan', desa_kelurahan: 'Pagentan', jumlah_penduduk: 4200, jumlah_kk: 1080, luas_km2: 3.5 },
+  { id: 'wil-102', kecamatan: 'Pejawaran', desa_kelurahan: 'Pejawaran', jumlah_penduduk: 4800, jumlah_kk: 1230, luas_km2: 3.9 },
+  { id: 'wil-106', kecamatan: 'Punggelan', desa_kelurahan: 'Punggelan', jumlah_penduduk: 5200, jumlah_kk: 1330, luas_km2: 4.5 },
+  { id: 'wil-110', kecamatan: 'Purwonegoro', desa_kelurahan: 'Purwonegoro', jumlah_penduduk: 6800, jumlah_kk: 1750, luas_km2: 3.8 },
+  { id: 'wil-114', kecamatan: 'Rakit', desa_kelurahan: 'Rakit', jumlah_penduduk: 5500, jumlah_kk: 1410, luas_km2: 3.4 },
+  { id: 'wil-117', kecamatan: 'Susukan', desa_kelurahan: 'Susukan', jumlah_penduduk: 5100, jumlah_kk: 1310, luas_km2: 3.6 },
+  { id: 'wil-120', kecamatan: 'Wanayasa', desa_kelurahan: 'Wanayasa', jumlah_penduduk: 4800, jumlah_kk: 1230, luas_km2: 4.1 },
+  { id: 'wil-123', kecamatan: 'Pandanarum', desa_kelurahan: 'Pandanarum', jumlah_penduduk: 3900, jumlah_kk: 1000, luas_km2: 4.5 }
+];
+
 // ========== Master Wilayah ==========
 export async function getAllMasterWilayah() {
   if (navigator.onLine) {
     try {
       const { data, error } = await supabase.from('master_wilayah').select('*').order('kecamatan').order('desa_kelurahan');
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         // Cache to IDB
         const db = await getDB();
         const tx = db.transaction('master_wilayah', 'readwrite');
@@ -242,7 +269,11 @@ export async function getAllMasterWilayah() {
       console.warn('Failed to fetch master_wilayah from Supabase, falling back to IDB', e);
     }
   }
-  return getAll('master_wilayah');
+  const idbData = await getAll('master_wilayah');
+  if (idbData && idbData.length > 0) {
+    return idbData;
+  }
+  return FALLBACK_WILAYAH;
 }
 
 export async function addMasterWilayah(wilayahData) {
