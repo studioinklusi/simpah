@@ -171,16 +171,16 @@ const WILAYAH_DATA = [
 ];
 
 const LOCATIONS_DATA = [
-  { id: 'loc-01', name: 'TPS3R Banjarnegara', type: 'tps3r', lat: -7.3891, lng: 109.6952, address: 'Jl. Selamanik No. 10, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-005' },
-  { id: 'loc-02', name: 'TPS3R Purwareja', type: 'tps3r', lat: -7.4123, lng: 109.6310, address: 'Jl. Raya Purwareja, Purwareja Klampok', wilayah: 'Purwareja Klampok', desa_id: 'wil-013' },
-  { id: 'loc-03', name: 'TPS Mandiraja', type: 'tps', lat: -7.4502, lng: 109.6218, address: 'Jl. Raya Mandiraja', wilayah: 'Mandiraja', desa_id: 'wil-021' },
-  { id: 'loc-04', name: 'Bank Sampah Berseri', type: 'bank_sampah', lat: -7.3935, lng: 109.6988, address: 'Jl. Letjend S. Parman No. 45, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-001' },
-  { id: 'loc-05', name: 'Bank Sampah Mawar', type: 'bank_sampah', lat: -7.3780, lng: 109.7051, address: 'Jl. Pemuda No. 22, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-003' },
-  { id: 'loc-06', name: 'Bank Sampah Cempaka', type: 'bank_sampah', lat: -7.4250, lng: 109.6850, address: 'Jl. Raya Sigaluh No. 5', wilayah: 'Sigaluh', desa_id: 'wil-056' },
-  { id: 'loc-07', name: 'Pengepul Jaya Abadi', type: 'pengepul', lat: -7.3998, lng: 109.7102, address: 'Jl. Salak No. 8, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-002' },
-  { id: 'loc-08', name: 'Pengepul Berkah', type: 'pengepul', lat: -7.4350, lng: 109.6450, address: 'Jl. Raya Bawang No. 12', wilayah: 'Bawang', desa_id: 'wil-035' },
-  { id: 'loc-09', name: 'TPA Winong', type: 'tpa', lat: -7.3720, lng: 109.6780, address: 'Desa Winong, Kec. Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-005' },
-  { id: 'loc-10', name: 'TPS3R Wanadadi', type: 'tps3r', lat: -7.3555, lng: 109.7410, address: 'Jl. Raya Wanadadi No. 3', wilayah: 'Wanadadi', desa_id: 'wil-047' }
+  { id: 'loc-01', name: 'TPS3R Banjarnegara', type: 'tps3r', lat: -7.3891, lng: 109.6952, address: 'Jl. Selamanik No. 10, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-005', served_desa_ids: ['wil-005'] },
+  { id: 'loc-02', name: 'TPS3R Purwareja', type: 'tps3r', lat: -7.4123, lng: 109.6310, address: 'Jl. Raya Purwareja, Purwareja Klampok', wilayah: 'Purwareja Klampok', desa_id: 'wil-013', served_desa_ids: ['wil-013'] },
+  { id: 'loc-03', name: 'TPS Mandiraja', type: 'tps', lat: -7.4502, lng: 109.6218, address: 'Jl. Raya Mandiraja', wilayah: 'Mandiraja', desa_id: 'wil-021', served_desa_ids: ['wil-021'] },
+  { id: 'loc-04', name: 'Bank Sampah Berseri', type: 'bank_sampah', lat: -7.3935, lng: 109.6988, address: 'Jl. Letjend S. Parman No. 45, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-001', served_desa_ids: ['wil-001'] },
+  { id: 'loc-05', name: 'Bank Sampah Mawar', type: 'bank_sampah', lat: -7.3780, lng: 109.7051, address: 'Jl. Pemuda No. 22, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-003', served_desa_ids: ['wil-003'] },
+  { id: 'loc-06', name: 'Bank Sampah Cempaka', type: 'bank_sampah', lat: -7.4250, lng: 109.6850, address: 'Jl. Raya Sigaluh No. 5', wilayah: 'Sigaluh', desa_id: 'wil-056', served_desa_ids: ['wil-056'] },
+  { id: 'loc-07', name: 'Pengepul Jaya Abadi', type: 'pengepul', lat: -7.3998, lng: 109.7102, address: 'Jl. Salak No. 8, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-002', served_desa_ids: ['wil-002'] },
+  { id: 'loc-08', name: 'Pengepul Berkah', type: 'pengepul', lat: -7.4350, lng: 109.6450, address: 'Jl. Raya Bawang No. 12', wilayah: 'Bawang', desa_id: 'wil-035', served_desa_ids: ['wil-035'] },
+  { id: 'loc-09', name: 'TPA Winong', type: 'tpa', lat: -7.3720, lng: 109.6780, address: 'Desa Winong, Kec. Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-005', served_desa_ids: ['wil-005'] },
+  { id: 'loc-10', name: 'TPS3R Wanadadi', type: 'tps3r', lat: -7.3555, lng: 109.7410, address: 'Jl. Raya Wanadadi No. 3', wilayah: 'Wanadadi', desa_id: 'wil-047', served_desa_ids: ['wil-047'] }
 ];
 
 const USERS_DATA = [

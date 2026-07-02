@@ -166,7 +166,10 @@ export async function renderMasterData() {
 
   // ---------- LOCATIONS TAB ----------
   async function renderLocationsTab(container) {
-    const locations = await getAllLocations();
+    const [locations, masterWilayah] = await Promise.all([
+      getAllLocations(),
+      getAllMasterWilayah()
+    ]);
     const badgeColors = { tps: 'amber', tps3r: 'green', bank_sampah: 'blue', pengepul: 'purple', tpa: 'red' };
     container.innerHTML = `
       <div class="md-toolbar">
@@ -178,27 +181,46 @@ export async function renderMasterData() {
       </div>
       <div class="md-table-container">
         <table class="md-table">
-          <thead><tr><th>Nama</th><th>Tipe</th><th>Wilayah</th><th>Koordinat</th><th>Aksi</th></tr></thead>
+          <thead><tr><th>Nama</th><th>Tipe</th><th>Wilayah / Desa</th><th>Koordinat</th><th>Aksi</th></tr></thead>
           <tbody>
             ${locations.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data lokasi</td></tr>' :
-              locations.map(l => `<tr>
-                <td><strong>${l.name}</strong></td>
-                <td><span class="md-badge ${badgeColors[l.type] || 'blue'}">${l.type?.toUpperCase()}</span></td>
-                <td>${l.wilayah || '-'}</td>
-                <td style="font-size:var(--font-xs);color:var(--text-muted)">${l.lat && l.lng ? `${Number(l.lat).toFixed(4)}, ${Number(l.lng).toFixed(4)}` : '-'}</td>
-                <td><div class="md-actions">
-                  <button class="md-btn-icon" title="Edit" data-edit-loc="${l.id}">${icons.edit}</button>
-                  <button class="md-btn-icon danger" title="Hapus" data-del-loc="${l.id}">${icons.trash}</button>
-                </div></td>
-              </tr>`).join('')}
+              locations.map(l => {
+                const matchedWil = masterWilayah.find(w => w.id === l.desa_id);
+                const wilayahDisplay = matchedWil ? `Desa ${matchedWil.desa_kelurahan}, Kec. ${matchedWil.kecamatan}` : (l.wilayah || '-');
+                return `<tr>
+                  <td>
+                    <strong>${l.name}</strong>
+                    ${l.address ? `<div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">${l.address}</div>` : ''}
+                  </td>
+                  <td><span class="md-badge ${badgeColors[l.type] || 'blue'}">${l.type?.toUpperCase()}</span></td>
+                  <td>
+                    <div>${wilayahDisplay}</div>
+                    ${l.served_desa_ids && l.served_desa_ids.length > 1 ? `
+                      <div style="font-size:var(--font-xs);color:var(--primary-color);margin-top:2px" title="${
+                        l.served_desa_ids.map(id => {
+                          const w = masterWilayah.find(x => x.id === id);
+                          return w ? w.desa_kelurahan : '';
+                        }).filter(Boolean).join(', ')
+                      }">
+                        Melayani ${l.served_desa_ids.length} Desa
+                      </div>
+                    ` : ''}
+                  </td>
+                  <td style="font-size:var(--font-xs);color:var(--text-muted)">${l.lat && l.lng ? `${Number(l.lat).toFixed(4)}, ${Number(l.lng).toFixed(4)}` : '-'}</td>
+                  <td><div class="md-actions">
+                    <button class="md-btn-icon" title="Edit" data-edit-loc="${l.id}">${icons.edit}</button>
+                    <button class="md-btn-icon danger" title="Hapus" data-del-loc="${l.id}">${icons.trash}</button>
+                  </div></td>
+                </tr>`;
+              }).join('')}
           </tbody>
         </table>
       </div>
     `;
-    document.getElementById('addLocationBtn')?.addEventListener('click', () => openLocationForm());
+    document.getElementById('addLocationBtn')?.addEventListener('click', () => openLocationForm(null, masterWilayah));
     container.querySelectorAll('[data-edit-loc]').forEach(btn => btn.addEventListener('click', async () => {
       const loc = locations.find(l => l.id === btn.dataset.editLoc);
-      if (loc) openLocationForm(loc);
+      if (loc) openLocationForm(loc, masterWilayah);
     }));
     container.querySelectorAll('[data-del-loc]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus lokasi ini?')) {
@@ -209,8 +231,10 @@ export async function renderMasterData() {
     }));
   }
 
-  function openLocationForm(existing = null) {
+  function openLocationForm(existing = null, masterWilayah = []) {
     const isEdit = !!existing;
+    const kecamatans = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+
     openModal(isEdit ? 'Edit Lokasi' : 'Tambah Lokasi Baru', `
       <form id="locForm">
         <div class="form-group">
@@ -223,20 +247,56 @@ export async function renderMasterData() {
             ${LOCATION_TYPES.map(t => `<option value="${t.id}" ${existing?.type === t.id ? 'selected' : ''}>${t.label}</option>`).join('')}
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Wilayah / Kecamatan</label>
-          <input class="form-input" id="locWilayah" value="${existing?.wilayah || ''}" placeholder="Misal: Banjarnegara" />
-        </div>
+        
         <div style="display:flex;gap:var(--space-3)">
           <div class="form-group" style="flex:1">
-            <label class="form-label">Latitude</label>
-            <input class="form-input" id="locLat" type="number" step="any" value="${existing?.lat || ''}" placeholder="-7.xxx" />
+            <label class="form-label">Kecamatan</label>
+            <select class="form-select" id="locKecamatan" required>
+              <option value="">Pilih Kecamatan...</option>
+              ${kecamatans.map(k => `<option value="${k}">${k}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group" style="flex:1">
-            <label class="form-label">Longitude</label>
-            <input class="form-input" id="locLng" type="number" step="any" value="${existing?.lng || ''}" placeholder="109.xxx" />
+            <label class="form-label">Desa Lokasi Fisik</label>
+            <select class="form-select" id="locDesa" required>
+              <option value="">Pilih Desa...</option>
+            </select>
           </div>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Desa Yang Dilayani</label>
+          <div style="display:flex; gap:10px; margin-bottom:8px">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnSelectAllServed" style="padding:2px 8px; font-size:var(--font-xs)">Pilih Semua</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnClearAllServed" style="padding:2px 8px; font-size:var(--font-xs)">Hapus Semua</button>
+          </div>
+          <div id="servedDesaGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:6px; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px; max-height:120px; overflow-y:auto; background:var(--gray-50)">
+            <div style="color:var(--text-muted); font-size:var(--font-sm)">Silakan pilih kecamatan terlebih dahulu</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Alamat (Opsional)</label>
+          <input class="form-input" id="locAddress" value="${existing?.address || ''}" placeholder="Misal: Jl. Selamanik No. 10" />
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
+            <label class="form-label" style="margin-bottom:0">Koordinat (Latitude & Longitude)</label>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnGetGPS" style="padding:2px 8px; font-size:var(--font-xs); display:flex; align-items:center; gap:4px">
+              🎯 Gunakan Lokasi Saat Ini
+            </button>
+          </div>
+          <div style="display:flex;gap:var(--space-3)">
+            <div class="form-group" style="flex:1; margin-bottom:0">
+              <input class="form-input" id="locLat" type="number" step="any" required value="${existing?.lat || ''}" placeholder="Latitude (e.g. -7.3891)" />
+            </div>
+            <div class="form-group" style="flex:1; margin-bottom:0">
+              <input class="form-input" id="locLng" type="number" step="any" required value="${existing?.lng || ''}" placeholder="Longitude (e.g. 109.6952)" />
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Kapasitas (kg, opsional)</label>
           <input class="form-input" id="locCapacity" type="number" step="0.1" value="${existing?.capacity_kg || ''}" placeholder="Misal: 1000" />
@@ -247,16 +307,106 @@ export async function renderMasterData() {
         </div>
       </form>
     `);
+
+    const kecSelect = document.getElementById('locKecamatan');
+    const desaSelect = document.getElementById('locDesa');
+    const servedGrid = document.getElementById('servedDesaGrid');
+
+    function updateDesaOptions(selectedKec, preselectedDesaId = null, preselectedServedIds = []) {
+      if (!selectedKec) {
+        desaSelect.innerHTML = '<option value="">Pilih Desa...</option>';
+        servedGrid.innerHTML = '<div style="color:var(--text-muted); font-size:var(--font-sm)">Silakan pilih kecamatan terlebih dahulu</div>';
+        return;
+      }
+
+      const filteredVillages = masterWilayah.filter(w => w.kecamatan === selectedKec);
+      
+      // Populate Desa dropdown
+      desaSelect.innerHTML = '<option value="">Pilih Desa...</option>' + 
+        filteredVillages.map(v => `<option value="${v.id}" ${preselectedDesaId === v.id ? 'selected' : ''}>${v.desa_kelurahan}</option>`).join('');
+
+      // Populate Served checkboxes
+      servedGrid.innerHTML = filteredVillages.map(v => {
+        const isChecked = preselectedServedIds.includes(v.id) || (preselectedDesaId === v.id);
+        return `
+          <label style="display:flex;align-items:center;gap:6px;margin-bottom:2px;font-size:var(--font-xs);cursor:pointer">
+            <input type="checkbox" name="servedDesa" value="${v.id}" class="served-desa-checkbox" ${isChecked ? 'checked' : ''} />
+            <span>${v.desa_kelurahan}</span>
+          </label>
+        `;
+      }).join('');
+    }
+
+    kecSelect.addEventListener('change', () => {
+      updateDesaOptions(kecSelect.value);
+    });
+
+    desaSelect.addEventListener('change', () => {
+      const val = desaSelect.value;
+      if (val) {
+        const cb = servedGrid.querySelector(`.served-desa-checkbox[value="${val}"]`);
+        if (cb) cb.checked = true;
+      }
+    });
+
+    document.getElementById('btnSelectAllServed')?.addEventListener('click', () => {
+      servedGrid.querySelectorAll('.served-desa-checkbox').forEach(cb => cb.checked = true);
+    });
+
+    document.getElementById('btnClearAllServed')?.addEventListener('click', () => {
+      servedGrid.querySelectorAll('.served-desa-checkbox').forEach(cb => cb.checked = false);
+    });
+
+    document.getElementById('btnGetGPS')?.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        showToast('Meminta koordinat GPS...', 'info');
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            document.getElementById('locLat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('locLng').value = position.coords.longitude.toFixed(6);
+            showToast('Koordinat GPS berhasil didapatkan', 'success');
+          },
+          (error) => {
+            showToast('Gagal mendapatkan GPS: ' + error.message, 'error');
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else {
+        showToast('Browser Anda tidak mendukung Geolocation', 'error');
+      }
+    });
+
+    // Set initial values if edit
+    if (isEdit && existing) {
+      const matched = masterWilayah.find(w => w.id === existing.desa_id);
+      const preselectedKec = matched ? matched.kecamatan : (existing.wilayah || '');
+      kecSelect.value = preselectedKec;
+      
+      const servedIds = Array.isArray(existing.served_desa_ids) ? existing.served_desa_ids : [existing.desa_id].filter(Boolean);
+      updateDesaOptions(preselectedKec, existing.desa_id, servedIds);
+    }
+
     document.getElementById('locForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const selectedDesaId = desaSelect.value;
+      const servedDesaIds = Array.from(document.querySelectorAll('.served-desa-checkbox:checked')).map(cb => cb.value);
+
+      if (selectedDesaId && !servedDesaIds.includes(selectedDesaId)) {
+        servedDesaIds.unshift(selectedDesaId);
+      }
+
       const data = {
         name: document.getElementById('locName').value.trim(),
         type: document.getElementById('locType').value,
-        wilayah: document.getElementById('locWilayah').value.trim(),
-        lat: parseFloat(document.getElementById('locLat').value) || null,
-        lng: parseFloat(document.getElementById('locLng').value) || null,
+        wilayah: kecSelect.value,
+        desa_id: selectedDesaId || null,
+        served_desa_ids: servedDesaIds,
+        address: document.getElementById('locAddress').value.trim() || null,
+        lat: parseFloat(document.getElementById('locLat').value),
+        lng: parseFloat(document.getElementById('locLng').value),
         capacity_kg: parseFloat(document.getElementById('locCapacity').value) || null
       };
+
       try {
         if (isEdit) await updateLocation(existing.id, data);
         else await addLocation(data);

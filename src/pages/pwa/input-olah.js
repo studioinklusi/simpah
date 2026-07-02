@@ -109,7 +109,7 @@ export async function renderInputOlah() {
             <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
             <select id="locationSelect" class="form-select">
               <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-              ${locations.filter(l => l.desa_id === userDesa.id && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('')}
+              ${locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('')}
             </select>
           </div>
         ` : `
@@ -208,7 +208,7 @@ export async function renderInputOlah() {
         return;
       }
 
-      const filteredLocs = locations.filter(l => l.desa_id === selectedDesaId && ['tps3r', 'bank_sampah'].includes(l.type));
+      const filteredLocs = locations.filter(l => (l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId))) && ['tps3r', 'bank_sampah'].includes(l.type));
       locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
         filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('');
       

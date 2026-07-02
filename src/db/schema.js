@@ -2,7 +2,7 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'simpah-db';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 export async function initDB() {
   const db = await openDB(DB_NAME, DB_VERSION, {
@@ -43,6 +43,16 @@ export async function initDB() {
         if (db.objectStoreNames.contains('waste_records')) tx.objectStore('waste_records').clear();
       }
 
+      // Upgrade Path for v7: Add desa_id index to locations if it doesn't exist
+      if (oldVersion > 0 && oldVersion < 7) {
+        if (db.objectStoreNames.contains('locations')) {
+          const locsStore = transaction.objectStore('locations');
+          if (!locsStore.indexNames.contains('desa_id')) {
+            locsStore.createIndex('desa_id', 'desa_id');
+          }
+        }
+      }
+
       // Sorted Waste (Pilah details)
       if (!db.objectStoreNames.contains('sorted_waste')) {
         const sorted = db.createObjectStore('sorted_waste', { keyPath: 'id' });
@@ -55,6 +65,7 @@ export async function initDB() {
         const locs = db.createObjectStore('locations', { keyPath: 'id' });
         locs.createIndex('type', 'type');
         locs.createIndex('wilayah', 'wilayah');
+        locs.createIndex('desa_id', 'desa_id');
       }
 
       // Fleet / Armada
