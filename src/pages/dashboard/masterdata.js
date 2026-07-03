@@ -511,7 +511,10 @@ export async function renderMasterData() {
 
   // ---------- USERS TAB ----------
   async function renderUsersTab(container) {
-    const users = await getAllUsers();
+    const [users, masterWilayah] = await Promise.all([
+      getAllUsers(),
+      getAllMasterWilayah()
+    ]);
     const roleColors = { warga: 'green', petugas: 'amber', eksekutif: 'blue', admin: 'purple' };
     const roleLabels = {};
     USER_ROLES.forEach(r => { roleLabels[r.id] = r.label; });
@@ -542,10 +545,10 @@ export async function renderMasterData() {
         </table>
       </div>
     `;
-    document.getElementById('addUserBtn')?.addEventListener('click', () => openUserForm());
+    document.getElementById('addUserBtn')?.addEventListener('click', () => openUserForm(null, masterWilayah));
     container.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
       const u = users.find(x => x.id === btn.dataset.editUser);
-      if (u) openUserForm(u);
+      if (u) openUserForm(u, masterWilayah);
     }));
     container.querySelectorAll('[data-del-user]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus pengguna ini? Pengguna yang sudah terhapus tidak bisa dikembalikan.')) {
@@ -556,8 +559,10 @@ export async function renderMasterData() {
     }));
   }
 
-  function openUserForm(existing = null) {
+  function openUserForm(existing = null, masterWilayah = []) {
     const isEdit = !!existing;
+    const kecamatanList = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+
     openModal(isEdit ? 'Edit Pengguna' : 'Tambah Pengguna Baru', `
       <form id="userForm">
         <div class="form-group">
@@ -588,7 +593,14 @@ export async function renderMasterData() {
             ${JOB_TYPES.map(j => `<option value="${j.id}" ${existing?.job_type === j.id ? 'selected' : ''}>${j.label} — ${j.desc}</option>`).join('')}
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="kecamatanGroup" style="display:${(existing?.role === 'petugas' && existing?.job_type === 'koordinator') ? 'block' : 'none'}">
+          <label class="form-label">Kecamatan Tanggung Jawab (Khusus Koordinator)</label>
+          <select class="form-select" id="userKecamatan">
+            <option value="">Pilih Kecamatan...</option>
+            ${kecamatanList.map(k => `<option value="${k}" ${existing?.kecamatan === k ? 'selected' : ''}>${k}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" id="wilayahGroup" style="display:${(existing?.role === 'petugas' && existing?.job_type === 'koordinator') ? 'none' : 'block'}">
           <label class="form-label">Wilayah (opsional)</label>
           <input class="form-input" id="userWilayah" value="${existing?.wilayah || ''}" placeholder="Misal: Banjarnegara" />
         </div>
@@ -598,25 +610,42 @@ export async function renderMasterData() {
         </div>
       </form>
     `);
-    // Toggle job_type visibility based on role
+    // Toggle fields visibility based on role and job type
     const roleSelect = document.getElementById('userRole');
+    const jobTypeSelect = document.getElementById('userJobType');
     const jobTypeGroup = document.getElementById('jobTypeGroup');
-    roleSelect?.addEventListener('change', () => {
-      jobTypeGroup.style.display = roleSelect.value === 'petugas' ? 'block' : 'none';
-    });
+    const kecamatanGroup = document.getElementById('kecamatanGroup');
+    const wilayahGroup = document.getElementById('wilayahGroup');
+
+    const updateFieldsVisibility = () => {
+      const isPetugas = roleSelect.value === 'petugas';
+      const isKoordinator = isPetugas && jobTypeSelect.value === 'koordinator';
+      
+      jobTypeGroup.style.display = isPetugas ? 'block' : 'none';
+      kecamatanGroup.style.display = isKoordinator ? 'block' : 'none';
+      wilayahGroup.style.display = isKoordinator ? 'none' : 'block';
+    };
+
+    roleSelect?.addEventListener('change', updateFieldsVisibility);
+    jobTypeSelect?.addEventListener('change', updateFieldsVisibility);
 
     document.getElementById('userForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const role = document.getElementById('userRole').value;
       const roleInfo = USER_ROLES.find(r => r.id === role);
       const jobType = document.getElementById('userJobType')?.value || null;
+      const kecamatan = (role === 'petugas' && jobType === 'koordinator')
+        ? document.getElementById('userKecamatan').value || null
+        : null;
+
       const data = {
         name: document.getElementById('userName').value.trim(),
         username: document.getElementById('userUsername').value.trim().toLowerCase(),
         role: role,
         role_icon: roleInfo?.icon || '',
         job_type: role === 'petugas' ? jobType : null,
-        wilayah: document.getElementById('userWilayah').value.trim()
+        kecamatan: kecamatan,
+        wilayah: kecamatan ? `Kec. ${kecamatan}` : document.getElementById('userWilayah').value.trim()
       };
       const pw = document.getElementById('userPassword').value;
       if (!isEdit && pw) data.password = pw;
@@ -1257,22 +1286,38 @@ export async function renderMasterData() {
 
     // Toggle Job Type dropdown based on role
     const roleSelect = document.getElementById('fInvRole');
+    const jobTypeSelect = document.getElementById('fInvJobType');
     const groupJobType = document.getElementById('groupJobType');
+    const groupInvDesa = document.getElementById('groupInvDesa');
+    const invKecSelect = document.getElementById('fInvKecamatan');
+    const invDesaInput = document.getElementById('fInvDesaInput');
+    const invDesaSelect = document.getElementById('fInvDesa');
+    const fInvKecFeedback = document.getElementById('fInvKecFeedback');
+    const fInvDesaFeedback = document.getElementById('fInvDesaFeedback');
+
+    const toggleDesaGroup = () => {
+      const isKoordinator = roleSelect.value === 'petugas' && jobTypeSelect.value === 'koordinator';
+      const hasKec = invKecSelect.value.trim() !== '';
+      if (hasKec && !isKoordinator) {
+        groupInvDesa.style.display = 'block';
+      } else {
+        groupInvDesa.style.display = 'none';
+        invDesaInput.value = '';
+        invDesaSelect.value = '';
+      }
+    };
+
     roleSelect.addEventListener('change', () => {
       if (roleSelect.value === 'petugas') {
         groupJobType.style.display = 'block';
       } else {
         groupJobType.style.display = 'none';
-        document.getElementById('fInvJobType').value = '';
+        jobTypeSelect.value = '';
       }
+      toggleDesaGroup();
     });
-    // Kecamatan → Desa cascading dropdown (Searchable Select)
-    const invKecSelect = document.getElementById('fInvKecamatan');
-    const groupInvDesa = document.getElementById('groupInvDesa');
-    const invDesaInput = document.getElementById('fInvDesaInput');
-    const invDesaSelect = document.getElementById('fInvDesa');
-    const fInvKecFeedback = document.getElementById('fInvKecFeedback');
-    const fInvDesaFeedback = document.getElementById('fInvDesaFeedback');
+
+    jobTypeSelect.addEventListener('change', toggleDesaGroup);
 
     let selectKecInstance, selectDesaInstance;
 
@@ -1285,14 +1330,10 @@ export async function renderMasterData() {
         return kecamatanList.map(k => ({ value: k, label: k }));
       },
       onSelect: (opt) => {
-        groupInvDesa.style.display = 'block';
-        invDesaInput.value = '';
-        invDesaSelect.value = '';
+        toggleDesaGroup();
       },
       onClear: () => {
-        groupInvDesa.style.display = 'none';
-        invDesaInput.value = '';
-        invDesaSelect.value = '';
+        toggleDesaGroup();
       }
     });
 
@@ -1315,7 +1356,7 @@ export async function renderMasterData() {
     });
 
     if (initialKec) {
-      groupInvDesa.style.display = 'block';
+      toggleDesaGroup();
     }
 
     // Generate random code helper
@@ -1337,6 +1378,7 @@ export async function renderMasterData() {
       const isDesaValid = selectDesaInstance.validate();
       const typedKec = invKecSelect.value.trim();
       const desaId = invDesaSelect.value || null;
+      const isKoordinator = roleSelect.value === 'petugas' && jobTypeSelect.value === 'koordinator';
 
       if (typedKec && !isKecValid) {
         showToast('Kecamatan tidak ditemukan. Harap pilih dari daftar yang valid.', 'warning');
@@ -1344,7 +1386,7 @@ export async function renderMasterData() {
         return;
       }
 
-      if (typedKec && (!isDesaValid || !desaId)) {
+      if (!isKoordinator && typedKec && (!isDesaValid || !desaId)) {
         showToast('Pilih default Desa / Kelurahan yang valid dari Kecamatan terpilih', 'warning');
         if (invDesaInput) invDesaInput.focus();
         return;
@@ -1352,9 +1394,10 @@ export async function renderMasterData() {
       const payload = {
         code: document.getElementById('fInvCode').value.trim().toUpperCase(),
         role: roleSelect.value,
-        job_type: roleSelect.value === 'petugas' ? document.getElementById('fInvJobType').value || null : null,
+        job_type: roleSelect.value === 'petugas' ? jobTypeSelect.value || null : null,
         location_id: document.getElementById('fInvLocation').value || null,
-        desa_id: invDesaSelect.value || null,
+        desa_id: isKoordinator ? null : (invDesaSelect.value || null),
+        kecamatan: typedKec || null,
         max_uses: parseInt(document.getElementById('fInvMaxUses').value) || 0,
         expires_at: document.getElementById('fInvExpiresAt').value ? new Date(document.getElementById('fInvExpiresAt').value).toISOString() : null,
         description: document.getElementById('fInvDesc').value.trim() || null,

@@ -110,7 +110,7 @@ export async function login(emailOrUsername, password) {
  * Register a new user with email, password, username, and full name.
  * Default role is 'warga' set by database trigger.
  */
-export async function register(email, password, username, fullName, invitationCode = null, desaId = null) {
+export async function register(email, password, username, fullName, invitationCode = null, desaId = null, kecamatan = null) {
   const metadata = {
     username: username.trim().toLowerCase(),
     full_name: fullName.trim(),
@@ -122,6 +122,10 @@ export async function register(email, password, username, fullName, invitationCo
 
   if (desaId && desaId.trim()) {
     metadata.desa_id = desaId.trim();
+  }
+
+  if (kecamatan && kecamatan.trim()) {
+    metadata.kecamatan = kecamatan.trim();
   }
 
   const { data, error } = await supabase.auth.signUp({

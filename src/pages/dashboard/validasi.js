@@ -1,7 +1,7 @@
 // SIMPAH - Halaman Validasi Data (Anti-Fraud Queue)
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatWeight, formatDate } from '../../utils/helpers.js';
-import { getAllWasteRecords, updateWasteRecordStatus } from '../../db/store.js';
+import { getAllWasteRecords, updateWasteRecordStatus, getAllMasterWilayah } from '../../db/store.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -28,10 +28,48 @@ export async function renderValidasi() {
 }
 
 async function loadData() {
-  allRecordsCache = await getAllWasteRecords();
-  const pendingRaw = allRecordsCache
+  const [records, masterWilayah] = await Promise.all([
+    getAllWasteRecords(),
+    getAllMasterWilayah()
+  ]);
+
+  const user = getCurrentUser();
+  const isKecKoordinator = user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan;
+
+  // Filter records by Kecamatan if user is a Koordinator
+  let filteredRaw = records;
+  if (isKecKoordinator) {
+    filteredRaw = records.filter(r => {
+      if (!r.desa_id) return false;
+      const desa = masterWilayah.find(w => w.id === r.desa_id);
+      return desa && desa.kecamatan.toLowerCase() === user.kecamatan.toLowerCase();
+    });
+  }
+
+  // Set the cache based on the filter so local stats are scoped
+  allRecordsCache = isKecKoordinator
+    ? records.filter(r => {
+        if (!r.desa_id) return false;
+        const desa = masterWilayah.find(w => w.id === r.desa_id);
+        return desa && desa.kecamatan.toLowerCase() === user.kecamatan.toLowerCase();
+      })
+    : records;
+
+  const pendingRaw = filteredRaw
     .filter(r => r.verification_status === 'pending')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // Enrich pending records with desa names
+  pendingRaw.forEach(r => {
+    if (r.desa_id) {
+      const desa = masterWilayah.find(w => w.id === r.desa_id);
+      if (desa) {
+        r.desa_name = `Desa ${desa.desa_kelurahan}, Kec. ${desa.kecamatan}`;
+        r.desa_only = desa.desa_kelurahan;
+      }
+    }
+  });
+
   pendingRecords = groupPendingRecords(pendingRaw);
 }
 
@@ -54,6 +92,9 @@ function groupPendingRecords(records) {
           user_name: r.user_name,
           location_id: r.location_id,
           location_name: r.location_name,
+          desa_id: r.desa_id,
+          desa_name: r.desa_name,
+          desa_only: r.desa_only,
           type: r.type,
           category_sipsn: r.category_sipsn,
           lat: r.lat,
@@ -106,6 +147,26 @@ function renderView() {
   const approvedCount = allRecordsCache.filter(r => !r.verification_status || r.verification_status === 'approved').length;
   const rejectedCount = allRecordsCache.filter(r => r.verification_status === 'rejected').length;
 
+  const user = getCurrentUser();
+  const isKecKoordinator = user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan;
+
+  let headerContent = '';
+  if (isKecKoordinator) {
+    headerContent = `
+      <div class="card" style="margin-bottom:var(--space-6); background:linear-gradient(135deg, var(--primary-900), var(--primary-800)); color:#fff; border:none; padding:var(--space-5); border-radius:12px; box-shadow:0 4px 12px rgba(5,150,105,0.15)">
+        <div style="display:flex; align-items:center; gap:var(--space-4)">
+          <div style="background:rgba(255,255,255,0.2); width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px">📍</div>
+          <div>
+            <h3 style="margin:0; font-size:var(--font-lg); font-weight:700; color:#fff">Wilayah Pengawasan: Kecamatan ${user.kecamatan}</h3>
+            <p style="margin:4px 0 0 0; font-size:var(--font-xs); color:var(--primary-200); display:flex; align-items:center; gap:4px">
+              Menampilkan data pending dan performa dari kader di seluruh desa/kelurahan di Kecamatan ${user.kecamatan}
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   renderDashboardLayout('Validasi Data', `
     <div class="page-enter">
       <div class="section-header" style="display:flex;justify-content:space-between;align-items:flex-end">
@@ -116,8 +177,10 @@ function renderView() {
         ${pendingRecords.length > 0 ? `<button class="btn btn-primary" id="approveAllBtn" style="background:var(--primary-600);border-color:var(--primary-600);white-space:nowrap">${icons.checkCircle} Setujui Semua (${pendingRecords.length})</button>` : ''}
       </div>
 
+      ${headerContent}
+
       <!-- Stats -->
-      <div class="grid-4" style="margin-bottom:var(--space-6)">
+      <div class="grid-3" style="margin-bottom:var(--space-6)">
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(245,158,11,0.12);color:#f59e0b">${icons.activity}</div>
           <div class="stat-value" style="color:#f59e0b" id="statPending">${pendingRecords.length}</div>
@@ -149,6 +212,7 @@ function renderView() {
                 <tr>
                   <th>Waktu Laporan</th>
                   <th>Petugas / Kader</th>
+                  <th>Desa / Kelurahan</th>
                   <th>Lokasi / TPS</th>
                   <th>Jenis & Kategori</th>
                   <th style="text-align:right">Volume</th>
@@ -176,6 +240,10 @@ function renderView() {
                       <td>
                         <div><strong>${escapeHTML(r.user_name || 'Anonim')}</strong></div>
                         <div style="font-size:11px;color:var(--text-muted)">ID: ${escapeHTML(r.user_id)}</div>
+                      </td>
+                      <td>
+                        <div><strong>${escapeHTML(r.desa_only || '-')}</strong></div>
+                        <div style="font-size:11px;color:var(--text-muted)">Kecamatan: ${escapeHTML(r.desa_name ? r.desa_name.split('Kec. ')[1] : '-')}</div>
                       </td>
                       <td>
                         <div><strong>${escapeHTML(r.location_name || '-')}</strong></div>

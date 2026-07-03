@@ -356,7 +356,8 @@ export async function renderRegister() {
   let isInvitationCodeValid = true;
   let resolvedRole = 'warga';
   let resolvedJobType = null;
-  let resolvedDesaId = null;  // ── Kecamatan → Desa Cascading Dropdown (Searchable Select) ─────────
+  let resolvedDesaId = null;
+  let resolvedKecamatan = null;  // ── Kecamatan → Desa Cascading Dropdown (Searchable Select) ─────────
   const regKecamatan = document.getElementById('regKecamatan');
   const regDesaGroup = document.getElementById('regDesaGroup');
   const regDesaInput = document.getElementById('regDesaInput');
@@ -428,6 +429,7 @@ export async function renderRegister() {
         resolvedRole = res.role;
         resolvedJobType = res.job_type;
         resolvedDesaId = res.desa_id || null;
+        resolvedKecamatan = res.kecamatan || null;
         invitationFeedback.style.color = '#059669';
         
         let roleName = res.role;
@@ -470,6 +472,18 @@ export async function renderRegister() {
               <span>Desa otomatis dari kode undangan: <strong>${res.desa_name || desaData.desa_kelurahan}</strong></span>
             `;
           }
+        } else if (res.kecamatan) {
+          regKecamatan.value = res.kecamatan;
+          regDesaGroup.style.display = 'none';
+          regDesaInput.value = '';
+          regDesa.value = '';
+
+          // Show badge
+          desaFromCodeBadge.style.display = 'flex';
+          desaFromCodeBadge.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Kecamatan otomatis dari kode: <strong>${res.kecamatan}</strong></span>
+          `;
         }
       } else {
         isInvitationCodeValid = false;
@@ -574,7 +588,8 @@ export async function renderRegister() {
     try {
       const invitationCode = invitationCodeInput.value.trim();
       const desaId = regDesa.value || null;
-      const data = await authRegister(email, password, username, fullName, invitationCode, desaId);
+      const kecamatan = regKecamatan.value.trim() || null;
+      const data = await authRegister(email, password, username, fullName, invitationCode, desaId, kecamatan);
       showToast('Registrasi berhasil!', 'success');
 
       // Check if user is active or needs confirmation

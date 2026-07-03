@@ -302,7 +302,7 @@ const USERS_DATA = [
   { id: 'usr-02', username: 'petugas1', password: 'petugas123', name: 'Petugas Pengangkut', role: 'petugas', job_type: 'angkut', location_id: 'loc-01', phone: '081234567891' },
   { id: 'usr-03', username: 'eksekutif1', password: 'eksekutif123', name: 'Bupati Banjarnegara', role: 'eksekutif', phone: '081234567892' },
   { id: 'usr-04', username: 'admin1', password: 'admin123', name: 'Admin SIMPAH', role: 'admin', phone: '081234567893' },
-  { id: 'usr-05', username: 'koordinator1', password: 'koordinator123', name: 'Koordinator Lapangan', role: 'petugas', job_type: 'koordinator', location_id: 'loc-01', phone: '081234567894' },
+  { id: 'usr-05', username: 'koordinator1', password: 'koordinator123', name: 'Koordinator Lapangan', role: 'petugas', job_type: 'koordinator', location_id: 'loc-01', kecamatan: 'Banjarnegara', phone: '081234567894' },
   { id: 'usr-06', username: 'operator1', password: 'operator123', name: 'Operator TPS3R', role: 'petugas', job_type: 'operator_tps', location_id: 'loc-01', phone: '081234567895' },
   { id: 'usr-07', username: 'kader1', password: 'kader123', name: 'Kader Lingkungan', role: 'petugas', job_type: 'kader', location_id: 'loc-01', desa_id: 'wil-005', phone: '081234567896' }
 ];
