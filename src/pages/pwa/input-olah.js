@@ -89,7 +89,8 @@ export async function renderInputOlah() {
             </div>
             <div class="accum-custom">
               <span>atau</span>
-              <input type="number" id="accumCustomDays" class="form-input" placeholder="Jumlah hari" min="2" max="30" style="width:120px" />
+              <input type="number" id="accumCustomDays" class="form-input" placeholder="Jumlah" min="2" max="30" style="width:100px; text-align:center" />
+              <span>hari</span>
             </div>
             <div class="accum-preview" id="accumPreview"></div>
           </div>
