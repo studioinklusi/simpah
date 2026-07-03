@@ -160,24 +160,23 @@ export async function renderRegister() {
                   required autocomplete="name" autofocus />
               </div>
             </div>
-
             <div class="form-group">
               <label class="form-label">Kecamatan</label>
-              <select id="regKecamatan" class="form-input form-input-lg">
-                <option value="">Pilih Kecamatan (Opsional)...</option>
-                ${kecamatanList.map(k => `<option value="${k}">${k}</option>`).join('')}
-              </select>
+              <input type="text" id="regKecamatan" list="regKecamatanList" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" />
+              <datalist id="regKecamatanList">
+                ${kecamatanList.map(k => `<option value="${k}"></option>`).join('')}
+              </datalist>
             </div>
 
             <div class="form-group" id="regDesaGroup" style="display:none">
               <label class="form-label">Desa / Kelurahan</label>
-              <select id="regDesa" class="form-input form-input-lg">
-                <option value="">Pilih Desa...</option>
-              </select>
+              <input type="text" id="regDesaInput" list="regDesaList" class="form-input form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" />
+              <datalist id="regDesaList">
+              </datalist>
+              <input type="hidden" id="regDesa" />
               <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; display:none; align-items:center; gap:4px">
               </div>
             </div>
-            
             <div class="form-group">
               <label class="form-label">Username</label>
               <div class="input-with-icon">
@@ -350,22 +349,39 @@ export async function renderRegister() {
   let resolvedJobType = null;
   let resolvedDesaId = null;
 
-  // ── Kecamatan → Desa Cascading Dropdown ───────────────────────
+  // ── Kecamatan → Desa Cascading Dropdown (Datalist) ───────────────────
   const regKecamatan = document.getElementById('regKecamatan');
   const regDesaGroup = document.getElementById('regDesaGroup');
+  const regDesaInput = document.getElementById('regDesaInput');
   const regDesa = document.getElementById('regDesa');
+  const regDesaList = document.getElementById('regDesaList');
   const desaFromCodeBadge = document.getElementById('desaFromCodeBadge');
 
-  regKecamatan.addEventListener('change', () => {
-    const selectedKec = regKecamatan.value;
-    if (selectedKec) {
-      const desaList = masterWilayah.filter(w => w.kecamatan === selectedKec);
-      regDesa.innerHTML = '<option value="">Pilih Desa...</option>' + 
-        desaList.map(d => `<option value="${d.id}">${d.desa_kelurahan}</option>`).join('');
+  regKecamatan.addEventListener('input', () => {
+    const selectedKec = regKecamatan.value.trim();
+    const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
+    if (matchKec) {
+      regKecamatan.value = matchKec.kecamatan; // Normalize casing
+      const desaList = masterWilayah.filter(w => w.kecamatan === matchKec.kecamatan);
+      regDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
       regDesaGroup.style.display = 'block';
     } else {
-      regDesa.innerHTML = '<option value="">Pilih Desa...</option>';
+      regDesaList.innerHTML = '';
       regDesaGroup.style.display = 'none';
+      regDesaInput.value = '';
+      regDesa.value = '';
+    }
+  });
+
+  regDesaInput.addEventListener('input', () => {
+    const typedDesa = regDesaInput.value.trim();
+    const selectedKec = regKecamatan.value.trim();
+    const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
+    if (matchDesa) {
+      regDesaInput.value = matchDesa.desa_kelurahan; // Normalize casing
+      regDesa.value = matchDesa.id;
+    } else {
+      regDesa.value = '';
     }
   });
 
@@ -421,13 +437,15 @@ export async function renderRegister() {
         if (res.desa_id) {
           const desaData = masterWilayah.find(w => w.id === res.desa_id);
           if (desaData) {
-            // Set kecamatan dropdown
             regKecamatan.value = desaData.kecamatan;
-            regKecamatan.dispatchEvent(new Event('change'));
-            // Wait for desa list to populate, then select
-            setTimeout(() => {
-              regDesa.value = desaData.id;
-            }, 50);
+            // Populate desa list and show group
+            const desaList = masterWilayah.filter(w => w.kecamatan === desaData.kecamatan);
+            regDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
+            regDesaGroup.style.display = 'block';
+            
+            regDesaInput.value = desaData.desa_kelurahan;
+            regDesa.value = desaData.id;
+
             // Show badge
             desaFromCodeBadge.style.display = 'flex';
             desaFromCodeBadge.innerHTML = `

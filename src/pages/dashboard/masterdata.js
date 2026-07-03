@@ -1187,22 +1187,21 @@ export async function renderMasterData() {
             <option value="koordinator" ${inv?.job_type === 'koordinator' ? 'selected' : ''}>Koordinator Lapangan</option>
           </select>
         </div>
-
         <div class="form-group">
           <label class="form-label">Kecamatan Default (Opsional)</label>
-          <select id="fInvKecamatan" class="form-input">
-            <option value="">Pilih Kecamatan...</option>
-            ${kecamatanList.map(k => `<option value="${k}" ${k === initialKec ? 'selected' : ''}>${k}</option>`).join('')}
-          </select>
+          <input type="text" id="fInvKecamatan" list="fInvKecamatanList" class="form-input" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${initialKec}" />
+          <datalist id="fInvKecamatanList">
+            ${kecamatanList.map(k => `<option value="${k}"></option>`).join('')}
+          </datalist>
         </div>
 
         <div class="form-group" id="groupInvDesa" style="display:none">
           <label class="form-label">Desa / Kelurahan Default (Opsional)</label>
-          <select id="fInvDesa" class="form-input">
-            <option value="">Pilih Desa...</option>
-          </select>
+          <input type="text" id="fInvDesaInput" list="fInvDesaList" class="form-input" placeholder="Ketik/Pilih Desa..." autocomplete="off" />
+          <datalist id="fInvDesaList">
+          </datalist>
+          <input type="hidden" id="fInvDesa" value="${inv?.desa_id || ''}" />
         </div>
-
         <div class="form-group">
           <label class="form-label">Lokasi Default (Opsional)</label>
           <select id="fInvLocation" class="form-input">
@@ -1257,29 +1256,58 @@ export async function renderMasterData() {
       }
     });
 
-    // Kecamatan → Desa cascading dropdown
+    // Kecamatan → Desa cascading dropdown (Datalist)
     const invKecSelect = document.getElementById('fInvKecamatan');
     const groupInvDesa = document.getElementById('groupInvDesa');
+    const invDesaInput = document.getElementById('fInvDesaInput');
     const invDesaSelect = document.getElementById('fInvDesa');
+    const invDesaList = document.getElementById('fInvDesaList');
 
-    const updateDesaDropdown = (selectedKec, selectedDesaId) => {
+    const updateDesaDatalist = (selectedKec, selectedDesaId) => {
       if (selectedKec) {
         const desaList = masterWilayah.filter(w => w.kecamatan === selectedKec);
-        invDesaSelect.innerHTML = '<option value="">Pilih Desa...</option>' + 
-          desaList.map(d => `<option value="${d.id}" ${d.id === selectedDesaId ? 'selected' : ''}>${d.desa_kelurahan}</option>`).join('');
+        invDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
         groupInvDesa.style.display = 'block';
+        if (selectedDesaId) {
+          const matchDesa = desaList.find(d => d.id === selectedDesaId);
+          if (matchDesa) {
+            invDesaInput.value = matchDesa.desa_kelurahan;
+            invDesaSelect.value = matchDesa.id;
+          }
+        }
       } else {
-        invDesaSelect.innerHTML = '<option value="">Pilih Desa...</option>';
+        invDesaList.innerHTML = '';
         groupInvDesa.style.display = 'none';
+        invDesaInput.value = '';
+        invDesaSelect.value = '';
       }
     };
 
-    invKecSelect.addEventListener('change', () => {
-      updateDesaDropdown(invKecSelect.value, null);
+    invKecSelect.addEventListener('input', () => {
+      const selectedKec = invKecSelect.value.trim();
+      const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
+      if (matchKec) {
+        invKecSelect.value = matchKec.kecamatan; // Normalize casing
+        updateDesaDatalist(matchKec.kecamatan, null);
+      } else {
+        updateDesaDatalist('', null);
+      }
+    });
+
+    invDesaInput.addEventListener('input', () => {
+      const typedDesa = invDesaInput.value.trim();
+      const selectedKec = invKecSelect.value.trim();
+      const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
+      if (matchDesa) {
+        invDesaInput.value = matchDesa.desa_kelurahan; // Normalize casing
+        invDesaSelect.value = matchDesa.id;
+      } else {
+        invDesaSelect.value = '';
+      }
     });
 
     if (initialKec) {
-      updateDesaDropdown(initialKec, inv.desa_id);
+      updateDesaDatalist(initialKec, inv.desa_id);
     }
 
     // Generate random code helper
