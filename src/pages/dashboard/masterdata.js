@@ -1156,7 +1156,7 @@ export async function renderMasterData() {
         initialKec = match.kecamatan;
       }
     }
-    
+
     const bodyHTML = `
       <form id="invitationForm" class="md-form">
         <div class="form-group">
@@ -1187,21 +1187,25 @@ export async function renderMasterData() {
             <option value="koordinator" ${inv?.job_type === 'koordinator' ? 'selected' : ''}>Koordinator Lapangan</option>
           </select>
         </div>
+
         <div class="form-group">
           <label class="form-label">Kecamatan Default (Opsional)</label>
-          <input type="text" id="fInvKecamatan" list="fInvKecamatanList" class="form-input" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${initialKec}" />
+          <input type="text" id="fInvKecamatan" list="fInvKecamatanList" class="form-input" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${initialKec}" style="border: 1px solid var(--border-color);" />
           <datalist id="fInvKecamatanList">
             ${kecamatanList.map(k => `<option value="${k}"></option>`).join('')}
           </datalist>
+          <div id="fInvKecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
         </div>
 
         <div class="form-group" id="groupInvDesa" style="display:none">
           <label class="form-label">Desa / Kelurahan Default (Opsional)</label>
-          <input type="text" id="fInvDesaInput" list="fInvDesaList" class="form-input" placeholder="Ketik/Pilih Desa..." autocomplete="off" />
+          <input type="text" id="fInvDesaInput" list="fInvDesaList" class="form-input" placeholder="Ketik/Pilih Desa..." autocomplete="off" style="border: 1px solid var(--border-color);" />
           <datalist id="fInvDesaList">
           </datalist>
           <input type="hidden" id="fInvDesa" value="${inv?.desa_id || ''}" />
+          <div id="fInvDesaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
         </div>
+
         <div class="form-group">
           <label class="form-label">Lokasi Default (Opsional)</label>
           <select id="fInvLocation" class="form-input">
@@ -1255,13 +1259,14 @@ export async function renderMasterData() {
         document.getElementById('fInvJobType').value = '';
       }
     });
-
     // Kecamatan → Desa cascading dropdown (Datalist)
     const invKecSelect = document.getElementById('fInvKecamatan');
     const groupInvDesa = document.getElementById('groupInvDesa');
     const invDesaInput = document.getElementById('fInvDesaInput');
     const invDesaSelect = document.getElementById('fInvDesa');
     const invDesaList = document.getElementById('fInvDesaList');
+    const fInvKecFeedback = document.getElementById('fInvKecFeedback');
+    const fInvDesaFeedback = document.getElementById('fInvDesaFeedback');
 
     const updateDesaDatalist = (selectedKec, selectedDesaId) => {
       if (selectedKec) {
@@ -1285,29 +1290,51 @@ export async function renderMasterData() {
 
     invKecSelect.addEventListener('input', () => {
       const selectedKec = invKecSelect.value.trim();
+      if (!selectedKec) {
+        invKecSelect.style.borderColor = 'var(--border-color)';
+        fInvKecFeedback.style.display = 'none';
+        updateDesaDatalist('', null);
+        return;
+      }
+
       const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
       if (matchKec) {
+        invKecSelect.style.borderColor = 'var(--border-color)';
+        fInvKecFeedback.style.display = 'none';
         invKecSelect.value = matchKec.kecamatan; // Normalize casing
         updateDesaDatalist(matchKec.kecamatan, null);
       } else {
+        invKecSelect.style.borderColor = '#ef4444';
+        fInvKecFeedback.style.display = 'block';
         updateDesaDatalist('', null);
       }
     });
 
     invDesaInput.addEventListener('input', () => {
       const typedDesa = invDesaInput.value.trim();
+      if (!typedDesa) {
+        invDesaInput.style.borderColor = 'var(--border-color)';
+        fInvDesaFeedback.style.display = 'none';
+        invDesaSelect.value = '';
+        return;
+      }
+
       const selectedKec = invKecSelect.value.trim();
       const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
       if (matchDesa) {
+        invDesaInput.style.borderColor = 'var(--border-color)';
+        fInvDesaFeedback.style.display = 'none';
         invDesaInput.value = matchDesa.desa_kelurahan; // Normalize casing
         invDesaSelect.value = matchDesa.id;
       } else {
+        invDesaInput.style.borderColor = '#ef4444';
+        fInvDesaFeedback.style.display = 'block';
         invDesaSelect.value = '';
       }
     });
 
     if (initialKec) {
-      updateDesaDatalist(initialKec, inv.desa_id);
+      updateDesaDatalist(initialKec, inv?.desa_id);
     }
 
     // Generate random code helper
@@ -1322,11 +1349,18 @@ export async function renderMasterData() {
         document.getElementById('fInvCode').value = code;
       });
     }
-
     // Submit handler
     document.getElementById('invitationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
+      const typedKec = invKecSelect.value.trim();
+      const desaId = invDesaSelect.value || null;
+      if (typedKec && !desaId) {
+        showToast('Pilih default Desa / Kelurahan yang valid dari Kecamatan terpilih', 'warning');
+        if (invDesaInput) invDesaInput.focus();
+        return;
+      }
+
       const payload = {
         code: document.getElementById('fInvCode').value.trim().toUpperCase(),
         role: roleSelect.value,

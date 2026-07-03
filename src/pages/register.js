@@ -162,19 +162,21 @@ export async function renderRegister() {
             </div>
             <div class="form-group">
               <label class="form-label">Kecamatan</label>
-              <input type="text" id="regKecamatan" list="regKecamatanList" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" />
+              <input type="text" id="regKecamatan" list="regKecamatanList" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" style="border: 1px solid var(--border-color);" />
               <datalist id="regKecamatanList">
                 ${kecamatanList.map(k => `<option value="${k}"></option>`).join('')}
               </datalist>
+              <div id="regKecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
             </div>
 
             <div class="form-group" id="regDesaGroup" style="display:none">
               <label class="form-label">Desa / Kelurahan</label>
-              <input type="text" id="regDesaInput" list="regDesaList" class="form-input form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" />
+              <input type="text" id="regDesaInput" list="regDesaList" class="form-input form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" style="border: 1px solid var(--border-color);" />
               <datalist id="regDesaList">
               </datalist>
               <input type="hidden" id="regDesa" />
-              <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; display:none; align-items:center; gap:4px">
+              <div id="regDesaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
+              <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; align-items:center; gap:4px">
               </div>
             </div>
             <div class="form-group">
@@ -356,16 +358,32 @@ export async function renderRegister() {
   const regDesa = document.getElementById('regDesa');
   const regDesaList = document.getElementById('regDesaList');
   const desaFromCodeBadge = document.getElementById('desaFromCodeBadge');
+  const regKecFeedback = document.getElementById('regKecFeedback');
+  const regDesaFeedback = document.getElementById('regDesaFeedback');
 
   regKecamatan.addEventListener('input', () => {
     const selectedKec = regKecamatan.value.trim();
+    if (!selectedKec) {
+      regKecamatan.style.borderColor = 'var(--border-color)';
+      regKecFeedback.style.display = 'none';
+      regDesaList.innerHTML = '';
+      regDesaGroup.style.display = 'none';
+      regDesaInput.value = '';
+      regDesa.value = '';
+      return;
+    }
+
     const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
     if (matchKec) {
+      regKecamatan.style.borderColor = 'var(--border-color)';
+      regKecFeedback.style.display = 'none';
       regKecamatan.value = matchKec.kecamatan; // Normalize casing
       const desaList = masterWilayah.filter(w => w.kecamatan === matchKec.kecamatan);
       regDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
       regDesaGroup.style.display = 'block';
     } else {
+      regKecamatan.style.borderColor = '#ef4444';
+      regKecFeedback.style.display = 'block';
       regDesaList.innerHTML = '';
       regDesaGroup.style.display = 'none';
       regDesaInput.value = '';
@@ -375,12 +393,23 @@ export async function renderRegister() {
 
   regDesaInput.addEventListener('input', () => {
     const typedDesa = regDesaInput.value.trim();
+    if (!typedDesa) {
+      regDesaInput.style.borderColor = 'var(--border-color)';
+      regDesaFeedback.style.display = 'none';
+      regDesa.value = '';
+      return;
+    }
+
     const selectedKec = regKecamatan.value.trim();
     const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
     if (matchDesa) {
+      regDesaInput.style.borderColor = 'var(--border-color)';
+      regDesaFeedback.style.display = 'none';
       regDesaInput.value = matchDesa.desa_kelurahan; // Normalize casing
       regDesa.value = matchDesa.id;
     } else {
+      regDesaInput.style.borderColor = '#ef4444';
+      regDesaFeedback.style.display = 'block';
       regDesa.value = '';
     }
   });
@@ -530,6 +559,16 @@ export async function renderRegister() {
     if (!isInvitationCodeValid) {
       showError('Kode undangan yang Anda masukkan tidak valid. Silakan periksa kembali atau kosongkan.');
       shakeCard();
+      return;
+    }
+
+    // Kecamatan / Desa selection validation
+    const typedKec = regKecamatan.value.trim();
+    const desaId = regDesa.value || null;
+    if (typedKec && !desaId) {
+      showError('Harap pilih Desa / Kelurahan yang valid dari Kecamatan terpilih');
+      shakeCard();
+      if (regDesaInput) regDesaInput.focus();
       return;
     }
 
