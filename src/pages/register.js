@@ -1,6 +1,8 @@
 // SIMPAH - Register Page (Sprint 2: Supabase Auth)
 import { icons } from '../components/icons.js';
 import { register as authRegister, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
+import { getAllMasterWilayah } from '../db/store.js';
+import { wireSearchableSelect } from '../utils/searchable-select.js';
 
 export async function renderRegister() {
   // If already logged in, redirect to default page

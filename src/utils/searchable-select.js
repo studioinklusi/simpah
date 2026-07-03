@@ -66,12 +66,15 @@ export function wireSearchableSelect({
   const selectIndex = (index) => {
     if (index >= 0 && index < filteredOptions.length) {
       const opt = filteredOptions[index];
+      const changed = hiddenEl.value !== opt.value;
       inputEl.value = opt.label;
       hiddenEl.value = opt.value;
       inputEl.style.borderColor = 'var(--border-color)';
       if (feedbackEl) feedbackEl.style.display = 'none';
       closeDropdown();
-      onSelect(opt);
+      if (changed) {
+        onSelect(opt);
+      }
     }
   };
 
@@ -127,13 +130,19 @@ export function wireSearchableSelect({
     const typed = inputEl.value.trim();
     const match = getOptions().find(opt => opt.label.toLowerCase() === typed.toLowerCase());
     if (match) {
+      const changed = hiddenEl.value !== match.value;
       hiddenEl.value = match.value;
       inputEl.style.borderColor = 'var(--border-color)';
       if (feedbackEl) feedbackEl.style.display = 'none';
-      onSelect(match);
+      if (changed) {
+        onSelect(match);
+      }
     } else {
+      const wasNotEmpty = hiddenEl.value !== '';
       hiddenEl.value = '';
-      onClear();
+      if (wasNotEmpty) {
+        onClear();
+      }
     }
   });
 
@@ -154,25 +163,34 @@ export function wireSearchableSelect({
 
       const typed = inputEl.value.trim();
       if (!typed) {
+        const wasNotEmpty = hiddenEl.value !== '';
         inputEl.style.borderColor = 'var(--border-color)';
         if (feedbackEl) feedbackEl.style.display = 'none';
         hiddenEl.value = '';
-        onClear();
+        if (wasNotEmpty) {
+          onClear();
+        }
         return;
       }
 
       const match = getOptions().find(opt => opt.label.toLowerCase() === typed.toLowerCase());
       if (match) {
+        const changed = hiddenEl.value !== match.value;
         inputEl.value = match.label; // Normalise casing
         hiddenEl.value = match.value;
         inputEl.style.borderColor = 'var(--border-color)';
         if (feedbackEl) feedbackEl.style.display = 'none';
-        onSelect(match);
+        if (changed) {
+          onSelect(match);
+        }
       } else {
+        const wasNotEmpty = hiddenEl.value !== '';
         inputEl.style.borderColor = '#ef4444';
         if (feedbackEl) feedbackEl.style.display = 'block';
         hiddenEl.value = '';
-        onClear();
+        if (wasNotEmpty) {
+          onClear();
+        }
       }
     }
   };
