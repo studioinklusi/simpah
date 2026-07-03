@@ -6,6 +6,7 @@ import { addWasteRecord, getAllLocations, getAllFleet, getAllMou, getAllMasterWi
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
+import { wireSearchableSelect } from '../../utils/searchable-select.js';
 
 export async function renderInputSampah() {
   const user = getCurrentUser();
@@ -17,7 +18,7 @@ export async function renderInputSampah() {
     getAllMou(),
     getAllMasterWilayah()
   ]);
-  
+
   const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
   let gpsData = null;
   let mouValid = true; // Track MoU validation state
@@ -98,27 +99,31 @@ export async function renderInputSampah() {
             <div class="accum-preview" id="accumPreview"></div>
           </div>
         </div>
-
         <!-- Location (Wilayah & Fasilitas) -->
         <div class="form-group">
           <label class="form-label">Kecamatan</label>
-          <input type="text" id="kecamatanSelect" list="kecList" class="form-select form-input-lg" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" />
-          <datalist id="kecList">
-            ${[...new Set(masterWilayah.map(w => w.kecamatan))].sort().map(k => `<option value="${k}"></option>`).join('')}
-          </datalist>
-          <div id="kecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
+          <div class="custom-select-container" id="kecSelectContainer">
+            <div class="custom-select-wrapper">
+              <input type="text" id="kecamatanSelect" class="form-select form-input-lg" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" />
+              <span class="custom-select-arrow">▼</span>
+            </div>
+            <div class="custom-select-dropdown" id="kecDropdown" style="display:none;"></div>
+            <div id="kecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
+          </div>
         </div>
 
         <div class="form-group" id="desaGroup" style="display:${userDesa ? 'block' : 'none'}">
           <label class="form-label">Desa / Kelurahan</label>
-          <input type="text" id="desaSelectInput" list="desaList" class="form-select form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" />
-          <datalist id="desaList">
-            ${userDesa ? masterWilayah.filter(w => w.kecamatan === userDesa.kecamatan).map(w => `<option value="${w.desa_kelurahan}"></option>`).join('') : ''}
-          </datalist>
-          <input type="hidden" id="desaSelect" value="${userDesa ? userDesa.id : ''}" />
-          <div id="desaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
+          <div class="custom-select-container" id="desaSelectContainer">
+            <div class="custom-select-wrapper">
+              <input type="text" id="desaSelectInput" class="form-select form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" />
+              <span class="custom-select-arrow">▼</span>
+            </div>
+            <div class="custom-select-dropdown" id="desaDropdown" style="display:none;"></div>
+            <input type="hidden" id="desaSelect" value="${userDesa ? userDesa.id : ''}" />
+            <div id="desaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
+          </div>
         </div>
-
         <div class="form-group" id="locationGroup" style="display:${userDesa ? 'block' : 'none'}">
           <label class="form-label">Lokasi TPS/TPS3R (Opsional)</label>
           <select id="locationSelect" class="form-select form-input-lg">
@@ -184,85 +189,64 @@ export async function renderInputSampah() {
   const locSelect = document.getElementById('locationSelect');
   const desaGroup = document.getElementById('desaGroup');
   const locGroup = document.getElementById('locationGroup');
-  const desaListDatalist = document.getElementById('desaList');
   const kecFeedback = document.getElementById('kecFeedback');
   const desaFeedback = document.getElementById('desaFeedback');
 
-  if (kecSelect) {
-    kecSelect.addEventListener('input', () => {
+  let selectKecInstance, selectDesaInstance;
+
+  const updateLocationDropdown = (selectedDesaId) => {
+    if (!selectedDesaId) {
+      locGroup.style.display = 'none';
+      locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
+      return;
+    }
+    const filteredLocs = locations.filter(l => l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId)));
+    locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
+      filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
+    locGroup.style.display = 'block';
+  };
+
+  selectKecInstance = wireSearchableSelect({
+    inputEl: kecSelect,
+    dropdownEl: document.getElementById('kecDropdown'),
+    hiddenEl: { value: '' },
+    feedbackEl: kecFeedback,
+    getOptions: () => {
+      const uniqueKec = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+      return uniqueKec.map(k => ({ value: k, label: k }));
+    },
+    onSelect: (opt) => {
+      desaGroup.style.display = 'block';
+      desaSelectInput.value = '';
+      desaSelect.value = '';
+      updateLocationDropdown('');
+    },
+    onClear: () => {
+      desaGroup.style.display = 'none';
+      locGroup.style.display = 'none';
+      desaSelectInput.value = '';
+      desaSelect.value = '';
+      updateLocationDropdown('');
+    }
+  });
+
+  selectDesaInstance = wireSearchableSelect({
+    inputEl: desaSelectInput,
+    dropdownEl: document.getElementById('desaDropdown'),
+    hiddenEl: desaSelect,
+    feedbackEl: desaFeedback,
+    getOptions: () => {
       const selectedKec = kecSelect.value.trim();
-      if (!selectedKec) {
-        kecSelect.style.borderColor = 'var(--border-color)';
-        kecFeedback.style.display = 'none';
-        desaListDatalist.innerHTML = '';
-        desaGroup.style.display = 'none';
-        locGroup.style.display = 'none';
-        desaSelectInput.value = '';
-        desaSelect.value = '';
-        desaSelect.dispatchEvent(new Event('change'));
-        return;
-      }
-
-      const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
-      if (matchKec) {
-        kecSelect.style.borderColor = 'var(--border-color)';
-        kecFeedback.style.display = 'none';
-        kecSelect.value = matchKec.kecamatan; // Normalize casing
-        const filteredDesa = masterWilayah.filter(w => w.kecamatan === matchKec.kecamatan);
-        desaListDatalist.innerHTML = filteredDesa.map(w => `<option value="${w.desa_kelurahan}"></option>`).join('');
-        desaGroup.style.display = 'block';
-      } else {
-        kecSelect.style.borderColor = '#ef4444';
-        kecFeedback.style.display = 'block';
-        desaListDatalist.innerHTML = '';
-        desaGroup.style.display = 'none';
-        locGroup.style.display = 'none';
-        desaSelectInput.value = '';
-        desaSelect.value = '';
-        desaSelect.dispatchEvent(new Event('change'));
-      }
-    });
-
-    desaSelectInput.addEventListener('input', () => {
-      const typedDesa = desaSelectInput.value.trim();
-      if (!typedDesa) {
-        desaSelectInput.style.borderColor = 'var(--border-color)';
-        desaFeedback.style.display = 'none';
-        desaSelect.value = '';
-        desaSelect.dispatchEvent(new Event('change'));
-        return;
-      }
-
-      const selectedKec = kecSelect.value.trim();
-      const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
-      if (matchDesa) {
-        desaSelectInput.style.borderColor = 'var(--border-color)';
-        desaFeedback.style.display = 'none';
-        desaSelectInput.value = matchDesa.desa_kelurahan; // Normalize casing
-        desaSelect.value = matchDesa.id;
-      } else {
-        desaSelectInput.style.borderColor = '#ef4444';
-        desaFeedback.style.display = 'block';
-        desaSelect.value = '';
-      }
-      desaSelect.dispatchEvent(new Event('change'));
-    });
-
-    desaSelect.addEventListener('change', () => {
-      const selectedDesaId = desaSelect.value;
-      if (!selectedDesaId) {
-        locGroup.style.display = 'none';
-        locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
-        return;
-      }
-
-      const filteredLocs = locations.filter(l => l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId)));
-      locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
-        filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
-      
-      locGroup.style.display = 'block';
-    });
-  }
+      const filtered = masterWilayah.filter(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
+      return filtered.map(w => ({ value: w.id, label: w.desa_kelurahan }));
+    },
+    onSelect: (opt) => {
+      updateLocationDropdown(opt.value);
+    },
+    onClear: () => {
+      updateLocationDropdown('');
+    }
+  });
 
   // Wire up unit toggle
   document.querySelectorAll('.weight-unit-btn').forEach(btn => {
@@ -412,17 +396,19 @@ export async function renderInputSampah() {
 
     const activeUnit = document.querySelector('.weight-unit-btn.active').dataset.unit;
     const weightKg = activeUnit === 'ton' ? weightInput * 1000 : weightInput;
+    const isKecValid = selectKecInstance.validate();
+    const isDesaValid = selectDesaInstance.validate();
+    const desaId = desaSelect.value || null;
 
-    const desaEl = document.getElementById('desaSelect');
-    const desaId = desaEl ? desaEl.value : null;
-
-    if (!desaId) {
+    if (!isKecValid || !isDesaValid || !desaId) {
       showToast('Pilih wilayah Kecamatan dan Desa / Kelurahan yang valid terlebih dahulu', 'warning');
-      const desaInputEl = document.getElementById('desaSelectInput');
-      if (desaInputEl) desaInputEl.focus();
+      if (!isKecValid) {
+        kecSelect.focus();
+      } else {
+        desaSelectInput.focus();
+      }
       return;
     }
-
     const locationEl = document.getElementById('locationSelect');
     const fleetEl = document.getElementById('fleetSelect');
     const selectedOption = (locationEl && locationEl.selectedIndex >= 0) ? locationEl.options[locationEl.selectedIndex] : null;

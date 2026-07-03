@@ -1,8 +1,6 @@
 // SIMPAH - Register Page (Sprint 2: Supabase Auth)
 import { icons } from '../components/icons.js';
 import { register as authRegister, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
-import { showToast } from '../components/toast.js';
-import { validateInvitationCode, getAllMasterWilayah } from '../db/store.js';
 
 export async function renderRegister() {
   // If already logged in, redirect to default page
@@ -162,23 +160,30 @@ export async function renderRegister() {
             </div>
             <div class="form-group">
               <label class="form-label">Kecamatan</label>
-              <input type="text" id="regKecamatan" list="regKecamatanList" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" style="border: 1px solid var(--border-color);" />
-              <datalist id="regKecamatanList">
-                ${kecamatanList.map(k => `<option value="${k}"></option>`).join('')}
-              </datalist>
-              <div id="regKecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
+              <div class="custom-select-container" id="regKecSelectContainer">
+                <div class="custom-select-wrapper">
+                  <input type="text" id="regKecamatan" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" style="border: 1px solid var(--border-color);" />
+                  <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-dropdown" id="regKecDropdown" style="display:none;"></div>
+                <div id="regKecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
+              </div>
             </div>
 
             <div class="form-group" id="regDesaGroup" style="display:none">
               <label class="form-label">Desa / Kelurahan</label>
-              <input type="text" id="regDesaInput" list="regDesaList" class="form-input form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" style="border: 1px solid var(--border-color);" />
-              <datalist id="regDesaList">
-              </datalist>
-              <input type="hidden" id="regDesa" />
-              <div id="regDesaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
-              <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; align-items:center; gap:4px">
+              <div class="custom-select-container" id="regDesaSelectContainer">
+                <div class="custom-select-wrapper">
+                  <input type="text" id="regDesaInput" class="form-input form-input-lg" placeholder="Ketik/Pilih Desa..." autocomplete="off" style="border: 1px solid var(--border-color);" />
+                  <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-dropdown" id="regDesaDropdown" style="display:none;"></div>
+                <input type="hidden" id="regDesa" />
+                <div id="regDesaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
+                <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; align-items:center; gap:4px"></div>
               </div>
             </div>
+
             <div class="form-group">
               <label class="form-label">Username</label>
               <div class="input-with-icon">
@@ -349,71 +354,57 @@ export async function renderRegister() {
   let isInvitationCodeValid = true;
   let resolvedRole = 'warga';
   let resolvedJobType = null;
-  let resolvedDesaId = null;
-
-  // ── Kecamatan → Desa Cascading Dropdown (Datalist) ───────────────────
+  let resolvedDesaId = null;  // ── Kecamatan → Desa Cascading Dropdown (Searchable Select) ─────────
   const regKecamatan = document.getElementById('regKecamatan');
   const regDesaGroup = document.getElementById('regDesaGroup');
   const regDesaInput = document.getElementById('regDesaInput');
   const regDesa = document.getElementById('regDesa');
-  const regDesaList = document.getElementById('regDesaList');
   const desaFromCodeBadge = document.getElementById('desaFromCodeBadge');
   const regKecFeedback = document.getElementById('regKecFeedback');
   const regDesaFeedback = document.getElementById('regDesaFeedback');
 
-  regKecamatan.addEventListener('input', () => {
-    const selectedKec = regKecamatan.value.trim();
-    if (!selectedKec) {
-      regKecamatan.style.borderColor = 'var(--border-color)';
-      regKecFeedback.style.display = 'none';
-      regDesaList.innerHTML = '';
-      regDesaGroup.style.display = 'none';
-      regDesaInput.value = '';
-      regDesa.value = '';
-      return;
-    }
+  let selectKecInstance, selectDesaInstance;
 
-    const matchKec = masterWilayah.find(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
-    if (matchKec) {
-      regKecamatan.style.borderColor = 'var(--border-color)';
-      regKecFeedback.style.display = 'none';
-      regKecamatan.value = matchKec.kecamatan; // Normalize casing
-      const desaList = masterWilayah.filter(w => w.kecamatan === matchKec.kecamatan);
-      regDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
+  selectKecInstance = wireSearchableSelect({
+    inputEl: regKecamatan,
+    dropdownEl: document.getElementById('regKecDropdown'),
+    hiddenEl: { value: '' },
+    feedbackEl: regKecFeedback,
+    getOptions: () => {
+      const uniqueKec = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+      return uniqueKec.map(k => ({ value: k, label: k }));
+    },
+    onSelect: (opt) => {
       regDesaGroup.style.display = 'block';
-    } else {
-      regKecamatan.style.borderColor = '#ef4444';
-      regKecFeedback.style.display = 'block';
-      regDesaList.innerHTML = '';
+      regDesaInput.value = '';
+      regDesa.value = '';
+      desaFromCodeBadge.style.display = 'none';
+    },
+    onClear: () => {
       regDesaGroup.style.display = 'none';
       regDesaInput.value = '';
       regDesa.value = '';
+      desaFromCodeBadge.style.display = 'none';
     }
   });
 
-  regDesaInput.addEventListener('input', () => {
-    const typedDesa = regDesaInput.value.trim();
-    if (!typedDesa) {
-      regDesaInput.style.borderColor = 'var(--border-color)';
-      regDesaFeedback.style.display = 'none';
-      regDesa.value = '';
-      return;
-    }
-
-    const selectedKec = regKecamatan.value.trim();
-    const matchDesa = masterWilayah.find(w => w.kecamatan === selectedKec && w.desa_kelurahan.toLowerCase() === typedDesa.toLowerCase());
-    if (matchDesa) {
-      regDesaInput.style.borderColor = 'var(--border-color)';
-      regDesaFeedback.style.display = 'none';
-      regDesaInput.value = matchDesa.desa_kelurahan; // Normalize casing
-      regDesa.value = matchDesa.id;
-    } else {
-      regDesaInput.style.borderColor = '#ef4444';
-      regDesaFeedback.style.display = 'block';
-      regDesa.value = '';
+  selectDesaInstance = wireSearchableSelect({
+    inputEl: regDesaInput,
+    dropdownEl: document.getElementById('regDesaDropdown'),
+    hiddenEl: regDesa,
+    feedbackEl: regDesaFeedback,
+    getOptions: () => {
+      const selectedKec = regKecamatan.value.trim();
+      const filtered = masterWilayah.filter(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
+      return filtered.map(w => ({ value: w.id, label: w.desa_kelurahan }));
+    },
+    onSelect: (opt) => {
+      // Validated
+    },
+    onClear: () => {
+      // Cleared
     }
   });
-
   invitationCodeInput.addEventListener('change', async () => {
     const code = invitationCodeInput.value.trim();
     if (!code) {
@@ -461,17 +452,12 @@ export async function renderRegister() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>
           <span>Kode Valid: Terdaftar sebagai <strong>${roleName}</strong></span>
         `;
-
         // Auto-select desa from invitation code if available
         if (res.desa_id) {
           const desaData = masterWilayah.find(w => w.id === res.desa_id);
           if (desaData) {
             regKecamatan.value = desaData.kecamatan;
-            // Populate desa list and show group
-            const desaList = masterWilayah.filter(w => w.kecamatan === desaData.kecamatan);
-            regDesaList.innerHTML = desaList.map(d => `<option value="${d.desa_kelurahan}"></option>`).join('');
             regDesaGroup.style.display = 'block';
-            
             regDesaInput.value = desaData.desa_kelurahan;
             regDesa.value = desaData.id;
 
@@ -561,17 +547,25 @@ export async function renderRegister() {
       shakeCard();
       return;
     }
-
     // Kecamatan / Desa selection validation
+    const isKecValid = selectKecInstance.validate();
+    const isDesaValid = selectDesaInstance.validate();
     const typedKec = regKecamatan.value.trim();
     const desaId = regDesa.value || null;
-    if (typedKec && !desaId) {
-      showError('Harap pilih Desa / Kelurahan yang valid dari Kecamatan terpilih');
+
+    if (!isKecValid) {
+      showError('Kecamatan tidak ditemukan. Harap pilih dari daftar yang valid.');
       shakeCard();
-      if (regDesaInput) regDesaInput.focus();
+      regKecamatan.focus();
       return;
     }
 
+    if (typedKec && (!isDesaValid || !desaId)) {
+      showError('Harap pilih Desa / Kelurahan yang valid dari Kecamatan terpilih');
+      shakeCard();
+      regDesaInput.focus();
+      return;
+    }
     // 2. Perform Register
     setLoading(true);
 

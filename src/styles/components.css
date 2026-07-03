@@ -558,3 +558,65 @@
   flex: 1;
   padding: var(--space-3) var(--space-5);
 }
+
+/* --- Custom Searchable Select (Dropdown) --- */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+.custom-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.custom-select-wrapper input.form-select {
+  padding-right: 40px !important;
+  cursor: text !important;
+  background-image: none !important; /* Remove native arrow */
+}
+.custom-select-arrow {
+  position: absolute;
+  right: 14px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+.custom-select-container.open .custom-select-arrow {
+  transform: rotate(180deg);
+}
+.custom-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1100; /* Ensure it is above modal and card contents */
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  margin-top: 4px;
+  box-shadow: var(--shadow-lg);
+}
+.custom-select-option {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-base);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.custom-select-option:hover {
+  background: rgba(16, 185, 129, 0.08); /* Primary tint */
+  color: var(--primary-600);
+}
+.custom-select-option.selected {
+  background: var(--primary-500);
+  color: #fff;
+}
+.custom-select-no-results {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
