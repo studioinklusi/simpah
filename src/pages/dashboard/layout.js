@@ -11,6 +11,21 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
   const user = getCurrentUser();
   const app = document.getElementById('app');
 
+  let scopeText = '';
+  if (user) {
+    if (user.role === 'admin') {
+      scopeText = 'Seluruh Kabupaten';
+    } else if (user.role === 'eksekutif') {
+      scopeText = 'Kab. Banjarnegara';
+    } else if (user.role === 'petugas') {
+      if (user.job_type === 'koordinator' && user.kecamatan) {
+        scopeText = `Kec. ${user.kecamatan}`;
+      } else if (user.wilayah) {
+        scopeText = user.wilayah;
+      }
+    }
+  }
+
   app.innerHTML = `
     <div class="app-layout">
       <!-- Sidebar -->
@@ -81,6 +96,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <div class="sidebar-user-info">
               <div class="sidebar-user-name">${user?.full_name || 'Guest'}</div>
               <div class="sidebar-user-role">${getRoleName(user)}</div>
+              ${scopeText ? `<div class="sidebar-user-scope" style="font-size:10px;color:var(--text-muted);opacity:0.85;margin-top:2px;font-weight:500">${scopeText}</div>` : ''}
             </div>
           </div>
         </div>

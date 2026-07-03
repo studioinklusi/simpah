@@ -1,7 +1,7 @@
 // SIMPAH - PWA Home Page
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatWeight, formatNumber, getState, onStateChange } from '../../utils/helpers.js';
-import { getWasteStats } from '../../db/store.js';
+import { getWasteStats, getAllMasterWilayah, getAllLocations } from '../../db/store.js';
 import { canInputWaste, getAllowedInputTypes, hasPermission, canValidate } from '../../utils/permissions.js';
 import { renderPWALayout } from './layout.js';
 
@@ -9,15 +9,52 @@ export async function renderPWAHome() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  const stats = await getWasteStats();
+  const [stats, masterWilayah, locations] = await Promise.all([
+    getWasteStats(),
+    getAllMasterWilayah(),
+    getAllLocations()
+  ]);
+
+  let authorityText = '';
+  if (user.role === 'admin') {
+    authorityText = 'Administrator (Seluruh Wilayah)';
+  } else if (user.role === 'eksekutif') {
+    authorityText = 'Eksekutif (Kabupaten Banjarnegara)';
+  } else if (user.role === 'petugas') {
+    const jobLabels = {
+      kader: 'Kader Lingkungan',
+      operator_tps: 'Operator TPS3R',
+      angkut: 'Petugas Pengangkut',
+      koordinator: 'Koordinator Lapangan'
+    };
+    const roleLabel = jobLabels[user.job_type] || 'Petugas Lapangan';
+    
+    if (user.job_type === 'koordinator') {
+      authorityText = `${roleLabel} · Kec. ${user.kecamatan || '-'}`;
+    } else if (user.job_type === 'kader' && user.desa_id) {
+      const desa = masterWilayah.find(w => w.id === user.desa_id);
+      authorityText = `${roleLabel} · Desa ${desa ? desa.desa_kelurahan : '-'}`;
+    } else if (user.job_type === 'operator_tps' && user.location_id) {
+      const loc = locations.find(l => l.id === user.location_id);
+      authorityText = `${roleLabel} · ${loc ? loc.name : 'Fasilitas'}`;
+    } else {
+      authorityText = roleLabel;
+    }
+  } else {
+    authorityText = 'Warga Banjarnegara';
+  }
 
   renderPWALayout('Beranda', `
     <!-- Greeting -->
     <div class="pwa-greeting page-enter">
       <div class="greeting-text">
         <h2>Halo, ${(user.full_name || 'User').split(' ')[0]}!</h2>
-        <p style="font-size:var(--font-sm);color:var(--primary-600);font-weight:600;margin:2px 0 4px">${getMotivationalGreeting()}</p>
-        <p>${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        <div style="display:inline-flex; align-items:center; gap:6px; margin:4px 0; background:rgba(255,255,255,0.7); backdrop-filter:blur(4px); padding:4px 12px; border-radius:30px; border:1px solid rgba(5,150,105,0.15); font-size:11px; font-weight:700; color:var(--primary-700)">
+          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--primary-600)"></span>
+          ${authorityText}
+        </div>
+        <p style="font-size:var(--font-sm);color:var(--primary-600);font-weight:600;margin:4px 0">${getMotivationalGreeting()}</p>
+        <p style="margin-top:2px; font-size:11px; color:var(--text-muted)">${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
       </div>
       <div class="sync-status ${navigator.onLine ? 'online' : 'offline'}" id="syncIndicator">
         <span class="sync-dot"></span>
