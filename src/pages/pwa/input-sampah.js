@@ -94,7 +94,7 @@ export async function renderInputSampah() {
             </div>
             <div class="accum-custom">
               <span>atau</span>
-              <input type="number" id="accumCustomDays" class="form-input" placeholder="Jumlah" min="2" max="30" style="width:100px; text-align:center" />
+              <input type="number" id="accumCustomDays" class="form-input" placeholder="10" min="2" max="30" style="width:110px; text-align:center" />
               <span>hari</span>
             </div>
             <div class="accum-preview" id="accumPreview"></div>
