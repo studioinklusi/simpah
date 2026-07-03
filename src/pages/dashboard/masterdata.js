@@ -1034,9 +1034,10 @@ export async function renderMasterData() {
 
   // ---------- INVITATIONS TAB ----------
   async function renderInvitationsTab(container) {
-    const [invitations, locations] = await Promise.all([
+    const [invitations, locations, masterWilayah] = await Promise.all([
       getAllInvitationCodes(),
-      getAllLocations()
+      getAllLocations(),
+      getAllMasterWilayah()
     ]);
 
     container.innerHTML = `
@@ -1055,6 +1056,7 @@ export async function renderMasterData() {
             <tr>
               <th>Kode</th>
               <th>Role / Job Type</th>
+              <th>Desa Default</th>
               <th>Lokasi Default</th>
               <th>Penggunaan</th>
               <th>Kedaluwarsa</th>
@@ -1065,7 +1067,7 @@ export async function renderMasterData() {
           <tbody>
             ${invitations.length === 0 ? `
               <tr>
-                <td colspan="7" class="md-empty">Belum ada kode undangan yang dibuat.</td>
+                <td colspan="8" class="md-empty">Belum ada kode undangan yang dibuat.</td>
               </tr>
             ` : invitations.map(inv => {
               const expiresStr = inv.expires_at ? new Date(inv.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Tidak Terbatas';
@@ -1080,6 +1082,9 @@ export async function renderMasterData() {
 
               const loc = locations.find(l => l.id === inv.location_id);
               const locName = loc ? loc.name : '-';
+
+              const desa = masterWilayah.find(w => w.id === inv.desa_id);
+              const desaName = desa ? `Desa ${desa.desa_kelurahan}, Kec. ${desa.kecamatan}` : '-';
               
               const roleDisplay = inv.role === 'petugas' ? `Petugas (${inv.job_type || 'Umum'})` : (inv.role === 'eksekutif' ? 'Eksekutif' : inv.role);
 
@@ -1087,6 +1092,7 @@ export async function renderMasterData() {
                 <tr>
                   <td style="font-weight:700;color:var(--text-primary);letter-spacing:0.5px">${inv.code}</td>
                   <td>${roleDisplay}</td>
+                  <td>${desaName}</td>
                   <td>${locName}</td>
                   <td><strong>${inv.current_uses}</strong> / ${maxUsesStr}</td>
                   <td>${expiresStr}</td>
@@ -1107,7 +1113,7 @@ export async function renderMasterData() {
     `;
 
     // Bind event handlers
-    document.getElementById('addInvitationBtn')?.addEventListener('click', () => showInvitationModal(null, locations));
+    document.getElementById('addInvitationBtn')?.addEventListener('click', () => showInvitationModal(null, locations, masterWilayah));
 
     container.querySelectorAll('.copy-inv-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1119,7 +1125,7 @@ export async function renderMasterData() {
     container.querySelectorAll('.edit-inv-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const inv = invitations.find(item => item.id === btn.dataset.id);
-        showInvitationModal(inv, locations);
+        showInvitationModal(inv, locations, masterWilayah);
       });
     });
 
@@ -1139,8 +1145,17 @@ export async function renderMasterData() {
   }
 
   // ---------- INVITATIONS MODAL ----------
-  function showInvitationModal(inv, locations) {
+  function showInvitationModal(inv, locations, masterWilayah) {
     const isEdit = !!inv;
+    const kecamatanList = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+
+    let initialKec = '';
+    if (inv?.desa_id) {
+      const match = masterWilayah.find(w => w.id === inv.desa_id);
+      if (match) {
+        initialKec = match.kecamatan;
+      }
+    }
     
     const bodyHTML = `
       <form id="invitationForm" class="md-form">
@@ -1170,6 +1185,21 @@ export async function renderMasterData() {
             <option value="angkut" ${inv?.job_type === 'angkut' ? 'selected' : ''}>Driver Armada</option>
             <option value="operator_tps" ${inv?.job_type === 'operator_tps' ? 'selected' : ''}>Operator TPS3R</option>
             <option value="koordinator" ${inv?.job_type === 'koordinator' ? 'selected' : ''}>Koordinator Lapangan</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kecamatan Default (Opsional)</label>
+          <select id="fInvKecamatan" class="form-input">
+            <option value="">Pilih Kecamatan...</option>
+            ${kecamatanList.map(k => `<option value="${k}" ${k === initialKec ? 'selected' : ''}>${k}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group" id="groupInvDesa" style="display:none">
+          <label class="form-label">Desa / Kelurahan Default (Opsional)</label>
+          <select id="fInvDesa" class="form-input">
+            <option value="">Pilih Desa...</option>
           </select>
         </div>
 
@@ -1227,6 +1257,31 @@ export async function renderMasterData() {
       }
     });
 
+    // Kecamatan → Desa cascading dropdown
+    const invKecSelect = document.getElementById('fInvKecamatan');
+    const groupInvDesa = document.getElementById('groupInvDesa');
+    const invDesaSelect = document.getElementById('fInvDesa');
+
+    const updateDesaDropdown = (selectedKec, selectedDesaId) => {
+      if (selectedKec) {
+        const desaList = masterWilayah.filter(w => w.kecamatan === selectedKec);
+        invDesaSelect.innerHTML = '<option value="">Pilih Desa...</option>' + 
+          desaList.map(d => `<option value="${d.id}" ${d.id === selectedDesaId ? 'selected' : ''}>${d.desa_kelurahan}</option>`).join('');
+        groupInvDesa.style.display = 'block';
+      } else {
+        invDesaSelect.innerHTML = '<option value="">Pilih Desa...</option>';
+        groupInvDesa.style.display = 'none';
+      }
+    };
+
+    invKecSelect.addEventListener('change', () => {
+      updateDesaDropdown(invKecSelect.value, null);
+    });
+
+    if (initialKec) {
+      updateDesaDropdown(initialKec, inv.desa_id);
+    }
+
     // Generate random code helper
     const btnGenCode = document.getElementById('btnGenCode');
     if (btnGenCode) {
@@ -1249,6 +1304,7 @@ export async function renderMasterData() {
         role: roleSelect.value,
         job_type: roleSelect.value === 'petugas' ? document.getElementById('fInvJobType').value || null : null,
         location_id: document.getElementById('fInvLocation').value || null,
+        desa_id: invDesaSelect.value || null,
         max_uses: parseInt(document.getElementById('fInvMaxUses').value) || 0,
         expires_at: document.getElementById('fInvExpiresAt').value ? new Date(document.getElementById('fInvExpiresAt').value).toISOString() : null,
         description: document.getElementById('fInvDesc').value.trim() || null,

@@ -2,15 +2,24 @@
 import { icons } from '../components/icons.js';
 import { register as authRegister, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
 import { showToast } from '../components/toast.js';
-import { validateInvitationCode } from '../db/store.js';
+import { validateInvitationCode, getAllMasterWilayah } from '../db/store.js';
 
-export function renderRegister() {
+export async function renderRegister() {
   // If already logged in, redirect to default page
   const existingUser = getAuthProfile();
   if (existingUser) {
     window.location.hash = getDefaultRoute(existingUser.role);
     return;
   }
+
+  // Load master wilayah data for Kecamatan/Desa dropdowns
+  let masterWilayah = [];
+  try {
+    masterWilayah = await getAllMasterWilayah();
+  } catch (err) {
+    console.warn('[Register] Failed to load master wilayah:', err);
+  }
+  const kecamatanList = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -149,6 +158,23 @@ export function renderRegister() {
                 <input type="text" id="regFullName" class="form-input form-input-lg has-icon-left" 
                   placeholder="Masukkan nama lengkap Anda" 
                   required autocomplete="name" autofocus />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Kecamatan</label>
+              <select id="regKecamatan" class="form-input form-input-lg">
+                <option value="">Pilih Kecamatan (Opsional)...</option>
+                ${kecamatanList.map(k => `<option value="${k}">${k}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="form-group" id="regDesaGroup" style="display:none">
+              <label class="form-label">Desa / Kelurahan</label>
+              <select id="regDesa" class="form-input form-input-lg">
+                <option value="">Pilih Desa...</option>
+              </select>
+              <div id="desaFromCodeBadge" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); color:#059669; display:none; align-items:center; gap:4px">
               </div>
             </div>
             
@@ -322,6 +348,26 @@ export function renderRegister() {
   let isInvitationCodeValid = true;
   let resolvedRole = 'warga';
   let resolvedJobType = null;
+  let resolvedDesaId = null;
+
+  // ── Kecamatan → Desa Cascading Dropdown ───────────────────────
+  const regKecamatan = document.getElementById('regKecamatan');
+  const regDesaGroup = document.getElementById('regDesaGroup');
+  const regDesa = document.getElementById('regDesa');
+  const desaFromCodeBadge = document.getElementById('desaFromCodeBadge');
+
+  regKecamatan.addEventListener('change', () => {
+    const selectedKec = regKecamatan.value;
+    if (selectedKec) {
+      const desaList = masterWilayah.filter(w => w.kecamatan === selectedKec);
+      regDesa.innerHTML = '<option value="">Pilih Desa...</option>' + 
+        desaList.map(d => `<option value="${d.id}">${d.desa_kelurahan}</option>`).join('');
+      regDesaGroup.style.display = 'block';
+    } else {
+      regDesa.innerHTML = '<option value="">Pilih Desa...</option>';
+      regDesaGroup.style.display = 'none';
+    }
+  });
 
   invitationCodeInput.addEventListener('change', async () => {
     const code = invitationCodeInput.value.trim();
@@ -343,6 +389,7 @@ export function renderRegister() {
         isInvitationCodeValid = true;
         resolvedRole = res.role;
         resolvedJobType = res.job_type;
+        resolvedDesaId = res.desa_id || null;
         invitationFeedback.style.color = '#059669';
         
         let roleName = res.role;
@@ -369,6 +416,26 @@ export function renderRegister() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>
           <span>Kode Valid: Terdaftar sebagai <strong>${roleName}</strong></span>
         `;
+
+        // Auto-select desa from invitation code if available
+        if (res.desa_id) {
+          const desaData = masterWilayah.find(w => w.id === res.desa_id);
+          if (desaData) {
+            // Set kecamatan dropdown
+            regKecamatan.value = desaData.kecamatan;
+            regKecamatan.dispatchEvent(new Event('change'));
+            // Wait for desa list to populate, then select
+            setTimeout(() => {
+              regDesa.value = desaData.id;
+            }, 50);
+            // Show badge
+            desaFromCodeBadge.style.display = 'flex';
+            desaFromCodeBadge.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Desa otomatis dari kode undangan: <strong>${res.desa_name || desaData.desa_kelurahan}</strong></span>
+            `;
+          }
+        }
       } else {
         isInvitationCodeValid = false;
         resolvedRole = 'warga';
@@ -453,7 +520,8 @@ export function renderRegister() {
 
     try {
       const invitationCode = invitationCodeInput.value.trim();
-      const data = await authRegister(email, password, username, fullName, invitationCode);
+      const desaId = regDesa.value || null;
+      const data = await authRegister(email, password, username, fullName, invitationCode, desaId);
       showToast('Registrasi berhasil!', 'success');
 
       // Check if user is active or needs confirmation

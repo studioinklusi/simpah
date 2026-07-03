@@ -95,46 +95,29 @@ export async function renderInputOlah() {
         </div>
 
         <!-- Location (Wilayah & Fasilitas) -->
-        ${userDesa ? `
-          <div class="form-group">
-            <label class="form-label">Wilayah Pencatatan</label>
-            <div class="form-input locked-wilayah-display" style="background:var(--gray-100); display:flex; align-items:center; gap:var(--space-2); border-color:var(--border-color); font-weight:600;">
-              ${icons.mapPin}
-              <span>Desa ${userDesa.desa_kelurahan}, Kec. ${userDesa.kecamatan}</span>
-            </div>
-            <input type="hidden" id="desaSelect" value="${userDesa.id}" />
-          </div>
+        <div class="form-group">
+          <label class="form-label">Kecamatan</label>
+          <select id="kecamatanSelect" class="form-select">
+            <option value="">Pilih Kecamatan...</option>
+            ${[...new Set(masterWilayah.map(w => w.kecamatan))].sort().map(k => `<option value="${k}" ${userDesa && userDesa.kecamatan === k ? 'selected' : ''}>${k}</option>`).join('')}
+          </select>
+        </div>
 
-          <div class="form-group">
-            <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
-            <select id="locationSelect" class="form-select">
-              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-              ${locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('')}
-            </select>
-          </div>
-        ` : `
-          <div class="form-group">
-            <label class="form-label">Kecamatan</label>
-            <select id="kecamatanSelect" class="form-select">
-              <option value="">Pilih Kecamatan...</option>
-              ${[...new Set(masterWilayah.map(w => w.kecamatan))].sort().map(k => `<option value="${k}">${k}</option>`).join('')}
-            </select>
-          </div>
+        <div class="form-group" id="desaGroup" style="display:${userDesa ? 'block' : 'none'}">
+          <label class="form-label">Desa / Kelurahan</label>
+          <select id="desaSelect" class="form-select">
+            <option value="">Pilih Desa...</option>
+            ${userDesa ? masterWilayah.filter(w => w.kecamatan === userDesa.kecamatan).map(w => `<option value="${w.id}" ${w.id === userDesa.id ? 'selected' : ''}>${w.desa_kelurahan}</option>`).join('') : ''}
+          </select>
+        </div>
 
-          <div class="form-group" id="desaGroup" style="display:none">
-            <label class="form-label">Desa / Kelurahan</label>
-            <select id="desaSelect" class="form-select">
-              <option value="">Pilih Desa...</option>
-            </select>
-          </div>
-
-          <div class="form-group" id="locationGroup" style="display:none">
-            <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
-            <select id="locationSelect" class="form-select">
-              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-            </select>
-          </div>
-        `}
+        <div class="form-group" id="locationGroup" style="display:${userDesa ? 'block' : 'none'}">
+          <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
+          <select id="locationSelect" class="form-select">
+            <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('') : ''}
+          </select>
+        </div>
 
         <div class="form-group">
           <label class="form-label">Hasil / Keterangan</label>
