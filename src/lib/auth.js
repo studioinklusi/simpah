@@ -107,10 +107,51 @@ export async function login(emailOrUsername, password) {
 }
 
 /**
+ * Check if a username is already taken in the profiles table.
+ * Uses RPC function (SECURITY DEFINER) so it works for unauthenticated users.
+ * Returns true if available, false if taken.
+ */
+export async function checkUsernameAvailable(username) {
+  try {
+    // Try RPC function first (works for anon users)
+    const { data, error } = await supabase
+      .rpc('check_username_available', { p_username: username.trim().toLowerCase() });
+
+    if (!error && data !== null) {
+      return data === true;
+    }
+
+    // Fallback: direct table query (only works for authenticated users)
+    console.warn('[Auth] RPC check_username_available not available, trying direct query:', error?.message);
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username.trim().toLowerCase())
+      .limit(1);
+
+    if (profileError) {
+      console.warn('[Auth] Username check failed:', profileError);
+      return true; // Allow registration attempt if check fails
+    }
+
+    return !profileData || profileData.length === 0;
+  } catch (err) {
+    console.warn('[Auth] Username availability check error:', err);
+    return true; // Allow registration attempt if check fails entirely
+  }
+}
+
+/**
  * Register a new user with email, password, username, and full name.
  * Default role is 'warga' set by database trigger.
  */
 export async function register(email, password, username, fullName, invitationCode = null, desaId = null, kecamatan = null) {
+  // Pre-check: username uniqueness
+  const usernameAvailable = await checkUsernameAvailable(username);
+  if (!usernameAvailable) {
+    throw new AuthError('Username "' + username.trim().toLowerCase() + '" sudah digunakan. Silakan pilih username lain.', 409);
+  }
+
   const metadata = {
     username: username.trim().toLowerCase(),
     full_name: fullName.trim(),
@@ -320,8 +361,13 @@ function _mapAuthError(error) {
   if (msg.includes('already registered') || msg.includes('email_exists') || msg.includes('user already exists')) {
     return 'Email sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.';
   }
+  if (msg.includes('unique constraint') && msg.includes('username')) {
+    return 'Username sudah digunakan. Silakan pilih username lain.';
+  }
   if (msg.includes('database error saving new user') || msg.includes('unexpected_failure')) {
-    return 'Email atau username tersebut sudah terdaftar di sistem. Silakan coba masuk atau gunakan email/username lain.';
+    // Log the original error for debugging
+    console.error('[Auth] Database error during registration:', error.message);
+    return 'Terjadi kesalahan saat menyimpan data pendaftaran. Kemungkinan email atau username sudah terdaftar. Detail: ' + (error.message || 'Unknown error');
   }
   if (msg.includes('too many requests') || msg.includes('rate limit')) {
     return 'Terlalu banyak percobaan. Coba lagi dalam beberapa menit.';

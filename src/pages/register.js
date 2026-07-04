@@ -1,6 +1,6 @@
 // SIMPAH - Register Page (Sprint 2: Supabase Auth)
 import { icons } from '../components/icons.js';
-import { register as authRegister, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
+import { register as authRegister, getAuthProfile, getDefaultRoute, checkUsernameAvailable } from '../lib/auth.js';
 import { getAllMasterWilayah, validateInvitationCode } from '../db/store.js';
 import { wireSearchableSelect } from '../utils/searchable-select.js';
 
@@ -194,6 +194,7 @@ export async function renderRegister() {
                   placeholder="Masukkan username baru" 
                   required autocomplete="username" />
               </div>
+              <div id="usernameFeedback" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); align-items:center; gap:4px"></div>
             </div>
 
             <div class="form-group">
@@ -307,6 +308,71 @@ export async function renderRegister() {
   const registerCard = document.getElementById('registerCard');
   const successState = document.getElementById('registerSuccessState');
   const successMessage = document.getElementById('successMessage');
+
+  // ── Username Availability Check ──────────────────────────────────
+  const usernameFeedback = document.getElementById('usernameFeedback');
+  let usernameCheckTimeout = null;
+  let isUsernameAvailable = true;
+
+  usernameInput.addEventListener('input', () => {
+    const val = usernameInput.value.trim();
+    
+    // Clear previous timeout
+    if (usernameCheckTimeout) clearTimeout(usernameCheckTimeout);
+    
+    if (!val || val.length < 3) {
+      usernameFeedback.style.display = 'none';
+      isUsernameAvailable = true;
+      return;
+    }
+
+    // Validate format first
+    if (!/^[a-zA-Z0-9_]+$/.test(val)) {
+      usernameFeedback.style.display = 'flex';
+      usernameFeedback.style.color = '#b91c1c';
+      usernameFeedback.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#b91c1c;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span>Hanya huruf, angka, dan garis bawah (_)</span>
+      `;
+      isUsernameAvailable = false;
+      return;
+    }
+
+    // Show checking state
+    usernameFeedback.style.display = 'flex';
+    usernameFeedback.style.color = '#6b7280';
+    usernameFeedback.innerHTML = `<span>Memeriksa ketersediaan...</span>`;
+
+    // Debounce: check after 500ms of no typing
+    usernameCheckTimeout = setTimeout(async () => {
+      try {
+        const available = await checkUsernameAvailable(val);
+        // Only update if the input value hasn't changed
+        if (usernameInput.value.trim() !== val) return;
+        
+        isUsernameAvailable = available;
+        usernameFeedback.style.display = 'flex';
+        
+        if (available) {
+          usernameFeedback.style.color = '#059669';
+          usernameFeedback.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Username tersedia</span>
+          `;
+        } else {
+          usernameFeedback.style.color = '#b91c1c';
+          usernameFeedback.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#b91c1c;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Username sudah digunakan</span>
+          `;
+        }
+      } catch (err) {
+        console.warn('[Register] Username check failed:', err);
+        isUsernameAvailable = true; // Allow attempt if check fails
+        usernameFeedback.style.display = 'none';
+      }
+    }, 500);
+  });
 
   // ── Password Visibility Toggles ─────────────────────────────────
   togglePasswordBtn.addEventListener('click', () => {
@@ -525,6 +591,13 @@ export async function renderRegister() {
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     if (!usernameRegex.test(username)) {
       showError('Username hanya boleh berisi huruf, angka, dan garis bawah (_)');
+      shakeCard();
+      return;
+    }
+
+    // Username availability check (from real-time validation)
+    if (!isUsernameAvailable) {
+      showError('Username "' + username.toLowerCase() + '" sudah digunakan. Silakan pilih username lain.');
       shakeCard();
       return;
     }
