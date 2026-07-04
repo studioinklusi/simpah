@@ -310,11 +310,18 @@ function _getDefaultRoute(roleOrProfile) {
 
 function _mapAuthError(error) {
   const msg = (error.message || '').toLowerCase();
+  
   if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
     return 'Email/username atau password salah';
   }
   if (msg.includes('email not confirmed')) {
     return 'Akun belum dikonfirmasi. Hubungi administrator.';
+  }
+  if (msg.includes('already registered') || msg.includes('email_exists') || msg.includes('user already exists')) {
+    return 'Email sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.';
+  }
+  if (msg.includes('database error saving new user') || msg.includes('unexpected_failure')) {
+    return 'Email atau username tersebut sudah terdaftar di sistem. Silakan coba masuk atau gunakan email/username lain.';
   }
   if (msg.includes('too many requests') || msg.includes('rate limit')) {
     return 'Terlalu banyak percobaan. Coba lagi dalam beberapa menit.';
@@ -322,5 +329,6 @@ function _mapAuthError(error) {
   if (msg.includes('network') || msg.includes('fetch')) {
     return 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
   }
-  return error.message || 'Terjadi kesalahan saat login';
+  
+  return error.message || 'Terjadi kesalahan saat memproses permintaan Anda';
 }
