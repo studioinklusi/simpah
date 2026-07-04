@@ -364,10 +364,29 @@ function _mapAuthError(error) {
   if (msg.includes('unique constraint') && msg.includes('username')) {
     return 'Username sudah digunakan. Silakan pilih username lain.';
   }
+  if (msg.includes('gagal membuat profil') || msg.includes('failed to create profile')) {
+    // Detailed error from our updated trigger
+    console.error('[Auth] Trigger error:', error.message);
+    // Parse the specific constraint error
+    const origMsg = error.message || '';
+    if (origMsg.includes('unique') && origMsg.includes('username')) {
+      return 'Username sudah digunakan oleh akun lain. Silakan pilih username yang berbeda.';
+    }
+    if (origMsg.includes('foreign key') || origMsg.includes('violates foreign key')) {
+      return 'Data lokasi (desa/kecamatan) tidak valid. Silakan pilih ulang dari daftar yang tersedia.';
+    }
+    if (origMsg.includes('not-null') || origMsg.includes('null value')) {
+      return 'Ada data wajib yang belum terisi. Silakan lengkapi semua kolom yang diperlukan.';
+    }
+    if (origMsg.includes('check constraint')) {
+      return 'Data yang dimasukkan tidak sesuai format. Silakan periksa kembali inputan Anda.';
+    }
+    return 'Gagal menyimpan data profil. Detail: ' + origMsg;
+  }
   if (msg.includes('database error saving new user') || msg.includes('unexpected_failure')) {
-    // Log the original error for debugging
+    // Generic Supabase error - trigger didn't have our exception handler yet
     console.error('[Auth] Database error during registration:', error.message);
-    return 'Terjadi kesalahan saat menyimpan data pendaftaran. Kemungkinan email atau username sudah terdaftar. Detail: ' + (error.message || 'Unknown error');
+    return 'Gagal menyimpan data pendaftaran ke database. Silakan coba lagi atau hubungi administrator. (Error: ' + (error.message || 'Unknown') + ')';
   }
   if (msg.includes('too many requests') || msg.includes('rate limit')) {
     return 'Terlalu banyak percobaan. Coba lagi dalam beberapa menit.';
