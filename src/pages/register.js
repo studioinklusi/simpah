@@ -499,7 +499,8 @@ export async function renderRegister() {
       isInvitationCodeValid = false;
       resolvedRole = 'warga';
       invitationFeedback.style.color = '#b91c1c';
-      invitationFeedback.innerHTML = `<span>Gagal memverifikasi kode</span>`;
+      const errMsg = err?.message || err?.error_description || JSON.stringify(err);
+      invitationFeedback.innerHTML = `<span>Gagal memverifikasi kode: ${errMsg}</span>`;
     }
   });
 
