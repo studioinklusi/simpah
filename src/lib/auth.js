@@ -169,6 +169,8 @@ export async function register(email, password, username, fullName, invitationCo
     metadata.kecamatan = kecamatan.trim();
   }
 
+  console.log('[Auth] Registration metadata:', JSON.stringify(metadata, null, 2));
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -178,6 +180,15 @@ export async function register(email, password, username, fullName, invitationCo
   });
 
   if (error) {
+    console.error('[Auth] SignUp error FULL:', JSON.stringify({
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      name: error.name,
+    }, null, 2));
+    console.error('[Auth] SignUp error RAW:', error);
     throw new AuthError(_mapAuthError(error), error.status);
   }
 
