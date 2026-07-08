@@ -761,8 +761,12 @@ export async function deleteUser(id) {
   await deleteById('users', id);
 }
 
-export async function getWasteStats() {
-  const allRecords = await getAllWasteRecords();
+export async function getWasteStats(filterUserId = null) {
+  let allRecords = await getAllWasteRecords();
+  
+  if (filterUserId) {
+    allRecords = allRecords.filter(r => r.created_by === filterUserId);
+  }
   
   // Include all records except rejected ones for stats
   // (pending records should be visible to the inputting user)

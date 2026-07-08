@@ -9,8 +9,10 @@ export async function renderPWAHome() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
+  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
+
   const [stats, masterWilayah, locations] = await Promise.all([
-    getWasteStats(),
+    getWasteStats(isInputter ? user.id : null),
     getAllMasterWilayah(),
     getAllLocations()
   ]);

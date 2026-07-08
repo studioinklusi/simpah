@@ -9,7 +9,8 @@ export async function renderSampahHub() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  const stats = await getWasteStats();
+  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
+  const stats = await getWasteStats(isInputter ? user.id : null);
   const allowed = getAllowedInputTypes(user);
 
   // Today's breakdown
