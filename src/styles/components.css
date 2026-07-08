@@ -660,3 +660,26 @@
   color: var(--text-muted);
   text-align: center;
 }
+
+/* Disabled Form Elements Styling */
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled,
+.custom-select-wrapper input.form-select:disabled {
+  background-color: var(--gray-100) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  border-color: var(--border-color) !important;
+  opacity: 0.7 !important;
+}
+
+[data-theme="dark"] .form-input:disabled,
+[data-theme="dark"] .form-select:disabled,
+[data-theme="dark"] .form-textarea:disabled,
+[data-theme="dark"] .custom-select-wrapper input.form-select:disabled {
+  background-color: var(--gray-900) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-color) !important;
+}
+

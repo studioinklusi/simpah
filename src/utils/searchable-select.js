@@ -158,6 +158,7 @@ export function wireSearchableSelect({
 
   // Click outside to close and validate
   const handleClickOutside = (e) => {
+    if (inputEl.disabled) return;
     const container = inputEl.closest('.custom-select-container');
     if (container && !container.contains(e.target)) {
       closeDropdown();

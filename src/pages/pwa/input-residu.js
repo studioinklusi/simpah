@@ -155,10 +155,12 @@ export async function renderInputResidu() {
     locGroup.style.display = 'block';
   };
 
+  const kecHidden = { value: userDesa ? userDesa.kecamatan : '' };
+
   selectKecInstance = wireSearchableSelect({
     inputEl: kecSelect,
     dropdownEl: document.getElementById('kecDropdown'),
-    hiddenEl: { value: '' },
+    hiddenEl: kecHidden,
     feedbackEl: kecFeedback,
     getOptions: () => {
       const uniqueKec = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
