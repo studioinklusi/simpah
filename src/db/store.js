@@ -718,7 +718,7 @@ export async function updateUser(id, updates) {
           }
         } else {
           // Mengubah password orang lain (ditolak karena keterbatasan SDK Client)
-          throw new Error('Kebijakan keamanan Supabase melarang perubahan password pengguna lain secara langsung dari aplikasi web (Client SDK). Password pengguna lain hanya dapat diganti melalui console admin Supabase atau fitur reset password mandiri.');
+          throw new Error('Kebijakan keamanan sistem melarang perubahan password pengguna lain secara langsung dari aplikasi web. Password pengguna lain hanya dapat diganti melalui console admin database atau fitur reset password mandiri.');
         }
       }
 

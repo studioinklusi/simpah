@@ -177,7 +177,7 @@ export async function renderMasterData() {
         errorMessage.toLowerCase().includes('invitation_codes') ||
         errorMessage.toLowerCase().includes('schema cache')
       )) {
-        errorMessage = 'Tabel <code>invitation_codes</code> belum dibuat di database Supabase Anda. Harap jalankan script SQL migrasi di editor Supabase Anda terlebih dahulu.';
+        errorMessage = 'Tabel <code>invitation_codes</code> belum dibuat di server database Anda. Harap jalankan script SQL migrasi di editor database Anda terlebih dahulu.';
       }
       
       container.innerHTML = `
@@ -1272,7 +1272,7 @@ export async function renderMasterData() {
         </div>` : `<div class="form-group" style="background:var(--gray-50); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-color)">
           <label class="form-label" style="margin-bottom:4px; color:var(--text-muted)">Keamanan Password</label>
           <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0; line-height:1.4">
-            Password pengguna lain tidak dapat diubah langsung dari panel ini demi kebijakan keamanan Supabase. Perubahan hanya bisa dilakukan secara mandiri oleh pengguna atau oleh admin melalui console Supabase.
+            Password pengguna lain tidak dapat diubah langsung dari panel ini demi kebijakan keamanan sistem. Perubahan hanya bisa dilakukan secara mandiri oleh pengguna atau oleh admin melalui console utama database.
           </p>
         </div>`)}
         <div class="form-group">
