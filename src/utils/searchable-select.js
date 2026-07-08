@@ -47,6 +47,7 @@ export function wireSearchableSelect({
   };
 
   const openDropdown = () => {
+    if (inputEl.disabled) return;
     // Close other open custom selects
     document.querySelectorAll('.custom-select-dropdown').forEach(d => {
       if (d !== dropdownEl) d.style.display = 'none';

@@ -17,6 +17,7 @@ export async function renderInputResidu() {
     getAllMasterWilayah()
   ]);
   const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
+  const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
   let gpsData = null;
   let photoPicker = null;
   getCurrentPosition(false).then(p => { gpsData = p; const el = document.getElementById('gpsStatus'); if(el){el.className='gps-indicator active'; el.querySelector('span:last-child').textContent=`GPS: ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}`;} }).catch(()=>{});
@@ -45,8 +46,8 @@ export async function renderInputResidu() {
           <label class="form-label">Kecamatan</label>
           <div class="custom-select-container" id="kecSelectContainer">
             <div class="custom-select-wrapper">
-              <input type="text" id="kecamatanSelect" class="form-select" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" />
-              <span class="custom-select-arrow">▼</span>
+              <input type="text" id="kecamatanSelect" class="form-select" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
+              ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
             </div>
             <div class="custom-select-dropdown" id="kecDropdown" style="display:none;"></div>
             <div id="kecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
@@ -57,8 +58,8 @@ export async function renderInputResidu() {
           <label class="form-label">Desa / Kelurahan</label>
           <div class="custom-select-container" id="desaSelectContainer">
             <div class="custom-select-wrapper">
-              <input type="text" id="desaSelectInput" class="form-select" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" />
-              <span class="custom-select-arrow">▼</span>
+              <input type="text" id="desaSelectInput" class="form-select" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
+              ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
             </div>
             <div class="custom-select-dropdown" id="desaDropdown" style="display:none;"></div>
             <input type="hidden" id="desaSelect" value="${userDesa ? userDesa.id : ''}" />
