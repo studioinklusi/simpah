@@ -1049,6 +1049,32 @@ export async function deleteUsersBatch(ids) {
   await tx.done;
 }
 
+export async function deactivateUsersBatch(ids) {
+  if (!navigator.onLine) throw new Error('Penonaktifan pengguna secara batch harus dalam keadaan online');
+  if (!Array.isArray(ids) || ids.length === 0) return;
+
+  // Protect admin accounts from deactivation just in case
+  const { data: adminCheck } = await supabase.from('profiles').select('role').in('id', ids).eq('role', 'admin');
+  if (adminCheck && adminCheck.length > 0) {
+    throw new Error('Tidak diizinkan menonaktifkan akun Administrator secara batch.');
+  }
+
+  const { error } = await supabase.from('profiles').update({ is_active: false }).in('id', ids);
+  if (error) throw new Error('Gagal menonaktifkan pengguna di server: ' + error.message);
+
+  const db = await getDB();
+  const tx = db.transaction('users', 'readwrite');
+  for (const id of ids) {
+    const existing = await tx.store.get(id);
+    if (existing) {
+      existing.is_active = false;
+      existing.updated_at = new Date().toISOString();
+      await tx.store.put(existing);
+    }
+  }
+  await tx.done;
+}
+
 export async function updatePopulationBatch(records) {
   if (!navigator.onLine) throw new Error('Pembaruan data kependudukan harus dalam keadaan online');
   if (!Array.isArray(records) || records.length === 0) return;

@@ -328,6 +328,12 @@ async function _loadProfile(userId, forceRefresh = false) {
     if (error || !data) {
       console.warn('[Auth] Profile load failed:', error);
       _profile = null;
+    } else if (data.is_active === false) {
+      console.warn('[Auth] User is deactivated, logging out');
+      _profile = null;
+      sessionStorage.removeItem('simpah_user');
+      await supabase.auth.signOut();
+      throw new Error('Akun Anda telah dinonaktifkan oleh administrator.');
     } else {
       // Fetch RBAC Permissions
       try {

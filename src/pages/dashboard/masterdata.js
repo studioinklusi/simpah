@@ -8,7 +8,7 @@ import { renderDashboardLayout } from './layout.js';
 import {
   getAllLocations, addLocation, addLocationsBatch, updateLocation, deleteLocation, deleteLocationsBatch,
   getAllFleet, addFleet, updateFleet, deleteFleet,
-  getAllUsers, addUser, updateUser, deleteUser, deleteUsersBatch,
+  getAllUsers, addUser, updateUser, deleteUser, deleteUsersBatch, deactivateUsersBatch,
   getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
   getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility, deletePublicFacilitiesBatch, addPublicFacilitiesBatch,
   getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions,
@@ -1120,8 +1120,8 @@ export async function renderMasterData() {
         </div>
         <div style="display:flex; gap:var(--space-2)">
           <button type="button" class="btn btn-ghost btn-sm" id="btnCancelUsersBulkSelect" style="color:var(--text-muted); padding:6px 12px; font-size:var(--font-xs)">Batal</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btnDeleteUsersBulkSelected" style="background:#dc2626; border-color:#dc2626; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:var(--font-xs)">
-            ${icons.trash} Hapus Terpilih
+          <button type="button" class="btn btn-primary btn-sm" id="btnDeactivateUsersBulkSelected" style="background:#dc2626; border-color:#dc2626; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:var(--font-xs)">
+            ${icons.xCircle} Nonaktifkan Terpilih
           </button>
         </div>
       </div>
@@ -1135,11 +1135,12 @@ export async function renderMasterData() {
               <th>Username</th>
               <th>Role</th>
               <th>Wilayah</th>
+              <th>Status</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            ${users.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data pengguna</td></tr>' :
+            ${users.length === 0 ? '<tr><td colspan="7" class="md-empty">Belum ada data pengguna</td></tr>' :
               users.map(u => `<tr>
                 <td style="text-align:center; vertical-align:middle">
                   ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
@@ -1148,9 +1149,18 @@ export async function renderMasterData() {
                 <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
                 <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
                 <td>${u.wilayah || '-'}</td>
+                <td>
+                  ${u.is_active !== false 
+                    ? `<span class="md-badge" style="background:#d1fae5; color:#065f46">Aktif</span>` 
+                    : `<span class="md-badge" style="background:#fee2e2; color:#991b1b">Nonaktif</span>`}
+                </td>
                 <td><div class="md-actions">
                   <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
-                  ${u.role !== 'admin' ? `<button class="md-btn-icon danger" title="Hapus" data-del-user="${u.id}">${icons.trash}</button>` : ''}
+                  ${u.role !== 'admin' ? (
+                    u.is_active !== false
+                      ? `<button class="md-btn-icon danger" title="Nonaktifkan Akun" data-toggle-user="${u.id}" data-active="true" style="color:#dc2626">${icons.xCircle}</button>`
+                      : `<button class="md-btn-icon" title="Aktifkan Akun" data-toggle-user="${u.id}" data-active="false" style="color:#059669">${icons.checkCircle}</button>`
+                  ) : ''}
                 </div></td>
               </tr>`).join('')}
           </tbody>
@@ -1165,7 +1175,7 @@ export async function renderMasterData() {
     const bulkBar = document.getElementById('usersBulkActionBar');
     const selectedCountEl = document.getElementById('usersSelectedCount');
     const btnCancelBulk = document.getElementById('btnCancelUsersBulkSelect');
-    const btnDeleteBulk = document.getElementById('btnDeleteUsersBulkSelected');
+    const btnDeactivateBulk = document.getElementById('btnDeactivateUsersBulkSelected');
 
     function updateBulkBar() {
       if (selectedIds.length > 0) {
@@ -1209,22 +1219,22 @@ export async function renderMasterData() {
       updateBulkBar();
     });
 
-    btnDeleteBulk?.addEventListener('click', async () => {
+    btnDeactivateBulk?.addEventListener('click', async () => {
       if (selectedIds.length === 0) return;
-      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} pengguna terpilih? Pengguna yang sudah terhapus tidak bisa dikembalikan.`)) {
-        if (btnDeleteBulk) {
-          btnDeleteBulk.disabled = true;
-          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+      if (confirm(`Apakah Anda yakin ingin menonaktifkan ${selectedIds.length} pengguna terpilih? Pengguna yang dinonaktifkan tidak akan bisa login.`)) {
+        if (btnDeactivateBulk) {
+          btnDeactivateBulk.disabled = true;
+          btnDeactivateBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menonaktifkan...';
         }
         try {
-          await deleteUsersBatch(selectedIds);
-          showToast(`${selectedIds.length} pengguna berhasil dihapus`, 'success');
+          await deactivateUsersBatch(selectedIds);
+          showToast(`${selectedIds.length} pengguna berhasil dinonaktifkan`, 'success');
           loadTabContent('users');
         } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          if (btnDeleteBulk) {
-            btnDeleteBulk.disabled = false;
-            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+          showToast('Gagal menonaktifkan: ' + err.message, 'error');
+          if (btnDeactivateBulk) {
+            btnDeactivateBulk.disabled = false;
+            btnDeactivateBulk.innerHTML = `${icons.xCircle} Nonaktifkan Terpilih`;
           }
         }
       }
@@ -1235,15 +1245,19 @@ export async function renderMasterData() {
       const u = users.find(x => x.id === btn.dataset.editUser);
       if (u) openUserForm(u, masterWilayah);
     }));
-    container.querySelectorAll('[data-del-user]').forEach(btn => btn.addEventListener('click', async () => {
-      if (confirm('Yakin ingin menghapus pengguna ini? Pengguna yang sudah terhapus tidak bisa dikembalikan.')) {
+    container.querySelectorAll('[data-toggle-user]').forEach(btn => btn.addEventListener('click', async () => {
+      const userId = btn.dataset.toggleUser;
+      const isActive = btn.dataset.active === 'true';
+      const actionText = isActive ? 'menonaktifkan' : 'mengaktifkan';
+      
+      if (confirm(`Yakin ingin ${actionText} akun pengguna ini? Pengguna yang nonaktif tidak dapat mengakses aplikasi.`)) {
         try {
-          await deleteUser(btn.dataset.delUser);
-          showToast('Pengguna berhasil dihapus', 'success');
+          await updateUser(userId, { is_active: !isActive });
+          showToast(`Akun berhasil ${isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
           loadTabContent('users');
         } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          console.error('[MasterData] Delete user error:', err);
+          showToast(`Gagal: ${err.message}`, 'error');
+          console.error('[MasterData] Toggle user status error:', err);
         }
       }
     }));
