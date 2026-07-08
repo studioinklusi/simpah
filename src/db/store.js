@@ -702,17 +702,36 @@ export async function updateUser(id, updates) {
   const user = await getById('users', id);
   if (!user) throw new Error('Pengguna tidak ditemukan');
   const updated = { ...user, ...updates, updated_at: new Date().toISOString() };
-  
   // Sync to Supabase if online
   if (navigator.onLine) {
     try {
       const supabaseUpdates = { ...updates, updated_at: updated.updated_at };
+      
+      // Jika mencoba mengubah password
+      if (updates.password) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && session.user.id === id) {
+          // Mengubah password milik sendiri (diizinkan via Client SDK)
+          const { error: authError } = await supabase.auth.updateUser({ password: updates.password });
+          if (authError) {
+            throw new Error('Gagal memperbarui password Anda di Supabase Auth: ' + authError.message);
+          }
+        } else {
+          // Mengubah password orang lain (ditolak karena keterbatasan SDK Client)
+          throw new Error('Kebijakan keamanan Supabase melarang perubahan password pengguna lain secara langsung dari aplikasi web (Client SDK). Password pengguna lain hanya dapat diganti melalui console admin Supabase atau fitur reset password mandiri.');
+        }
+      }
+
       // Don't send password as plaintext to profiles table
       delete supabaseUpdates.password;
       const { error } = await supabase.from('profiles').update(supabaseUpdates).eq('id', id);
-      if (error) console.warn('[updateUser] Gagal update ke Supabase:', error.message);
+      if (error) {
+        console.warn('[updateUser] Gagal update ke Supabase:', error.message);
+        throw new Error('Gagal memperbarui profil di server: ' + error.message);
+      }
     } catch (e) {
       console.warn('[updateUser] Gagal sync ke Supabase:', e);
+      throw e; // Teruskan error agar terdeteksi oleh UI
     }
   }
   
