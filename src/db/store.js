@@ -765,7 +765,7 @@ export async function getWasteStats(filterUserId = null) {
   let allRecords = await getAllWasteRecords();
   
   if (filterUserId) {
-    allRecords = allRecords.filter(r => r.created_by === filterUserId);
+    allRecords = allRecords.filter(r => r.created_by === filterUserId || r.user_id === filterUserId);
   }
   
   // Include all records except rejected ones for stats
