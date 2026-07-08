@@ -136,7 +136,30 @@ export async function checkUsernameAvailable(username) {
 
     return !profileData || profileData.length === 0;
   } catch (err) {
-    console.warn('[Auth] Username availability check error:', err);
+  }
+}
+
+/**
+ * Check if an email is already registered in auth.users.
+ * Uses RPC function (SECURITY DEFINER) so it works for unauthenticated users.
+ * Returns true if available, false if taken.
+ */
+export async function checkEmailAvailable(email) {
+  try {
+    // Try RPC function first (works for anon users)
+    const { data, error } = await supabase
+      .rpc('check_email_available', { p_email: email.trim().toLowerCase() });
+
+    if (!error && data !== null) {
+      return data === true;
+    }
+
+    if (error) {
+      console.warn('[Auth] RPC check_email_available not available or failed:', error.message);
+    }
+    return true; // Allow registration attempt if check fails
+  } catch (err) {
+    console.warn('[Auth] Email availability check error:', err);
     return true; // Allow registration attempt if check fails entirely
   }
 }
@@ -150,6 +173,12 @@ export async function register(email, password, username, fullName, invitationCo
   const usernameAvailable = await checkUsernameAvailable(username);
   if (!usernameAvailable) {
     throw new AuthError('Username "' + username.trim().toLowerCase() + '" sudah digunakan. Silakan pilih username lain.', 409);
+  }
+
+  // Pre-check: email uniqueness
+  const emailAvailable = await checkEmailAvailable(email);
+  if (!emailAvailable) {
+    throw new AuthError('Alamat email sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.', 409);
   }
 
   const metadata = {

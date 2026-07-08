@@ -1,6 +1,6 @@
 // SIMPAH - Register Page (Sprint 2: Supabase Auth)
 import { icons } from '../components/icons.js';
-import { register as authRegister, getAuthProfile, getDefaultRoute, checkUsernameAvailable } from '../lib/auth.js';
+import { register as authRegister, getAuthProfile, getDefaultRoute, checkUsernameAvailable, checkEmailAvailable } from '../lib/auth.js';
 import { getAllMasterWilayah, validateInvitationCode } from '../db/store.js';
 import { wireSearchableSelect } from '../utils/searchable-select.js';
 import { showToast } from '../components/toast.js';
@@ -208,6 +208,7 @@ export async function renderRegister() {
                   placeholder="nama@email.com" 
                   required autocomplete="email" />
               </div>
+              <div id="emailFeedback" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); align-items:center; gap:4px"></div>
             </div>
 
             <div class="form-group">
@@ -371,6 +372,59 @@ export async function renderRegister() {
         console.warn('[Register] Username check failed:', err);
         isUsernameAvailable = true; // Allow attempt if check fails
         usernameFeedback.style.display = 'none';
+      }
+    }, 500);
+  });
+
+  // ── Email Availability Check ─────────────────────────────────────
+  const emailFeedback = document.getElementById('emailFeedback');
+  let emailCheckTimeout = null;
+  let isEmailAvailable = true;
+
+  emailInput.addEventListener('input', () => {
+    const val = emailInput.value.trim();
+    
+    // Clear previous timeout
+    if (emailCheckTimeout) clearTimeout(emailCheckTimeout);
+    
+    if (!val || val.length < 5 || !val.includes('@')) {
+      emailFeedback.style.display = 'none';
+      isEmailAvailable = true;
+      return;
+    }
+
+    // Show checking state
+    emailFeedback.style.display = 'flex';
+    emailFeedback.style.color = '#6b7280';
+    emailFeedback.innerHTML = `<span>Memeriksa ketersediaan...</span>`;
+
+    // Debounce: check after 500ms of no typing
+    emailCheckTimeout = setTimeout(async () => {
+      try {
+        const available = await checkEmailAvailable(val);
+        // Only update if the input value hasn't changed
+        if (emailInput.value.trim() !== val) return;
+        
+        isEmailAvailable = available;
+        emailFeedback.style.display = 'flex';
+        
+        if (available) {
+          emailFeedback.style.color = '#059669';
+          emailFeedback.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Email tersedia</span>
+          `;
+        } else {
+          emailFeedback.style.color = '#b91c1c';
+          emailFeedback.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#b91c1c;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>Email sudah digunakan oleh akun lain</span>
+          `;
+        }
+      } catch (err) {
+        console.warn('[Register] Email check failed:', err);
+        isEmailAvailable = true; // Allow attempt if check fails
+        emailFeedback.style.display = 'none';
       }
     }, 500);
   });
@@ -599,6 +653,13 @@ export async function renderRegister() {
     // Username availability check (from real-time validation)
     if (!isUsernameAvailable) {
       showError('Username "' + username.toLowerCase() + '" sudah digunakan. Silakan pilih username lain.');
+      shakeCard();
+      return;
+    }
+
+    // Email availability check (from real-time validation)
+    if (!isEmailAvailable) {
+      showError('Alamat email sudah digunakan. Silakan gunakan email lain atau masuk ke akun Anda.');
       shakeCard();
       return;
     }
