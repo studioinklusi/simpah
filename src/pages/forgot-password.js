@@ -124,8 +124,8 @@ export function renderForgotPassword() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </span>
                   <input type="text" id="forgotOtp" class="form-input form-input-lg has-icon-left" 
-                    placeholder="Masukkan 6-digit kode" 
-                    maxlength="6" pattern="[0-9]*" inputmode="numeric" />
+                    placeholder="Masukkan kode verifikasi" 
+                    pattern="[0-9]*" inputmode="numeric" />
                 </div>
               </div>
 
@@ -211,7 +211,7 @@ export function renderForgotPassword() {
         forgotFooter.style.display = 'none';
 
         forgotTitle.textContent = 'Verifikasi Kode OTP';
-        forgotDesc.textContent = `Masukkan 6-digit kode verifikasi yang dikirim ke email ${userEmail}.`;
+        forgotDesc.textContent = `Masukkan kode verifikasi yang dikirim ke email ${userEmail}.`;
         forgotBtnText.textContent = 'Verifikasi Kode OTP →';
 
         otpInput.value = '';
@@ -232,8 +232,8 @@ export function renderForgotPassword() {
         showError('Harap masukkan kode verifikasi Anda');
         return;
       }
-      if (otpCode.length !== 6) {
-        showError('Kode verifikasi harus terdiri dari 6 digit');
+      if (otpCode.length < 6) {
+        showError('Kode verifikasi harus minimal 6 digit');
         return;
       }
 
