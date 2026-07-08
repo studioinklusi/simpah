@@ -1266,10 +1266,15 @@ export async function renderMasterData() {
         ${!isEdit ? `<div class="form-group">
           <label class="form-label">Password</label>
           <input class="form-input" id="userPassword" type="password" required placeholder="Minimal 6 karakter" minlength="6" />
-        </div>` : `<div class="form-group">
+        </div>` : (existing?.id === user?.id ? `<div class="form-group">
           <label class="form-label">Password Baru (kosongkan jika tidak diganti)</label>
           <input class="form-input" id="userPassword" type="password" placeholder="Biarkan kosong jika tidak ingin diubah" />
-        </div>`}
+        </div>` : `<div class="form-group" style="background:var(--gray-50); padding:var(--space-3); border-radius:var(--radius-md); border:1px solid var(--border-color)">
+          <label class="form-label" style="margin-bottom:4px; color:var(--text-muted)">Keamanan Password</label>
+          <p style="font-size:var(--font-xs); color:var(--text-muted); margin:0; line-height:1.4">
+            Password pengguna lain tidak dapat diubah langsung dari panel ini demi kebijakan keamanan Supabase. Perubahan hanya bisa dilakukan secara mandiri oleh pengguna atau oleh admin melalui console Supabase.
+          </p>
+        </div>`)}
         <div class="form-group">
           <label class="form-label">Role / Peran</label>
           <select class="form-select" id="userRole" required>
@@ -1338,7 +1343,8 @@ export async function renderMasterData() {
         kecamatan: kecamatan,
         wilayah: kecamatan ? `Kec. ${kecamatan}` : document.getElementById('userWilayah').value.trim()
       };
-      const pw = document.getElementById('userPassword').value;
+      const passwordEl = document.getElementById('userPassword');
+      const pw = passwordEl ? passwordEl.value : '';
       if (!isEdit && pw) data.password = pw;
       if (isEdit && pw) data.password = pw;
       try {
