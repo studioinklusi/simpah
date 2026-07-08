@@ -60,22 +60,61 @@ export async function triggerSync() {
           continue;
         }
 
-        const payload = { ...record };
+        // Gunakan pendekatan whitelist: hanya kirim field yang ada di tabel Supabase
+        // untuk mencegah error karena kolom tidak dikenal
+        const WASTE_RECORD_FIELDS = [
+          'id', 'type', 'category_sipsn', 'source_type', 'weight_kg',
+          'lat', 'lng', 'location_id', 'location_name',
+          'fleet_id', 'fleet_plate', 'notes', 'photo_url',
+          'user_id', 'user_name', 'record_date', 'created_at',
+          'verification_status', 'verified_at', 'verified_by', 'verification_notes',
+          'treatment_method', 'is_incidental',
+          'is_batch', 'batch_id', 'batch_days', 'batch_start_date', 'batch_end_date',
+          'desa_id'
+        ];
+        const COMPLAINT_FIELDS = [
+          'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
+          'reporter_phone', 'reporter_email',
+          'category', 'description', 'location_text', 'lat', 'lng',
+          'photo_url', 'status', 'is_anonymous', 'created_at', 'updated_at',
+          'response_text', 'responded_at', 'responded_by'
+        ];
+        const INCIDENTAL_FIELDS = [
+          'id', 'type', 'description', 'location_text', 'lat', 'lng',
+          'photo_url', 'weight_kg', 'user_id', 'user_name',
+          'location_id', 'location_name', 'created_at',
+          'category_sipsn', 'desa_id'
+        ];
         
-        // Hapus properti lokal
-        delete payload.synced;
-        if (payload.date_str) {
-           if (table === 'waste_records') payload.record_date = payload.date_str;
-           delete payload.date_str;
+        const fieldMap = {
+          waste_records: WASTE_RECORD_FIELDS,
+          complaints: COMPLAINT_FIELDS,
+          incidental_events: INCIDENTAL_FIELDS
+        };
+        
+        const allowedFields = fieldMap[table];
+        const payload = {};
+        
+        if (allowedFields) {
+          for (const key of allowedFields) {
+            if (key in record) {
+              payload[key] = record[key];
+            }
+          }
+        } else {
+          // Fallback: salin semua kecuali field yang pasti lokal
+          Object.assign(payload, record);
+          delete payload.synced;
+          delete payload.photos;
+          delete payload.photo_count;
+          delete payload.is_demo;
+          delete payload.created_by;
         }
-        delete payload.created_by;
-        delete payload.photos; // Local helper
-        delete payload.photo_count; // Local helper
-        delete payload.destination; // Local helper
-        delete payload.is_accumulation; // Local helper
-        delete payload.accumulation_days; // Local helper
-        delete payload.accumulation_total_kg; // Local helper
-        delete payload.desa_id; // Local helper
+        
+        // Konversi date_str → record_date untuk waste_records
+        if (table === 'waste_records' && !payload.record_date && record.date_str) {
+          payload.record_date = record.date_str;
+        }
         
         // Sesuaikan user_id
         if (!payload.user_id && record.created_by && table !== 'complaints') {
@@ -96,8 +135,21 @@ export async function triggerSync() {
         const { error } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
         
         if (error) {
-          console.error(`Gagal upload data ${table}`, record.id, error);
-          throw error;
+          // Jika error karena kolom tidak dikenal, coba hapus kolom bermasalah dan retry
+          const colMatch = error.message?.match(/column "([^"]+)" of relation/);
+          if (colMatch) {
+            const badCol = colMatch[1];
+            console.warn(`[Sync] Kolom "${badCol}" tidak ada di tabel ${table}, menghapus dan mencoba ulang...`);
+            delete payload[badCol];
+            const { error: retryError } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+            if (retryError) {
+              console.error(`[Sync] Retry gagal untuk ${table}`, record.id, retryError);
+              continue; // Lewati record ini, lanjut ke record berikutnya
+            }
+          } else {
+            console.error(`[Sync] Gagal upload data ${table}`, record.id, error);
+            continue; // Lewati record ini, lanjut ke record berikutnya
+          }
         }
         
         if (table === 'waste_records' && record.type === 'pilah') {
