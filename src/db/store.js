@@ -744,12 +744,17 @@ export async function deleteUser(id) {
   if (navigator.onLine) {
     try {
       const { data, error } = await supabase.from('profiles').delete().eq('id', id).select();
-      if (error) console.warn('[deleteUser] Gagal hapus dari Supabase:', error.message);
+      if (error) {
+        console.warn('[deleteUser] Gagal hapus dari Supabase:', error.message);
+        throw new Error('Gagal menghapus dari server database: ' + error.message);
+      }
       if (!data || data.length === 0) {
         console.warn(`[deleteUser] Supabase delete returned 0 rows for id=${id}, mungkin RLS memblokir.`);
+        throw new Error('Gagal menghapus: Hak akses ditolak (kebijakan RLS memblokir) atau pengguna memiliki riwayat data yang tidak dapat dihapus.');
       }
     } catch (e) {
       console.warn('[deleteUser] Gagal sync ke Supabase:', e);
+      throw e;
     }
   }
   
