@@ -75,6 +75,7 @@ export async function triggerSync() {
         delete payload.is_accumulation; // Local helper
         delete payload.accumulation_days; // Local helper
         delete payload.accumulation_total_kg; // Local helper
+        delete payload.desa_id; // Local helper
         
         // Sesuaikan user_id
         if (!payload.user_id && record.created_by && table !== 'complaints') {
