@@ -1144,7 +1144,7 @@ export async function renderMasterData() {
                 <td style="text-align:center; vertical-align:middle">
                   ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
                 </td>
-                <td><strong>${u.name}</strong></td>
+                <td><strong>${u.full_name || u.name || ''}</strong></td>
                 <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
                 <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
                 <td>${u.wilayah || '-'}</td>
@@ -1257,7 +1257,7 @@ export async function renderMasterData() {
       <form id="userForm">
         <div class="form-group">
           <label class="form-label">Nama Lengkap</label>
-          <input class="form-input" id="userName" required value="${existing?.name || ''}" placeholder="Misal: Siti Aminah" />
+          <input class="form-input" id="userName" required value="${existing?.full_name || existing?.name || ''}" placeholder="Misal: Siti Aminah" />
         </div>
         <div class="form-group">
           <label class="form-label">Username</label>
@@ -1330,6 +1330,7 @@ export async function renderMasterData() {
 
       const data = {
         name: document.getElementById('userName').value.trim(),
+        full_name: document.getElementById('userName').value.trim(),
         username: document.getElementById('userUsername').value.trim().toLowerCase(),
         role: role,
         role_icon: roleInfo?.icon || '',
