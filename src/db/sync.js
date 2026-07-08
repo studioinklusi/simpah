@@ -144,12 +144,21 @@ export async function triggerSync() {
             const { error: retryError } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
             if (retryError) {
               console.error(`[Sync] Retry gagal untuk ${table}`, record.id, retryError);
+              record.sync_error = retryError.message;
+              await db.put(table, record);
               continue; // Lewati record ini, lanjut ke record berikutnya
             }
           } else {
             console.error(`[Sync] Gagal upload data ${table}`, record.id, error);
+            record.sync_error = error.message;
+            await db.put(table, record);
             continue; // Lewati record ini, lanjut ke record berikutnya
           }
+        }
+        
+        // Hapus error jika sebelumnya ada
+        if (record.sync_error) {
+          delete record.sync_error;
         }
         
         if (table === 'waste_records' && record.type === 'pilah') {

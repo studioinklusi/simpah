@@ -89,7 +89,10 @@ function getTypeEmoji(t) { return {masuk:icons.download,campur:icons.box,pilah:i
 function getTypeBg(t) { return {masuk:'rgba(16,185,129,0.12)',campur:'rgba(245,158,11,0.12)',pilah:'rgba(59,130,246,0.12)',olah:'rgba(245,158,11,0.12)',residu:'rgba(239,68,68,0.12)'}[t]; }
 
 function getVerificationBadge(r) {
-  if (!r.synced) return '<span class="badge badge-warning" style="font-size:9px;margin-top:4px">Sinkronisasi...</span>';
+  if (!r.synced) {
+    const errorMsg = r.sync_error ? `: ${r.sync_error}` : '';
+    return `<span class="badge badge-warning" style="font-size:9px;margin-top:4px" title="Gagal sync: ${r.sync_error || 'Sedang proses...'}">Sinkronisasi${errorMsg}</span>`;
+  }
   if (!r.verification_status || r.verification_status === 'approved') return '<span class="badge badge-success" style="font-size:9px;margin-top:4px">Disetujui</span>';
   if (r.verification_status === 'rejected') return '<span class="badge badge-danger" style="font-size:9px;margin-top:4px">Ditolak</span>';
   return '<span class="badge" style="background:#fef08a;color:#854d0e;font-size:9px;margin-top:4px">Menunggu Validasi</span>';

@@ -199,7 +199,10 @@ function timeAgo(iso) {
 }
 
 function getVerificationBadge(r) {
-  if (!r.synced) return '<span class="badge badge-warning" style="font-size:11px;margin-top:4px">Sinkronisasi...</span>';
+  if (!r.synced) {
+    const errorMsg = r.sync_error ? `: ${r.sync_error}` : '';
+    return `<span class="badge badge-warning" style="font-size:11px;margin-top:4px" title="Gagal sync: ${r.sync_error || 'Sedang proses...'}">Sinkronisasi${errorMsg}</span>`;
+  }
   if (!r.verification_status || r.verification_status === 'approved') return '<span class="badge badge-success" style="font-size:11px;margin-top:4px">Disetujui</span>';
   if (r.verification_status === 'rejected') return '<span class="badge badge-danger" style="font-size:11px;margin-top:4px">Ditolak</span>';
   return '<span class="badge" style="background:#fef08a;color:#854d0e;font-size:11px;margin-top:4px">Tunggu Validasi</span>';
