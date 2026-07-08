@@ -959,3 +959,15 @@
   }
 }
 
+.forgot-password-link {
+  font-size: var(--font-xs);
+  color: #059669;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+  color: #047857;
+  text-decoration: underline;
+}

@@ -13,6 +13,8 @@ const _authReadyPromise = new Promise((resolve) => { _authReadyResolve = resolve
 const PUBLIC_ROUTES = [
   '/login',
   '/register',
+  '/forgot-password',
+  '/reset-password',
 ];
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -46,6 +48,11 @@ export async function initAuth() {
         if (session?.user) {
           await _loadProfile(session.user.id);
         }
+        break;
+
+      case 'PASSWORD_RECOVERY':
+        console.log('[Auth] Password recovery event triggered');
+        window.location.hash = '#/reset-password';
         break;
     }
   });
@@ -235,6 +242,39 @@ export async function logout() {
   }
   _clearSession();
   window.location.hash = '#/login';
+}
+
+/**
+ * Send password reset link to user's email.
+ */
+export async function sendResetPasswordEmail(email) {
+  const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+  console.log('[Auth] Sending reset email with redirect to:', redirectUrl);
+  
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: redirectUrl,
+  });
+
+  if (error) {
+    throw new AuthError(_mapAuthError(error), error.status);
+  }
+
+  return data;
+}
+
+/**
+ * Update the user's password (used in the recovery/reset password flow).
+ */
+export async function resetPassword(newPassword) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    throw new AuthError(_mapAuthError(error), error.status);
+  }
+
+  return data;
 }
 
 /**

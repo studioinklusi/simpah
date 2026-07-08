@@ -131,7 +131,10 @@ export function renderLogin() {
               </div>
 
               <div class="form-group">
-                <label class="form-label">Password</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                  <label class="form-label" style="margin-bottom: 0;">Password</label>
+                  <a href="#/forgot-password" class="forgot-password-link">Lupa password?</a>
+                </div>
                 <div class="input-with-icon">
                   <span class="input-icon-left">${icons.shield}</span>
                   <input type="password" id="loginPassword" class="form-input form-input-lg has-icon-left has-icon-right" 
