@@ -95,7 +95,7 @@ export async function getVillageProfiles() {
   // Filter out pending and rejected records, and prevent double counting
   const validRecords = records.filter(r => 
     (!r.verification_status || r.verification_status === 'approved') &&
-    r.source_type !== 'fasilitas'
+    r.source_type !== 'fasilitas' && r.source_type !== 'fasilitas_lain'
   );
 
   // Aggregate waste records

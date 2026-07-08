@@ -116,6 +116,13 @@ export async function triggerSync() {
           payload.record_date = record.date_str;
         }
         
+        // Map source_type to database check constraint values
+        if (payload.source_type === 'sumber_langsung') {
+          payload.source_type = 'langsung';
+        } else if (payload.source_type === 'fasilitas') {
+          payload.source_type = 'fasilitas_lain';
+        }
+        
         // Sesuaikan user_id
         if (!payload.user_id && record.created_by && table !== 'complaints') {
            payload.user_id = record.created_by;

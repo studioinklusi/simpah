@@ -74,8 +74,8 @@ export async function renderInputPilah() {
           <label class="form-label">Asal / Sumber Sampah</label>
           <p style="font-size:var(--font-xs); color:var(--text-muted); margin-bottom:var(--space-2);">Pilih untuk mencegah penghitungan ganda.</p>
           <select id="sourceSelect" class="form-select">
-            <option value="sumber_langsung">Sumber Langsung (Warga/Rumah Tangga/Pasar)</option>
-            <option value="fasilitas">Dari Fasilitas Lain (Pengepul/Bank Sampah Unit/TPS)</option>
+            <option value="langsung">Sumber Langsung (Warga/Rumah Tangga/Pasar)</option>
+            <option value="fasilitas_lain">Dari Fasilitas Lain (Pengepul/Bank Sampah Unit/TPS)</option>
           </select>
         </div>
 
