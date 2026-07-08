@@ -1,6 +1,6 @@
 // SIMPAH - Forgot Password Page (Supabase Auth)
 import { icons } from '../components/icons.js';
-import { sendResetPasswordEmail, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
+import { sendResetPasswordEmail, verifyRecoveryOtp, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
 import { showToast } from '../components/toast.js';
 
 export function renderForgotPassword() {
@@ -10,6 +10,9 @@ export function renderForgotPassword() {
     window.location.hash = getDefaultRoute(existingUser.role);
     return;
   }
+
+  let currentStep = 1; // 1: Email, 2: OTP
+  let userEmail = '';
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -35,7 +38,7 @@ export function renderForgotPassword() {
         <!-- Left Column: Copywriting & Illustration -->
         <div class="reference-left-panel">
           <h2>Atur Ulang Kata Sandi <span class="accent-text">SIMPAH Anda</span></h2>
-          <p class="desc">Jangan khawatir jika Anda lupa kata sandi. Cukup masukkan alamat email terdaftar Anda, dan kami akan mengirimkan tautan aman untuk membuat kata sandi baru.</p>
+          <p class="desc">Jangan khawatir jika Anda lupa kata sandi. Cukup masukkan alamat email terdaftar Anda, dan kami akan mengirimkan kode verifikasi aman untuk membuat kata sandi baru.</p>
           
           <div class="reference-list">
             <div class="reference-list-item">
@@ -87,8 +90,8 @@ export function renderForgotPassword() {
         <div class="reference-right-panel">
           <div class="reference-card" id="forgotCard">
             <div class="login-header">
-              <h1>Lupa Kata Sandi?</h1>
-              <p>Masukkan email terdaftar untuk menerima tautan atur ulang kata sandi.</p>
+              <h1 id="forgotTitle">Lupa Kata Sandi?</h1>
+              <p id="forgotDesc">Masukkan email terdaftar untuk menerima kode verifikasi atur ulang kata sandi.</p>
             </div>
 
             <!-- Error Banner (hidden by default) -->
@@ -99,25 +102,9 @@ export function renderForgotPassword() {
               </div>
             </div>
 
-            <!-- Success State (hidden by default) -->
-            <div id="forgotSuccessState" style="display:none; text-align:center; padding: var(--space-4) 0;">
-              <div style="color:#059669; margin-bottom:var(--space-4);">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <h3 style="color:#111827; font-size:var(--font-lg); font-weight:700; margin-bottom:var(--space-2)">Email Terkirim!</h3>
-              <p style="color:#4b5563; font-size:var(--font-sm); margin-bottom:var(--space-6); line-height:1.5;">
-                Tautan pengaturan ulang kata sandi telah dikirim ke alamat email Anda. Harap periksa folder kotak masuk atau spam Anda.
-              </p>
-              <a href="#/login" class="reference-btn-primary" style="margin-top:0">
-                Kembali ke Login
-              </a>
-            </div>
-
             <form id="forgotForm" class="login-form">
-              <div class="form-group">
+              <!-- Step 1: Email Input -->
+              <div class="form-group" id="emailGroup">
                 <label class="form-label">Alamat Email</label>
                 <div class="input-with-icon">
                   <span class="input-icon-left">
@@ -129,8 +116,21 @@ export function renderForgotPassword() {
                 </div>
               </div>
 
+              <!-- Step 2: OTP Input (Hidden by default) -->
+              <div class="form-group" id="otpGroup" style="display:none">
+                <label class="form-label">Kode Verifikasi (OTP)</label>
+                <div class="input-with-icon">
+                  <span class="input-icon-left">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </span>
+                  <input type="text" id="forgotOtp" class="form-input form-input-lg has-icon-left" 
+                    placeholder="Masukkan 6-digit kode" 
+                    maxlength="6" pattern="[0-9]*" inputmode="numeric" />
+                </div>
+              </div>
+
               <button type="submit" class="reference-btn-primary" id="forgotBtn">
-                <span class="btn-text">Kirim Link Reset →</span>
+                <span class="btn-text" id="forgotBtnText">Kirim Kode Verifikasi →</span>
                 <span class="btn-loading" style="display:none">
                   <div class="spinner" style="margin:0 auto;width:20px;height:20px;border-width:2px"></div>
                 </span>
@@ -139,6 +139,11 @@ export function renderForgotPassword() {
 
             <div class="login-footer" id="forgotFooter">
               Ingat kata sandi Anda? <a href="#/login">Masuk sekarang</a>
+            </div>
+
+            <!-- Back to Email Button for Step 2 -->
+            <div class="login-footer" id="otpBackLink" style="display:none; margin-top: var(--space-4); text-align: center;">
+              <a href="javascript:void(0)" id="btnBackToEmail" style="color: var(--gray-500); font-weight: 500; text-decoration: none;">← Kembali masukkan email</a>
             </div>
           </div>
         </div>
@@ -161,56 +166,121 @@ export function renderForgotPassword() {
 
   const form = document.getElementById('forgotForm');
   const emailInput = document.getElementById('forgotEmail');
+  const otpInput = document.getElementById('forgotOtp');
   const forgotBtn = document.getElementById('forgotBtn');
+  const forgotBtnText = document.getElementById('forgotBtnText');
   const errorBanner = document.getElementById('forgotErrorBanner');
   const errorText = document.getElementById('forgotErrorText');
   const forgotCard = document.getElementById('forgotCard');
-  const successState = document.getElementById('forgotSuccessState');
+  
+  const emailGroup = document.getElementById('emailGroup');
+  const otpGroup = document.getElementById('otpGroup');
+  const otpBackLink = document.getElementById('otpBackLink');
+  const btnBackToEmail = document.getElementById('btnBackToEmail');
+  
+  const forgotTitle = document.getElementById('forgotTitle');
+  const forgotDesc = document.getElementById('forgotDesc');
   const forgotFooter = document.getElementById('forgotFooter');
 
   form.addEventListener('submit', (e) => handleForgot(e));
+  btnBackToEmail.addEventListener('click', () => handleBackToEmail());
 
   async function handleForgot(e) {
     e.preventDefault();
-    const email = emailInput.value.trim();
-
-    if (!email) {
-      showError('Harap isi alamat email Anda');
-      return;
-    }
-
-    setLoading(true);
     hideError();
 
-    try {
-      await sendResetPasswordEmail(email);
-      showToast('Email reset password berhasil dikirim!', 'success');
+    if (currentStep === 1) {
+      // Step 1: Send OTP
+      userEmail = emailInput.value.trim();
+      if (!userEmail) {
+        showError('Harap isi alamat email Anda');
+        return;
+      }
 
-      // Show success view, hide form and footer
-      form.style.display = 'none';
-      forgotFooter.style.display = 'none';
-      successState.style.display = 'block';
-    } catch (err) {
-      console.error('[Forgot] Error:', err);
-      showError(err.message || 'Terjadi kesalahan saat memproses permintaan');
+      setLoading(true);
 
-      // Shake animation
-      forgotCard.classList.remove('shake');
-      void forgotCard.offsetWidth; // force reflow
-      forgotCard.classList.add('shake');
+      try {
+        await sendResetPasswordEmail(userEmail);
+        showToast('Kode verifikasi telah dikirim ke email Anda!', 'success');
 
-      setLoading(false);
+        // Transition to Step 2
+        currentStep = 2;
+        emailGroup.style.display = 'none';
+        otpGroup.style.display = 'block';
+        otpBackLink.style.display = 'block';
+        forgotFooter.style.display = 'none';
+
+        forgotTitle.textContent = 'Verifikasi Kode OTP';
+        forgotDesc.textContent = `Masukkan 6-digit kode verifikasi yang dikirim ke email ${userEmail}.`;
+        forgotBtnText.textContent = 'Verifikasi Kode OTP →';
+
+        otpInput.value = '';
+        otpInput.required = true;
+        otpInput.focus();
+
+        setLoading(false);
+      } catch (err) {
+        console.error('[Forgot Stage 1] Error:', err);
+        showError(err.message || 'Gagal mengirim kode verifikasi');
+        shakeCard();
+        setLoading(false);
+      }
+    } else {
+      // Step 2: Verify OTP
+      const otpCode = otpInput.value.trim();
+      if (!otpCode) {
+        showError('Harap masukkan kode verifikasi Anda');
+        return;
+      }
+      if (otpCode.length !== 6) {
+        showError('Kode verifikasi harus terdiri dari 6 digit');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await verifyRecoveryOtp(userEmail, otpCode);
+        showToast('Kode verifikasi berhasil! Silakan atur sandi baru.', 'success');
+
+        // Navigate to reset password page
+        setTimeout(() => {
+          window.location.hash = '#/reset-password';
+        }, 500);
+      } catch (err) {
+        console.error('[Forgot Stage 2] Error:', err);
+        showError(err.message || 'Kode verifikasi salah atau kedaluwarsa');
+        shakeCard();
+        setLoading(false);
+      }
     }
   }
 
+  function handleBackToEmail() {
+    currentStep = 1;
+    emailGroup.style.display = 'block';
+    otpGroup.style.display = 'none';
+    otpBackLink.style.display = 'none';
+    forgotFooter.style.display = 'block';
+
+    forgotTitle.textContent = 'Lupa Kata Sandi?';
+    forgotDesc.textContent = 'Masukkan email terdaftar untuk menerima kode verifikasi atur ulang kata sandi.';
+    forgotBtnText.textContent = 'Kirim Kode Verifikasi →';
+
+    otpInput.required = false;
+    emailInput.focus();
+    hideError();
+  }
+
   function setLoading(loading) {
-    const btnText = forgotBtn.querySelector('.btn-text');
+    const btnTextElement = forgotBtn.querySelector('.btn-text');
     const btnLoading = forgotBtn.querySelector('.btn-loading');
     
     forgotBtn.disabled = loading;
-    btnText.style.display = loading ? 'none' : '';
+    btnTextElement.style.display = loading ? 'none' : '';
     btnLoading.style.display = loading ? '' : 'none';
     emailInput.disabled = loading;
+    otpInput.disabled = loading;
   }
 
   function showError(message) {
@@ -221,5 +291,11 @@ export function renderForgotPassword() {
   function hideError() {
     errorBanner.style.display = 'none';
     errorText.textContent = '';
+  }
+
+  function shakeCard() {
+    forgotCard.classList.remove('shake');
+    void forgotCard.offsetWidth; // force reflow
+    forgotCard.classList.add('shake');
   }
 }

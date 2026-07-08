@@ -278,6 +278,23 @@ export async function resetPassword(newPassword) {
 }
 
 /**
+ * Verify recovery OTP code sent to user's email.
+ */
+export async function verifyRecoveryOtp(email, token) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: email.trim(),
+    token: token.trim(),
+    type: 'recovery',
+  });
+
+  if (error) {
+    throw new AuthError(_mapAuthError(error), error.status);
+  }
+
+  return data;
+}
+
+/**
  * Get the currently authenticated user's profile.
  * Returns null if not logged in.
  */
