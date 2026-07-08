@@ -165,7 +165,7 @@ export async function renderRegister() {
               <label class="form-label">Kecamatan</label>
               <div class="custom-select-container" id="regKecSelectContainer">
                 <div class="custom-select-wrapper">
-                  <input type="text" id="regKecamatan" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan (Opsional)..." autocomplete="off" style="border: 1px solid var(--border-color);" />
+                  <input type="text" id="regKecamatan" class="form-input form-input-lg" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" style="border: 1px solid var(--border-color);" />
                   <span class="custom-select-arrow">▼</span>
                 </div>
                 <div class="custom-select-dropdown" id="regKecDropdown" style="display:none;"></div>
@@ -700,11 +700,17 @@ export async function renderRegister() {
       return;
     }
     // Kecamatan / Desa selection validation
-    const isKecValid = selectKecInstance.validate();
-    const isDesaValid = selectDesaInstance.validate();
     const typedKec = regKecamatan.value.trim();
     const desaId = regDesa.value || null;
 
+    if (!typedKec) {
+      showError('Kecamatan wajib dipilih');
+      shakeCard();
+      regKecamatan.focus();
+      return;
+    }
+
+    const isKecValid = selectKecInstance.validate();
     if (!isKecValid) {
       showError('Kecamatan tidak ditemukan. Harap pilih dari daftar yang valid.');
       shakeCard();
@@ -712,7 +718,15 @@ export async function renderRegister() {
       return;
     }
 
-    if (typedKec && (!isDesaValid || !desaId)) {
+    if (!desaId) {
+      showError('Desa / Kelurahan wajib dipilih');
+      shakeCard();
+      regDesaInput.focus();
+      return;
+    }
+
+    const isDesaValid = selectDesaInstance.validate();
+    if (!isDesaValid) {
       showError('Harap pilih Desa / Kelurahan yang valid dari Kecamatan terpilih');
       shakeCard();
       regDesaInput.focus();
