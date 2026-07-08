@@ -145,7 +145,15 @@ function renderReportRows(records) {
             : '<span style="color:var(--text-muted)">-</span>'
         }
       </td>
-      <td>${r.synced ? '<span class="badge badge-success">Synced</span>' : '<span class="badge badge-warning">Pending</span>'}</td>
+      <td style="vertical-align:middle">
+        ${r.verification_status === 'approved'
+          ? '<span class="badge badge-success">Disetujui</span>'
+          : r.verification_status === 'rejected'
+            ? '<span class="badge badge-danger">Ditolak</span>'
+            : '<span class="badge badge-warning">Pending</span>'
+        }
+        ${!r.synced ? `<div style="font-size:10px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:4px;">${icons.clock.replace('width="20" height="20"', 'width="12" height="12"')} Belum Sinkron</div>` : ''}
+      </td>
     </tr>
   `).join('');
 }
