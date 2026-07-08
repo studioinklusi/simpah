@@ -2,6 +2,7 @@
 import { getDB } from './schema.js';
 import { createAuditEntry } from '../utils/audit.js';
 import { supabase } from '../lib/supabase.js';
+import { triggerSync } from './sync.js';
 
 // ========== Generic CRUD ==========
 // Normalize date_str across Supabase (record_date) and local (date_str) records
@@ -62,6 +63,10 @@ export async function getAllWasteRecords() {
         // Simpan data server ke cache lokal
         const tx = db.transaction('waste_records', 'readwrite');
         for (const item of data) {
+          const localItem = await tx.store.get(item.id);
+          if (localItem && localItem.synced === false) {
+            continue; // Jangan timpa data lokal yang belum sinkron
+          }
           item.synced = true;
           await tx.store.put(item);
         }
@@ -108,6 +113,7 @@ export async function addWasteRecord(record, userId) {
   delete data.override_date; // Clean up internal field
   await put('waste_records', data);
   await createAuditEntry('waste_records', data.id, 'create', userId, data);
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   return data;
 }
 
@@ -124,6 +130,7 @@ export async function updateWasteRecordStatus(id, status, notes = '', userId = '
   
   await put('waste_records', record);
   await createAuditEntry('waste_records', id, `status_${status}`, userId, { old: oldStatus, new: status, notes });
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   return record;
 }
 
@@ -561,6 +568,10 @@ export async function getAllComplaints() {
         
         const tx = db.transaction('complaints', 'readwrite');
         for (const item of data) {
+          const localItem = await tx.store.get(item.id);
+          if (localItem && localItem.synced === false) {
+            continue; // Jangan timpa data lokal yang belum sinkron
+          }
           item.synced = true;
           await tx.store.put(item);
         }
@@ -606,14 +617,16 @@ export async function addComplaint(complaint, userId = null) {
   if (userId) {
     await createAuditEntry('complaints', data.id, 'create', userId, { tracking: data.tracking_number, category: data.category });
   }
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   return data;
 }
 
 export async function updateComplaint(id, updates) {
   const complaint = await getById('complaints', id);
   if (!complaint) throw new Error('Aduan tidak ditemukan');
-  const updated = { ...complaint, ...updates, updated_at: new Date().toISOString() };
+  const updated = { ...complaint, ...updates, synced: false, updated_at: new Date().toISOString() };
   await put('complaints', updated);
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   return updated;
 }
 
@@ -634,6 +647,10 @@ export async function getAllEvents() {
         
         const tx = db.transaction('incidental_events', 'readwrite');
         for (const item of data) {
+          const localItem = await tx.store.get(item.id);
+          if (localItem && localItem.synced === false) {
+            continue; // Jangan timpa data lokal yang belum sinkron
+          }
           item.synced = true;
           await tx.store.put(item);
         }
@@ -663,6 +680,7 @@ export async function addEvent(event, userId) {
   };
   await put('incidental_events', data);
   await createAuditEntry('incidental_events', data.id, 'create', userId, data);
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   return data;
 }
 
