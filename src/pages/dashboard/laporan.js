@@ -6,6 +6,7 @@ import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import { hasPermission } from '../../utils/permissions.js';
+import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 
 export async function renderLaporan() {
   const user = getCurrentUser();
@@ -136,10 +137,12 @@ function renderReportRows(records) {
       <td style="font-weight:600">${formatWeight(r.weight_kg)}</td>
       <td>${r.location_name || '-'}</td>
       <td>${r.user_name || '-'}</td>
-      <td style="text-align:center">
-        ${r.photo_count > 0
-          ? `<span class="badge badge-info" style="cursor:pointer" title="${r.photo_count} foto terlampir">${icons.camera} ${r.photo_count}</span>`
-          : '<span style="color:var(--text-muted)">-</span>'
+      <td style="text-align:center;vertical-align:middle">
+        ${r.photo_url
+          ? `<img src="${escapeHTML(sanitizeURL(r.photo_url))}" style="width:36px;height:36px;border-radius:4px;object-fit:cover;cursor:pointer;border:1px solid var(--border-color);" onclick="window.open('${escapeHTML(sanitizeURL(r.photo_url))}','_blank')" title="Klik untuk memperbesar">`
+          : r.photo_count > 0
+            ? `<span class="badge badge-info" style="cursor:pointer" title="${r.photo_count} foto terlampir">${icons.camera} ${r.photo_count}</span>`
+            : '<span style="color:var(--text-muted)">-</span>'
         }
       </td>
       <td>${r.synced ? '<span class="badge badge-success">Synced</span>' : '<span class="badge badge-warning">Pending</span>'}</td>

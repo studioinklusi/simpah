@@ -7,7 +7,7 @@ import { addEvent, getAllEvents } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
-import { escapeHTML } from '../../utils/sanitize.js';
+import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 
 export async function renderInsidental() {
   const user = getCurrentUser();
@@ -68,7 +68,10 @@ export async function renderInsidental() {
                 <div class="record-meta">${escapeHTML(e.location_name || '-')} · ${formatDateTime(e.created_at)}</div>
               </div>
               <div class="record-value" style="text-align:right">
-                ${e.photo_count ? `<div style="font-size:11px;color:var(--info-500);margin-bottom:2px">${icons.camera} ${e.photo_count}</div>` : ''}
+                ${(e.photo_url || e.photo_count)
+                  ? `<div style="font-size:11px;color:var(--info-500);margin-bottom:2px;cursor:pointer" onclick="${e.photo_url ? `window.open('${escapeHTML(sanitizeURL(e.photo_url))}','_blank')` : ''}" title="Lihat Foto">${icons.camera} ${e.photo_count || 1}</div>`
+                  : ''
+                }
                 <div>${e.participants || '-'}<small> org</small></div>
               </div>
             </div>

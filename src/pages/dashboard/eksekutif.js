@@ -460,10 +460,13 @@ function renderTopKader(records, users) {
   records.forEach(r => {
     const id = r.user_id || r.created_by;
     if (id && id !== 'system') {
-      if (!kaderStats[id]) {
-        kaderStats[id] = { count: 0, name: r.user_name || 'Kader' };
+      const user = users.find(u => u.id === id);
+      if (user && user.job_type === 'kader') {
+        if (!kaderStats[id]) {
+          kaderStats[id] = { count: 0, name: user.full_name || user.name || r.user_name || 'Kader' };
+        }
+        kaderStats[id].count += 1;
       }
-      kaderStats[id].count += 1;
     }
   });
 
@@ -474,9 +477,13 @@ function renderTopKader(records, users) {
   const body = document.getElementById('topKaderBody');
   if (!body) return;
 
+  if (sorted.length === 0) {
+    body.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);font-size:var(--font-xs);padding:var(--space-4)">Belum ada data entri dari Kader</td></tr>';
+    return;
+  }
+
   body.innerHTML = sorted.map(([id, data]) => {
-    const user = users.find(u => u.id === id);
-    const displayName = user?.full_name || user?.name || data.name;
+    const displayName = data.name;
     
     return `
       <tr>
@@ -487,7 +494,7 @@ function renderTopKader(records, users) {
             </div>
             <div>
               <strong style="font-size:var(--font-sm)">${displayName}</strong>
-              <div style="font-size:10px;color:var(--text-muted)">${user?.role || 'Kader'}</div>
+              <div style="font-size:10px;color:var(--text-muted)">Kader Lingkungan</div>
             </div>
           </div>
         </td>

@@ -6,14 +6,14 @@ import { JOB_TYPES, hasPermission, getAllowedInputTypes } from '../../utils/perm
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import {
-  getAllLocations, addLocation, updateLocation, deleteLocation,
+  getAllLocations, addLocation, addLocationsBatch, updateLocation, deleteLocation, deleteLocationsBatch,
   getAllFleet, addFleet, updateFleet, deleteFleet,
-  getAllUsers, addUser, updateUser, deleteUser,
+  getAllUsers, addUser, updateUser, deleteUser, deleteUsersBatch,
   getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
-  getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility,
+  getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility, deletePublicFacilitiesBatch, addPublicFacilitiesBatch,
   getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions,
   getAllInvitationCodes, addInvitationCode, updateInvitationCode, deleteInvitationCode,
-  getAllMasterWilayah, updateMasterWilayah} from '../../db/store.js';
+  getAllMasterWilayah, updateMasterWilayah, updatePopulationBatch} from '../../db/store.js';
 import { wireSearchableSelect } from '../../utils/searchable-select.js';
 export async function renderMasterData() {
   const user = getCurrentUser();
@@ -87,7 +87,7 @@ export async function renderMasterData() {
       .md-btn-icon:hover { background:var(--gray-100); }
       .md-btn-icon.danger:hover { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); }
       .md-empty { text-align:center; padding:var(--space-8); color:var(--text-muted); font-size:var(--font-sm); }
-      .md-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease; }
+      .md-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease; }
       .md-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:90%; max-width:520px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:scaleIn 0.2s ease; }
       .md-modal-header { display:flex; justify-content:space-between; align-items:center; padding:var(--space-5) var(--space-6); border-bottom:1px solid var(--border-color); }
       .md-modal-header h3 { font-size:var(--font-lg); font-weight:700; }
@@ -96,6 +96,33 @@ export async function renderMasterData() {
       .md-modal-body .form-group { margin-bottom:var(--space-4); }
       .md-modal-body .form-label { display:block; font-size:var(--font-sm); font-weight:600; margin-bottom:var(--space-2); }
       .md-modal-body .form-actions { display:flex; gap:var(--space-3); justify-content:flex-end; margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border-color); }
+      .md-bulk-bar {
+        position: fixed;
+        bottom: var(--space-6);
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4) var(--space-5);
+        z-index: 1050;
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @media (min-width: 1025px) {
+        .md-bulk-bar {
+          left: calc(50% + var(--sidebar-width) / 2);
+        }
+      }
+      @keyframes slideUp {
+        from { transform: translate(-50%, 20px); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
+      }
       @media (max-width:768px) { .md-table { font-size:var(--font-xs); } .md-table th, .md-table td { padding:var(--space-2); } }
     </style>
   `);
@@ -120,6 +147,8 @@ export async function renderMasterData() {
   }
   function closeModal() {
     document.getElementById('mdModal').style.display = 'none';
+    const modalEl = document.querySelector('.md-modal');
+    if (modalEl) modalEl.style.maxWidth = '520px';
   }
   document.getElementById('modalClose')?.addEventListener('click', closeModal);
   document.getElementById('mdModal')?.addEventListener('click', (e) => {
@@ -163,6 +192,70 @@ export async function renderMasterData() {
     }
   }
 
+  async function downloadLocationTemplate(masterWilayah = []) {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      // 1. Template Sheet
+      const headers = [
+        'Nama Lokasi',
+        'Tipe',
+        'Kecamatan',
+        'Desa Lokasi Fisik',
+        'Alamat',
+        'Latitude',
+        'Longitude',
+        'Kapasitas (kg)',
+        'Desa yang Dilayani (Opsional - Pisahkan Koma)'
+      ];
+
+      const descriptionRow = [
+        'Contoh: TPS3R Banjarnegara',
+        'Pilih salah satu: TPS, TPS3R, Bank Sampah, Pengepul, TPA',
+        'Contoh: Banjarnegara (Harus sesuai referensi)',
+        'Contoh: Krandegan (Harus sesuai referensi)',
+        'Contoh: Jl. Selamanik No. 10',
+        'Contoh: -7.389100',
+        'Contoh: 109.695200',
+        'Contoh: 2500 (Isi angka saja atau kosongkan)',
+        'Contoh: Krandegan, Semampir (Pisahkan dengan koma jika melayani lebih dari satu desa)'
+      ];
+
+      const templateData = [
+        headers,
+        descriptionRow
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(templateData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+      // 2. Reference Sheet for Kecamatan & Desa
+      const refHeaders = ['Kecamatan', 'Desa / Kelurahan'];
+      const refRows = masterWilayah.map(w => [w.kecamatan, w.desa_kelurahan]);
+      const wsRef = XLSX.utils.aoa_to_sheet([refHeaders, ...refRows]);
+      XLSX.utils.book_append_sheet(wb, wsRef, 'Referensi Wilayah');
+
+      // 3. Reference Sheet for Types
+      const typeHeaders = ['Tipe Lokasi (Input)', 'Label'];
+      const typeRows = [
+        ['TPS', 'Tempat Penampungan Sementara'],
+        ['TPS3R', 'TPS 3R (Reduce, Reuse, Recycle)'],
+        ['Bank Sampah', 'Bank Sampah Unit/Induk'],
+        ['Pengepul', 'Pengepul / Lapak Sampah'],
+        ['TPA', 'Tempat Pemrosesan Akhir']
+      ];
+      const wsTypes = XLSX.utils.aoa_to_sheet([typeHeaders, ...typeRows]);
+      XLSX.utils.book_append_sheet(wb, wsTypes, 'Referensi Tipe Lokasi');
+
+      XLSX.writeFile(wb, 'Template_Upload_Lokasi.xlsx');
+      showToast('Templat Excel berhasil diunduh', 'success');
+    } catch (err) {
+      showToast('Gagal mengunduh templat: ' + err.message, 'error');
+      console.error('[MasterData] Template creation error:', err);
+    }
+  }
+
   // ---------- LOCATIONS TAB ----------
   async function renderLocationsTab(container) {
     const [locations, masterWilayah] = await Promise.all([
@@ -176,17 +269,52 @@ export async function renderMasterData() {
           <h3 style="display:flex;align-items:center;gap:8px">${icons.mapPin} Daftar Lokasi</h3>
           <span class="md-count">${locations.length} lokasi</span>
         </div>
-        <button class="btn btn-primary btn-sm" id="addLocationBtn">${icons.plus} Tambah Lokasi</button>
+        <div style="display:flex;gap:var(--space-2)">
+          <button class="btn btn-secondary btn-sm" id="downloadLocationTemplateBtn" style="display:inline-flex;align-items:center;gap:6px" title="Unduh Templat Format Excel">
+            ${icons.download} Download Format
+          </button>
+          <button class="btn btn-secondary btn-sm" id="uploadLocationExcelBtn" style="display:inline-flex;align-items:center;gap:6px">
+            ${icons.upload} Upload Excel
+          </button>
+          <button class="btn btn-primary btn-sm" id="addLocationBtn">${icons.plus} Tambah Lokasi</button>
+        </div>
       </div>
+
+      <!-- Bulk Action Bar -->
+      <div id="locationsBulkActionBar" class="md-bulk-bar">
+        <div style="display:flex; align-items:center; gap:8px; font-size:var(--font-sm); font-weight:600; color:var(--text-primary)">
+          <span style="background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px">!</span>
+          <span id="locationsSelectedCount">0</span> lokasi terpilih
+        </div>
+        <div style="display:flex; gap:var(--space-2)">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCancelBulkSelect" style="color:var(--text-muted); padding:6px 12px; font-size:var(--font-xs)">Batal</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnDeleteBulkSelected" style="background:#dc2626; border-color:#dc2626; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:var(--font-xs)">
+            ${icons.trash} Hapus Terpilih
+          </button>
+        </div>
+      </div>
+
       <div class="md-table-container">
         <table class="md-table">
-          <thead><tr><th>Nama</th><th>Tipe</th><th>Wilayah / Desa</th><th>Koordinat</th><th>Aksi</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center"><input type="checkbox" id="selectAllLocations" style="cursor:pointer; transform:scale(1.1)" /></th>
+              <th>Nama</th>
+              <th>Tipe</th>
+              <th>Wilayah / Desa</th>
+              <th>Koordinat</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
           <tbody>
-            ${locations.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data lokasi</td></tr>' :
+            ${locations.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data lokasi</td></tr>' :
               locations.map(l => {
                 const matchedWil = masterWilayah.find(w => w.id === l.desa_id);
                 const wilayahDisplay = matchedWil ? `Desa ${matchedWil.desa_kelurahan}, Kec. ${matchedWil.kecamatan}` : (l.wilayah || '-');
                 return `<tr>
+                  <td style="text-align:center; vertical-align:middle">
+                    <input type="checkbox" class="location-select-checkbox" data-id="${l.id}" style="cursor:pointer; transform:scale(1.1)" />
+                  </td>
                   <td>
                     <strong>${l.name}</strong>
                     ${l.address ? `<div style="font-size:var(--font-xs);color:var(--text-muted);margin-top:2px">${l.address}</div>` : ''}
@@ -216,16 +344,97 @@ export async function renderMasterData() {
         </table>
       </div>
     `;
+
+    // Bulk selection logic
+    let selectedIds = [];
+    const selectAllCb = document.getElementById('selectAllLocations');
+    const rowCheckboxes = container.querySelectorAll('.location-select-checkbox');
+    const bulkBar = document.getElementById('locationsBulkActionBar');
+    const selectedCountEl = document.getElementById('locationsSelectedCount');
+    const btnCancelBulk = document.getElementById('btnCancelBulkSelect');
+    const btnDeleteBulk = document.getElementById('btnDeleteBulkSelected');
+
+    function updateBulkBar() {
+      if (selectedIds.length > 0) {
+        if (bulkBar) bulkBar.style.display = 'flex';
+        if (selectedCountEl) selectedCountEl.textContent = selectedIds.length;
+      } else {
+        if (bulkBar) bulkBar.style.display = 'none';
+      }
+      if (selectAllCb) {
+        selectAllCb.checked = selectedIds.length === rowCheckboxes.length && rowCheckboxes.length > 0;
+        selectAllCb.indeterminate = selectedIds.length > 0 && selectedIds.length < rowCheckboxes.length;
+      }
+    }
+
+    selectAllCb?.addEventListener('change', () => {
+      const isChecked = selectAllCb.checked;
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) selectedIds.push(cb.dataset.id);
+      });
+      updateBulkBar();
+    });
+
+    rowCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.id;
+        if (cb.checked) {
+          if (!selectedIds.includes(id)) selectedIds.push(id);
+        } else {
+          selectedIds = selectedIds.filter(x => x !== id);
+        }
+        updateBulkBar();
+      });
+    });
+
+    btnCancelBulk?.addEventListener('click', () => {
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => cb.checked = false);
+      if (selectAllCb) selectAllCb.checked = false;
+      updateBulkBar();
+    });
+
+    btnDeleteBulk?.addEventListener('click', async () => {
+      if (selectedIds.length === 0) return;
+      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} lokasi terpilih? Tindakan ini tidak bisa dibatalkan.`)) {
+        if (btnDeleteBulk) {
+          btnDeleteBulk.disabled = true;
+          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+        }
+        try {
+          await deleteLocationsBatch(selectedIds);
+          showToast(`${selectedIds.length} lokasi berhasil dihapus`, 'success');
+          loadTabContent('locations');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          if (btnDeleteBulk) {
+            btnDeleteBulk.disabled = false;
+            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+          }
+        }
+      }
+    });
+
+    // Form buttons and action handlers
     document.getElementById('addLocationBtn')?.addEventListener('click', () => openLocationForm(null, masterWilayah));
+    document.getElementById('downloadLocationTemplateBtn')?.addEventListener('click', () => downloadLocationTemplate(masterWilayah));
+    document.getElementById('uploadLocationExcelBtn')?.addEventListener('click', () => openLocationExcelUpload(masterWilayah, locations));
     container.querySelectorAll('[data-edit-loc]').forEach(btn => btn.addEventListener('click', async () => {
       const loc = locations.find(l => l.id === btn.dataset.editLoc);
       if (loc) openLocationForm(loc, masterWilayah);
     }));
     container.querySelectorAll('[data-del-loc]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus lokasi ini?')) {
-        await deleteLocation(btn.dataset.delLoc);
-        showToast('Lokasi berhasil dihapus', 'success');
-        loadTabContent('locations');
+        try {
+          await deleteLocation(btn.dataset.delLoc);
+          showToast('Lokasi berhasil dihapus', 'success');
+          loadTabContent('locations');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          console.error('[MasterData] Delete location error:', err);
+        }
       }
     }));
   }
@@ -416,6 +625,377 @@ export async function renderMasterData() {
     });
   }
 
+  function openLocationExcelUpload(masterWilayah = [], locations = []) {
+    // Dynamically adjust modal width for preview table
+    const modalEl = document.querySelector('.md-modal');
+    if (modalEl) modalEl.style.maxWidth = '900px';
+
+    openModal('Upload Batch Lokasi', `
+      <div class="excel-upload-wizard">
+        <!-- Step 1: Download Template -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--border-color)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; align-items:center; gap:8px">
+            1. Unduh Templat Excel Resmi
+          </h4>
+          <p style="font-size:var(--font-xs); color:var(--text-secondary); margin-bottom:var(--space-3)">
+            Gunakan templat resmi kami untuk memastikan format data Anda sesuai. Sistem menyertakan daftar referensi wilayah Kecamatan & Desa terbaru secara dinamis di dalam file Excel.
+          </p>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadTemplate" style="display:inline-flex; align-items:center; gap:6px">
+            ${icons.download} Unduh Templat Excel
+          </button>
+        </div>
+
+        <!-- Step 2: Upload File -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2)">
+            2. Unggah File Excel Anda
+          </h4>
+          <div id="excelDropzone" style="border:2px dashed var(--border-color); border-radius:var(--radius-lg); padding:var(--space-6); text-align:center; background:var(--gray-50); cursor:pointer; transition:all 0.2s">
+            <div style="font-size:32px; margin-bottom:var(--space-2)">📄</div>
+            <p style="font-weight:600; font-size:var(--font-sm); color:var(--text-primary)">
+              Seret & taruh file Excel di sini, atau klik untuk memilih file
+            </p>
+            <p style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">
+              Format yang didukung: .xlsx, .xls
+            </p>
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display:none" />
+          </div>
+        </div>
+
+        <!-- Step 3: Preview & Validasi -->
+        <div id="previewSection" style="display:none; margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; justify-content:space-between; align-items:center">
+            <span>3. Preview & Validasi Data</span>
+            <span id="previewSummary" class="md-badge blue" style="font-size:10px; padding:2px 8px">0 Baris Terdeteksi</span>
+          </h4>
+          <div class="md-table-container" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-md)">
+            <table class="md-table" style="font-size:var(--font-xs)">
+              <thead style="position:sticky; top:0; z-index:10; background:var(--gray-50)">
+                <tr>
+                  <th>Status</th>
+                  <th>Nama Lokasi</th>
+                  <th>Tipe</th>
+                  <th>Kecamatan</th>
+                  <th>Desa Fisik</th>
+                  <th>Koordinat</th>
+                  <th>Kapasitas</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="validationAlert" style="margin-top:var(--space-3)"></div>
+        </div>
+
+        <div class="form-actions" style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:var(--space-3)">
+          <button type="button" class="btn btn-ghost" id="btnCancelUpload">Batal</button>
+          <button type="button" class="btn btn-primary" id="btnImportExcel" disabled>Impor Data</button>
+        </div>
+      </div>
+    `);
+
+    // Setup interactive dropzone
+    const dropzone = document.getElementById('excelDropzone');
+    const fileInput = document.getElementById('excelFileInput');
+    const btnDownload = document.getElementById('btnDownloadTemplate');
+    const btnCancel = document.getElementById('btnCancelUpload');
+    const btnImport = document.getElementById('btnImportExcel');
+
+    let validRowsToUpload = [];
+
+    // Download template handler
+    btnDownload?.addEventListener('click', () => downloadLocationTemplate(masterWilayah));
+
+    // Dropzone logic
+    dropzone?.addEventListener('click', () => fileInput?.click());
+    dropzone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--primary-color)';
+        dropzone.style.background = 'rgba(16, 185, 129, 0.05)';
+      }
+    });
+    const resetDropzoneStyle = () => {
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = 'var(--gray-50)';
+      }
+    };
+    dropzone?.addEventListener('dragleave', resetDropzoneStyle);
+    dropzone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      resetDropzoneStyle();
+      if (e.dataTransfer?.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput?.addEventListener('change', () => {
+      if (fileInput.files?.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+
+    // File processor
+    async function handleFile(file) {
+      if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+        showToast('Tipe file tidak didukung. Harus file Excel (.xlsx atau .xls).', 'error');
+        return;
+      }
+      showToast('Membaca file Excel...', 'info');
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const XLSX = await import('xlsx');
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            if (workbook.SheetNames.length === 0) {
+              throw new Error('File Excel tidak memiliki sheet.');
+            }
+            
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rawRows = XLSX.utils.sheet_to_json(sheet);
+            
+            if (rawRows.length === 0) {
+              throw new Error('Sheet pertama kosong.');
+            }
+
+            // Remove description row if present (checking if cell contains "Contoh:")
+            const rows = rawRows.filter(r => {
+              const values = Object.values(r).map(v => String(v).toLowerCase());
+              return !values.some(v => v.includes('contoh:') || v.includes('pilih salah satu:'));
+            });
+
+            validateRows(rows);
+          } catch (err) {
+            showToast('Gagal memproses excel: ' + err.message, 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (err) {
+        showToast('Gagal membaca file: ' + err.message, 'error');
+      }
+    }
+
+    // Row Validator
+    function validateRows(rows) {
+      const previewSection = document.getElementById('previewSection');
+      const previewTableBody = document.getElementById('previewTableBody');
+      const previewSummary = document.getElementById('previewSummary');
+      const validationAlert = document.getElementById('validationAlert');
+
+      if (!previewTableBody || !previewSection || !previewSummary || !validationAlert || !btnImport) return;
+
+      previewTableBody.innerHTML = '';
+      validRowsToUpload = [];
+      let errorCount = 0;
+      let successCount = 0;
+      let warningCount = 0;
+
+      rows.forEach((row) => {
+        const getRowValue = (possibleKeys) => {
+          const foundKey = Object.keys(row).find(k => 
+            possibleKeys.some(pk => k.toLowerCase().replace(/\s+/g, '') === pk.toLowerCase().replace(/\s+/g, ''))
+          );
+          return foundKey ? String(row[foundKey]).trim() : '';
+        };
+
+        const name = getRowValue(['namalokasi', 'nama', 'name']);
+        const rawType = getRowValue(['tipe', 'jenis', 'type']);
+        const kecamatan = getRowValue(['kecamatan', 'wilayah', 'subdistrict']);
+        const desaName = getRowValue(['desalokasifisik', 'desa', 'kelurahan', 'village']);
+        const address = getRowValue(['alamat', 'address']);
+        const latVal = getRowValue(['latitude', 'lat']);
+        const lngVal = getRowValue(['longitude', 'lng', 'long']);
+        const capacityVal = getRowValue(['kapasitaskg', 'kapasitas', 'capacity']);
+        const servedDesaStr = getRowValue(['desayangdilayani', 'desayangdilayaniopsional', 'served']);
+
+        const errors = [];
+        const warnings = [];
+
+        // 1. Name Check
+        if (!name) {
+          errors.push('Nama lokasi wajib diisi');
+        } else if (locations.some(l => l.name.toLowerCase() === name.toLowerCase())) {
+          warnings.push('Nama lokasi sudah terdaftar (duplikat)');
+        }
+
+        // 2. Type Check
+        let type = '';
+        const typeLower = rawType.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (typeLower === 'tps') type = 'tps';
+        else if (typeLower === 'tps3r') type = 'tps3r';
+        else if (typeLower === 'banksampah') type = 'bank_sampah';
+        else if (typeLower === 'pengepul') type = 'pengepul';
+        else if (typeLower === 'tpa') type = 'tpa';
+        else {
+          errors.push('Tipe lokasi tidak valid');
+        }
+
+        // 3. Kecamatan Check
+        let matchedKec = '';
+        if (!kecamatan) {
+          errors.push('Kecamatan wajib diisi');
+        } else {
+          const matched = masterWilayah.find(w => w.kecamatan.toLowerCase() === kecamatan.toLowerCase());
+          if (!matched) {
+            errors.push(`Kecamatan "${kecamatan}" tidak ditemukan`);
+          } else {
+            matchedKec = matched.kecamatan;
+          }
+        }
+
+        // 4. Desa Check
+        let desa_id = null;
+        if (!desaName) {
+          errors.push('Desa lokasi wajib diisi');
+        } else if (matchedKec) {
+          const matchedV = masterWilayah.find(w => 
+            w.kecamatan.toLowerCase() === matchedKec.toLowerCase() && 
+            w.desa_kelurahan.toLowerCase() === desaName.toLowerCase()
+          );
+          if (!matchedV) {
+            errors.push(`Desa "${desaName}" tidak ditemukan di Kec. ${matchedKec}`);
+          } else {
+            desa_id = matchedV.id;
+          }
+        }
+
+        // 5. Coordinates Check
+        const lat = parseFloat(latVal);
+        const lng = parseFloat(lngVal);
+        if (isNaN(lat)) errors.push('Latitude wajib diisi dengan angka');
+        else if (lat < -90 || lat > 90) errors.push('Latitude di luar batas (-90 s/d 90)');
+
+        if (isNaN(lng)) errors.push('Longitude wajib diisi dengan angka');
+        else if (lng < -180 || lng > 180) errors.push('Longitude di luar batas (-180 s/d 180)');
+
+        // 6. Capacity Check
+        const capacity = capacityVal ? parseFloat(capacityVal) : null;
+        if (capacityVal && isNaN(capacity)) errors.push('Kapasitas harus berupa angka');
+
+        // 7. Served Desa Check
+        let served_desa_ids = [];
+        if (desa_id) {
+          if (!servedDesaStr) {
+            served_desa_ids = [desa_id];
+          } else {
+            const vNames = servedDesaStr.split(',').map(v => v.trim()).filter(Boolean);
+            for (const vName of vNames) {
+              let matchedServed = masterWilayah.find(w => 
+                w.kecamatan.toLowerCase() === matchedKec.toLowerCase() && 
+                w.desa_kelurahan.toLowerCase() === vName.toLowerCase()
+              );
+              if (!matchedServed) {
+                // Fallback global search
+                matchedServed = masterWilayah.find(w => w.desa_kelurahan.toLowerCase() === vName.toLowerCase());
+              }
+              if (matchedServed) {
+                served_desa_ids.push(matchedServed.id);
+              } else {
+                warnings.push(`Desa dilayani "${vName}" tidak ditemukan`);
+              }
+            }
+            if (!served_desa_ids.includes(desa_id)) {
+              served_desa_ids.unshift(desa_id);
+            }
+          }
+        }
+
+        const hasError = errors.length > 0;
+        const hasWarning = warnings.length > 0;
+
+        if (hasError) errorCount++;
+        else {
+          successCount++;
+          if (hasWarning) warningCount++;
+          validRowsToUpload.push({
+            name,
+            type,
+            wilayah: matchedKec,
+            desa_id,
+            served_desa_ids,
+            address: address || null,
+            lat,
+            lng,
+            capacity_kg: capacity
+          });
+        }
+
+        const statusBadge = hasError 
+          ? '<span class="md-badge red" style="font-size:10px;padding:2px 6px">Error</span>' 
+          : hasWarning 
+            ? '<span class="md-badge amber" style="font-size:10px;padding:2px 6px">Warning</span>' 
+            : '<span class="md-badge green" style="font-size:10px;padding:2px 6px">Valid</span>';
+
+        const infoText = hasError 
+          ? `<span style="color:#ef4444">${errors.join(', ')}</span>`
+          : hasWarning 
+            ? `<span style="color:#f59e0b">${warnings.join(', ')}</span>`
+            : '<span style="color:#10b981">Siap diunggah</span>';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${statusBadge}</td>
+          <td><strong>${name || '-'}</strong></td>
+          <td><span class="md-badge ${type ? (type === 'tps' ? 'amber' : type === 'tps3r' ? 'green' : type === 'bank_sampah' ? 'blue' : type === 'pengepul' ? 'purple' : 'red') : 'blue'}" style="font-size:10px;padding:2px 4px">${type ? type.toUpperCase() : (rawType || '-')}</span></td>
+          <td>${kecamatan || '-'}</td>
+          <td>${desaName || '-'}</td>
+          <td style="color:var(--text-muted)">${!isNaN(lat) && !isNaN(lng) ? `${lat.toFixed(4)}, ${lng.toFixed(4)}` : '-'}</td>
+          <td>${capacity ? capacity + ' kg' : '-'}</td>
+          <td style="font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${errors.join(', ') || warnings.join(', ')}">${infoText}</td>
+        `;
+        previewTableBody.appendChild(tr);
+      });
+
+      previewSection.style.display = 'block';
+      previewSummary.textContent = `${rows.length} Baris Terdeteksi`;
+
+      if (validRowsToUpload.length > 0) {
+        btnImport.disabled = false;
+        btnImport.textContent = `Impor ${validRowsToUpload.length} Data Valid`;
+        validationAlert.innerHTML = `
+          <div style="background:rgba(16,185,129,0.08); border-left:4px solid #10b981; padding:10px; border-radius:4px; font-size:var(--font-sm)">
+            <strong>Hasil Validasi:</strong> ${validRowsToUpload.length} baris siap diimpor. 
+            ${errorCount > 0 ? `<span style="color:#ef4444; font-weight:600">${errorCount} baris memiliki kesalahan dan akan dilewati.</span>` : ''}
+          </div>
+        `;
+      } else {
+        btnImport.disabled = true;
+        btnImport.textContent = 'Impor Data';
+        validationAlert.innerHTML = `
+          <div style="background:rgba(239,68,68,0.08); border-left:4px solid #ef4444; padding:10px; border-radius:4px; font-size:var(--font-sm); color:#ef4444">
+            <strong>Validasi Gagal:</strong> Tidak ada baris data valid yang ditemukan untuk diimpor. Silakan periksa kembali file Anda.
+          </div>
+        `;
+      }
+    }
+
+    // Cancel Button click handler
+    btnCancel?.addEventListener('click', closeModal);
+
+    // Import click handler
+    btnImport?.addEventListener('click', async () => {
+      if (validRowsToUpload.length === 0) return;
+      btnImport.disabled = true;
+      btnImport.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Mengimpor...';
+      
+      try {
+        await addLocationsBatch(validRowsToUpload);
+        showToast(`${validRowsToUpload.length} lokasi berhasil diimpor!`, 'success');
+        closeModal();
+        loadTabContent('locations');
+      } catch (err) {
+        showToast('Gagal mengimpor data: ' + err.message, 'error');
+        btnImport.disabled = false;
+        btnImport.textContent = `Impor ${validRowsToUpload.length} Data Valid`;
+      }
+    });
+  }
+
   // ---------- FLEET TAB ----------
   async function renderFleetTab(container) {
     const fleet = await getAllFleet();
@@ -453,9 +1033,14 @@ export async function renderMasterData() {
     }));
     container.querySelectorAll('[data-del-fleet]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus kendaraan ini?')) {
-        await deleteFleet(btn.dataset.delFleet);
-        showToast('Kendaraan berhasil dihapus', 'success');
-        loadTabContent('fleet');
+        try {
+          await deleteFleet(btn.dataset.delFleet);
+          showToast('Kendaraan berhasil dihapus', 'success');
+          loadTabContent('fleet');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          console.error('[MasterData] Delete fleet error:', err);
+        }
       }
     }));
   }
@@ -526,12 +1111,39 @@ export async function renderMasterData() {
         </div>
         <button class="btn btn-primary btn-sm" id="addUserBtn">${icons.plus} Tambah Pengguna</button>
       </div>
+
+      <!-- Bulk Action Bar for Users -->
+      <div id="usersBulkActionBar" class="md-bulk-bar">
+        <div style="display:flex; align-items:center; gap:8px; font-size:var(--font-sm); font-weight:600; color:var(--text-primary)">
+          <span style="background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px">!</span>
+          <span id="usersSelectedCount">0</span> pengguna terpilih
+        </div>
+        <div style="display:flex; gap:var(--space-2)">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCancelUsersBulkSelect" style="color:var(--text-muted); padding:6px 12px; font-size:var(--font-xs)">Batal</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnDeleteUsersBulkSelected" style="background:#dc2626; border-color:#dc2626; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:var(--font-xs)">
+            ${icons.trash} Hapus Terpilih
+          </button>
+        </div>
+      </div>
+
       <div class="md-table-container">
         <table class="md-table">
-          <thead><tr><th>Nama</th><th>Username</th><th>Role</th><th>Wilayah</th><th>Aksi</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center"><input type="checkbox" id="selectAllUsers" style="cursor:pointer; transform:scale(1.1)" /></th>
+              <th>Nama</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Wilayah</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
           <tbody>
-            ${users.length === 0 ? '<tr><td colspan="5" class="md-empty">Belum ada data pengguna</td></tr>' :
+            ${users.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data pengguna</td></tr>' :
               users.map(u => `<tr>
+                <td style="text-align:center; vertical-align:middle">
+                  ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
+                </td>
                 <td><strong>${u.name}</strong></td>
                 <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
                 <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
@@ -545,6 +1157,79 @@ export async function renderMasterData() {
         </table>
       </div>
     `;
+
+    // Bulk selection logic for Users
+    let selectedIds = [];
+    const selectAllCb = document.getElementById('selectAllUsers');
+    const rowCheckboxes = container.querySelectorAll('.user-select-checkbox');
+    const bulkBar = document.getElementById('usersBulkActionBar');
+    const selectedCountEl = document.getElementById('usersSelectedCount');
+    const btnCancelBulk = document.getElementById('btnCancelUsersBulkSelect');
+    const btnDeleteBulk = document.getElementById('btnDeleteUsersBulkSelected');
+
+    function updateBulkBar() {
+      if (selectedIds.length > 0) {
+        if (bulkBar) bulkBar.style.display = 'flex';
+        if (selectedCountEl) selectedCountEl.textContent = selectedIds.length;
+      } else {
+        if (bulkBar) bulkBar.style.display = 'none';
+      }
+      if (selectAllCb) {
+        selectAllCb.checked = selectedIds.length === rowCheckboxes.length && rowCheckboxes.length > 0;
+        selectAllCb.indeterminate = selectedIds.length > 0 && selectedIds.length < rowCheckboxes.length;
+      }
+    }
+
+    selectAllCb?.addEventListener('change', () => {
+      const isChecked = selectAllCb.checked;
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) selectedIds.push(cb.dataset.id);
+      });
+      updateBulkBar();
+    });
+
+    rowCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.id;
+        if (cb.checked) {
+          if (!selectedIds.includes(id)) selectedIds.push(id);
+        } else {
+          selectedIds = selectedIds.filter(x => x !== id);
+        }
+        updateBulkBar();
+      });
+    });
+
+    btnCancelBulk?.addEventListener('click', () => {
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => cb.checked = false);
+      if (selectAllCb) selectAllCb.checked = false;
+      updateBulkBar();
+    });
+
+    btnDeleteBulk?.addEventListener('click', async () => {
+      if (selectedIds.length === 0) return;
+      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} pengguna terpilih? Pengguna yang sudah terhapus tidak bisa dikembalikan.`)) {
+        if (btnDeleteBulk) {
+          btnDeleteBulk.disabled = true;
+          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+        }
+        try {
+          await deleteUsersBatch(selectedIds);
+          showToast(`${selectedIds.length} pengguna berhasil dihapus`, 'success');
+          loadTabContent('users');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          if (btnDeleteBulk) {
+            btnDeleteBulk.disabled = false;
+            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+          }
+        }
+      }
+    });
+
     document.getElementById('addUserBtn')?.addEventListener('click', () => openUserForm(null, masterWilayah));
     container.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
       const u = users.find(x => x.id === btn.dataset.editUser);
@@ -552,9 +1237,14 @@ export async function renderMasterData() {
     }));
     container.querySelectorAll('[data-del-user]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus pengguna ini? Pengguna yang sudah terhapus tidak bisa dikembalikan.')) {
-        await deleteUser(btn.dataset.delUser);
-        showToast('Pengguna berhasil dihapus', 'success');
-        loadTabContent('users');
+        try {
+          await deleteUser(btn.dataset.delUser);
+          showToast('Pengguna berhasil dihapus', 'success');
+          loadTabContent('users');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          console.error('[MasterData] Delete user error:', err);
+        }
       }
     }));
   }
@@ -688,8 +1378,14 @@ export async function renderMasterData() {
             <h3 style="display:flex;align-items:center;gap:8px">${icons.chart} Data Kependudukan & Wilayah</h3>
             <span class="md-count">${filtered.length} desa/kelurahan</span>
           </div>
-          <div style="display:flex;gap:var(--space-2);flex:1;min-width:260px;justify-content:flex-end">
-            <input type="text" class="form-input form-input-sm" id="wilSearch" placeholder="Cari desa atau kecamatan..." value="${searchVal}" style="max-width:300px" />
+          <div style="display:flex;gap:var(--space-2);flex:1;min-width:320px;justify-content:flex-end">
+            <input type="text" class="form-input form-input-sm" id="wilSearch" placeholder="Cari desa..." value="${searchVal}" style="max-width:200px; margin-right:auto" />
+            <button class="btn btn-secondary btn-sm" id="downloadPopBtn" style="display:inline-flex;align-items:center;gap:6px" title="Ekspor data wilayah ke Excel">
+              ${icons.download} Unduh Data
+            </button>
+            <button class="btn btn-secondary btn-sm" id="uploadPopBtn" style="display:inline-flex;align-items:center;gap:6px" title="Unggah pembaruan statistik wilayah">
+              ${icons.upload} Upload Excel
+            </button>
           </div>
         </div>
 
@@ -735,7 +1431,6 @@ export async function renderMasterData() {
       const searchInput = document.getElementById('wilSearch');
       if (searchInput) {
         searchInput.focus();
-        // Set cursor to end
         const len = searchInput.value.length;
         searchInput.setSelectionRange(len, len);
         
@@ -744,6 +1439,10 @@ export async function renderMasterData() {
           drawTable();
         });
       }
+
+      // Bind Excel action buttons
+      document.getElementById('downloadPopBtn')?.addEventListener('click', () => downloadPopulationData(villages));
+      document.getElementById('uploadPopBtn')?.addEventListener('click', () => openPopulationExcelUpload(villages));
 
       // Bind edit action
       container.querySelectorAll('[data-edit-wil]').forEach(btn => btn.addEventListener('click', () => {
@@ -754,6 +1453,349 @@ export async function renderMasterData() {
 
     drawTable();
   }
+
+  async function downloadPopulationData(villages = []) {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const headers = [
+        'ID Wilayah (Jangan Diubah)',
+        'Kecamatan',
+        'Desa / Kelurahan',
+        'Jumlah Penduduk (jiwa)',
+        'Jumlah KK',
+        'Luas Wilayah (km²)',
+        'Timbulan per Kapita (kg/hari)'
+      ];
+
+      const refRows = villages.map(v => [
+        v.id,
+        v.kecamatan,
+        v.desa_kelurahan,
+        v.jumlah_penduduk || 0,
+        v.jumlah_kk || 0,
+        v.luas_km2 || 0,
+        v.timbulan_per_kapita || 0.70
+      ]);
+
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...refRows]);
+      XLSX.utils.book_append_sheet(wb, ws, 'Data Kependudukan');
+
+      XLSX.writeFile(wb, 'Data_Kependudukan_Simpah.xlsx');
+      showToast('Data kependudukan berhasil diunduh', 'success');
+    } catch (err) {
+      showToast('Gagal mengunduh data: ' + err.message, 'error');
+    }
+  }
+
+  function openPopulationExcelUpload(villages = []) {
+    const modalEl = document.querySelector('.md-modal');
+    if (modalEl) modalEl.style.maxWidth = '950px';
+
+    openModal('Upload Pembaruan Data Kependudukan', `
+      <div class="excel-upload-wizard">
+        <!-- Step 1: Download Current Data -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--border-color)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; align-items:center; gap:8px">
+            1. Ekspor & Unduh Data Kependudukan Saat Ini
+          </h4>
+          <p style="font-size:var(--font-xs); color:var(--text-secondary); margin-bottom:var(--space-3)">
+            Ekspor data kependudukan seluruh desa saat ini untuk mengedit angka penduduk, KK, luas, atau timbulan per kapita secara langsung di Excel.
+          </p>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadCurrentPop" style="display:inline-flex; align-items:center; gap:6px">
+            ${icons.download} Unduh Data Saat Ini
+          </button>
+        </div>
+
+        <!-- Step 2: Upload File -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2)">
+            2. Unggah File Excel yang Telah Diperbarui
+          </h4>
+          <div id="popExcelDropzone" style="border:2px dashed var(--border-color); border-radius:var(--radius-lg); padding:var(--space-6); text-align:center; background:var(--gray-50); cursor:pointer; transition:all 0.2s">
+            <div style="font-size:32px; margin-bottom:var(--space-2)">📄</div>
+            <p style="font-weight:600; font-size:var(--font-sm); color:var(--text-primary)">
+              Seret & taruh file Excel di sini, atau klik untuk memilih file
+            </p>
+            <p style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">
+               Format yang didukung: .xlsx, .xls
+            </p>
+            <input type="file" id="popExcelFileInput" accept=".xlsx, .xls" style="display:none" />
+          </div>
+        </div>
+
+        <!-- Step 3: Preview & Validasi Perubahan -->
+        <div id="popPreviewSection" style="display:none; margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; justify-content:space-between; align-items:center">
+            <span>3. Preview & Validasi Perubahan</span>
+            <span id="popPreviewSummary" class="md-badge blue" style="font-size:10px; padding:2px 8px">0 Baris Terdeteksi</span>
+          </h4>
+          <div class="md-table-container" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-md)">
+            <table class="md-table" style="font-size:var(--font-xs)">
+              <thead style="position:sticky; top:0; z-index:10; background:var(--gray-50)">
+                <tr>
+                  <th>Status</th>
+                  <th>Kecamatan</th>
+                  <th>Desa / Kelurahan</th>
+                  <th>Penduduk (Jiwa)</th>
+                  <th>Jumlah KK</th>
+                  <th>Luas Wilayah</th>
+                  <th>Timbulan/Kap</th>
+                  <th>Perubahan</th>
+                </tr>
+              </thead>
+              <tbody id="popPreviewTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="popValidationAlert" style="margin-top:var(--space-3)"></div>
+        </div>
+
+        <div class="form-actions" style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:var(--space-3)">
+          <button type="button" class="btn btn-ghost" id="btnCancelPopUpload">Batal</button>
+          <button type="button" class="btn btn-primary" id="btnImportPopExcel" disabled>Simpan Pembaruan</button>
+        </div>
+      </div>
+    `);
+
+    const dropzone = document.getElementById('popExcelDropzone');
+    const fileInput = document.getElementById('popExcelFileInput');
+    const btnDownload = document.getElementById('btnDownloadCurrentPop');
+    const btnCancel = document.getElementById('btnCancelPopUpload');
+    const btnImport = document.getElementById('btnImportPopExcel');
+
+    let rowsToUpdate = [];
+
+    btnDownload?.addEventListener('click', () => downloadPopulationData(villages));
+    dropzone?.addEventListener('click', () => fileInput?.click());
+    dropzone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--primary-color)';
+        dropzone.style.background = 'rgba(16, 185, 129, 0.05)';
+      }
+    });
+    const resetDropzoneStyle = () => {
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = 'var(--gray-50)';
+      }
+    };
+    dropzone?.addEventListener('dragleave', resetDropzoneStyle);
+    dropzone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      resetDropzoneStyle();
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+    fileInput?.addEventListener('change', () => {
+      const files = fileInput.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+
+    btnCancel?.addEventListener('click', () => closeModal());
+
+    btnImport?.addEventListener('click', async () => {
+      if (rowsToUpdate.length === 0) return;
+      btnImport.disabled = true;
+      btnImport.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menyimpan...';
+      try {
+        await updatePopulationBatch(rowsToUpdate);
+        showToast(`Berhasil memperbarui ${rowsToUpdate.length} data kependudukan desa`, 'success');
+        closeModal();
+        loadTabContent('population');
+      } catch (err) {
+        showToast('Gagal menyimpan pembaruan: ' + err.message, 'error');
+        btnImport.disabled = false;
+        btnImport.innerHTML = 'Simpan Pembaruan';
+      }
+    });
+
+    async function handleFileSelect(file) {
+      try {
+        const XLSX = await import('xlsx');
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (rawData.length < 2) {
+            showToast('File Excel kosong atau format tidak sesuai.', 'warning');
+            return;
+          }
+
+          processExcelData(rawData);
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (err) {
+        showToast('Gagal membaca file Excel: ' + err.message, 'error');
+      }
+    }
+
+    function processExcelData(rows) {
+      const headers = rows[0].map(h => String(h).trim());
+      const expectedHeaders = [
+        'ID Wilayah (Jangan Diubah)',
+        'Kecamatan',
+        'Desa / Kelurahan',
+        'Jumlah Penduduk (jiwa)',
+        'Jumlah KK',
+        'Luas Wilayah (km²)',
+        'Timbulan per Kapita (kg/hari)'
+      ];
+
+      const hasRequiredHeaders = expectedHeaders.every(h => headers.includes(h));
+      if (!hasRequiredHeaders) {
+        showToast('Format kolom Excel tidak sesuai. Pastikan Anda mengunggah file yang diekspor dari tombol Step 1.', 'error');
+        return;
+      }
+
+      const idxMap = {};
+      expectedHeaders.forEach(h => {
+        idxMap[h] = headers.indexOf(h);
+      });
+
+      const records = rows.slice(1);
+      const tbody = document.getElementById('popPreviewTableBody');
+      const previewSection = document.getElementById('popPreviewSection');
+      const summaryBadge = document.getElementById('popPreviewSummary');
+      const valAlert = document.getElementById('popValidationAlert');
+
+      if (!tbody || !previewSection) return;
+
+      tbody.innerHTML = '';
+      rowsToUpdate = [];
+      let errorCount = 0;
+      let modifiedCount = 0;
+
+      records.forEach((row, i) => {
+        if (row.length === 0 || row.every(cell => cell === null || cell === undefined || String(cell).trim() === '')) {
+          return;
+        }
+
+        const id = String(row[idxMap['ID Wilayah (Jangan Diubah)']] || '').trim();
+        const kec = String(row[idxMap['Kecamatan']] || '').trim();
+        const desa = String(row[idxMap['Desa / Kelurahan']] || '').trim();
+        const jiwaRaw = row[idxMap['Jumlah Penduduk (jiwa)']];
+        const kkRaw = row[idxMap['Jumlah KK']];
+        const luasRaw = row[idxMap['Luas Wilayah (km²)']];
+        const timbulanRaw = row[idxMap['Timbulan per Kapita (kg/hari)']];
+
+        let status = 'valid';
+        const errors = [];
+        const changes = [];
+
+        const original = villages.find(v => v.id === id);
+        if (!original) {
+          status = 'invalid';
+          errors.push('ID Wilayah tidak dikenal atau telah diubah');
+        }
+
+        const jiwa = parseInt(jiwaRaw);
+        if (isNaN(jiwa) || jiwa < 0) {
+          status = 'invalid';
+          errors.push('Jumlah Penduduk harus berupa angka non-negatif');
+        }
+
+        const kk = parseInt(kkRaw);
+        if (isNaN(kk) || kk < 0) {
+          status = 'invalid';
+          errors.push('Jumlah KK harus berupa angka non-negatif');
+        }
+
+        const luas = parseFloat(luasRaw);
+        if (isNaN(luas) || luas < 0) {
+          status = 'invalid';
+          errors.push('Luas wilayah harus berupa angka non-negatif');
+        }
+
+        const timbulan = parseFloat(timbulanRaw);
+        if (isNaN(timbulan) || timbulan < 0) {
+          status = 'invalid';
+          errors.push('Timbulan per kapita harus berupa angka non-negatif');
+        }
+
+        if (status === 'valid' && original) {
+          if (original.jumlah_penduduk !== jiwa) changes.push(`Penduduk: ${original.jumlah_penduduk || 0} ➔ ${jiwa}`);
+          if (original.jumlah_kk !== kk) changes.push(`KK: ${original.jumlah_kk || 0} ➔ ${kk}`);
+          if (Number(original.luas_km2 || 0).toFixed(2) !== Number(luas).toFixed(2)) changes.push(`Luas: ${original.luas_km2 || 0} ➔ ${luas}`);
+          if (Number(original.timbulan_per_kapita || 0.70).toFixed(2) !== Number(timbulan).toFixed(2)) changes.push(`Timbulan: ${original.timbulan_per_kapita || 0.70} ➔ ${timbulan}`);
+
+          if (changes.length > 0) {
+            modifiedCount++;
+            rowsToUpdate.push({
+              id,
+              jumlah_penduduk: jiwa,
+              jumlah_kk: kk,
+              luas_km2: luas,
+              timbulan_per_kapita: timbulan
+            });
+          }
+        }
+
+        let statusBadge = '';
+        let changeText = '';
+        if (status === 'invalid') {
+          errorCount++;
+          statusBadge = `<span class="md-badge red" title="${errors.join('; ')}">Error</span>`;
+          changeText = `<span style="color:#b91c1c; font-weight:600">${errors.join(', ')}</span>`;
+        } else if (changes.length > 0) {
+          statusBadge = `<span class="md-badge blue">Diperbarui</span>`;
+          changeText = `<span style="color:#2563eb; font-weight:500">${changes.join(' | ')}</span>`;
+        } else {
+          statusBadge = `<span class="md-badge gray">Tidak Berubah</span>`;
+          changeText = `<span style="color:var(--text-muted)">-</span>`;
+        }
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td style="vertical-align:middle; text-align:center">${statusBadge}</td>
+            <td><strong>${kec}</strong></td>
+            <td>${desa}</td>
+            <td style="text-align:right">${isNaN(jiwa) ? '-' : jiwa.toLocaleString('id-ID')}</td>
+            <td style="text-align:right">${isNaN(kk) ? '-' : kk.toLocaleString('id-ID')}</td>
+            <td style="text-align:right">${isNaN(luas) ? '-' : luas}</td>
+            <td style="text-align:right">${isNaN(timbulan) ? '-' : timbulan}</td>
+            <td>${changeText}</td>
+          </tr>
+        `);
+      });
+
+      previewSection.style.display = 'block';
+      if (summaryBadge) {
+        summaryBadge.textContent = `${records.length} Desa Terdeteksi`;
+      }
+
+      if (errorCount > 0) {
+        if (valAlert) {
+          valAlert.className = 'md-badge red';
+          valAlert.style.display = 'block';
+          valAlert.style.width = '100%';
+          valAlert.style.padding = '8px 12px';
+          valAlert.innerHTML = `⚠️ Terdeteksi <strong>${errorCount} baris bermasalah</strong>. Perbaiki file Excel Anda sebelum melakukan pembaruan.`;
+        }
+        if (btnImport) btnImport.disabled = true;
+      } else {
+        if (valAlert) {
+          valAlert.className = 'md-badge green';
+          valAlert.style.display = 'block';
+          valAlert.style.width = '100%';
+          valAlert.style.padding = '8px 12px';
+          valAlert.innerHTML = `✅ Validasi selesai! Terdeteksi <strong>${modifiedCount} desa yang mengalami perubahan data</strong>. Klik <strong>Simpan Pembaruan</strong> untuk memperbarui database.`;
+        }
+        if (btnImport) btnImport.disabled = rowsToUpdate.length === 0;
+      }
+    }
+  }
+
 
   function openWilayahForm(existing) {
     openModal('Edit Data Wilayah & Kependudukan', `
@@ -815,23 +1857,62 @@ export async function renderMasterData() {
 
   // ---------- FASILITAS UMUM TAB ----------
   async function renderFasumTab(container) {
-    const facilities = await getAllPublicFacilities();
+    const [facilities, masterWilayah] = await Promise.all([
+      getAllPublicFacilities(),
+      getAllMasterWilayah()
+    ]);
     container.innerHTML = `
       <div class="md-toolbar">
         <div style="display:flex;align-items:center;gap:var(--space-3)">
           <h3 style="display:flex;align-items:center;gap:8px">${icons.grid} Daftar Fasilitas Umum</h3>
           <span class="md-count">${facilities.length} fasilitas</span>
         </div>
-        <button class="btn btn-primary btn-sm" id="addFasumBtn">${icons.plus} Tambah Fasum</button>
+        <div style="display:flex;gap:var(--space-2)">
+          <button class="btn btn-secondary btn-sm" id="downloadFasumTemplateBtn" style="display:inline-flex;align-items:center;gap:6px" title="Unduh Templat Format Excel">
+            ${icons.download} Download Format
+          </button>
+          <button class="btn btn-secondary btn-sm" id="uploadFasumExcelBtn" style="display:inline-flex;align-items:center;gap:6px">
+            ${icons.upload} Upload Excel
+          </button>
+          <button class="btn btn-primary btn-sm" id="addFasumBtn">${icons.plus} Tambah Fasum</button>
+        </div>
       </div>
+
+      <!-- Bulk Action Bar for Fasum -->
+      <div id="fasumBulkActionBar" class="md-bulk-bar">
+        <div style="display:flex; align-items:center; gap:8px; font-size:var(--font-sm); font-weight:600; color:var(--text-primary)">
+          <span style="background:rgba(239,68,68,0.1); color:#ef4444; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px">!</span>
+          <span id="fasumSelectedCount">0</span> fasilitas terpilih
+        </div>
+        <div style="display:flex; gap:var(--space-2)">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCancelFasumBulkSelect" style="color:var(--text-muted); padding:6px 12px; font-size:var(--font-xs)">Batal</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnDeleteFasumBulkSelected" style="background:#dc2626; border-color:#dc2626; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:var(--font-xs)">
+            ${icons.trash} Hapus Terpilih
+          </button>
+        </div>
+      </div>
+
       <div class="md-table-container">
         <table class="md-table">
-          <thead><tr><th>Nama</th><th>Kategori</th><th>Wilayah</th><th>Kapasitas</th><th>Potensi Sampah</th><th>Aksi</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center"><input type="checkbox" id="selectAllFasum" style="cursor:pointer; transform:scale(1.1)" /></th>
+              <th>Nama</th>
+              <th>Kategori</th>
+              <th>Wilayah</th>
+              <th>Kapasitas</th>
+              <th>Potensi Sampah</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
           <tbody>
-            ${facilities.length === 0 ? '<tr><td colspan="6" class="md-empty">Belum ada data fasilitas umum</td></tr>' :
+            ${facilities.length === 0 ? '<tr><td colspan="7" class="md-empty">Belum ada data fasilitas umum</td></tr>' :
               facilities.map(f => {
                 const potensiHarian = (f.capacity_value * (f.timbulan_per_unit || 0)).toFixed(1);
                 return `<tr>
+                  <td style="text-align:center; vertical-align:middle">
+                    <input type="checkbox" class="fasum-select-checkbox" data-id="${f.id}" style="cursor:pointer; transform:scale(1.1)" />
+                  </td>
                   <td><strong>${f.name}</strong></td>
                   <td><span class="md-badge blue">${f.category}</span></td>
                   <td>${f.kecamatan || '-'}</td>
@@ -847,18 +1928,505 @@ export async function renderMasterData() {
         </table>
       </div>
     `;
+
+    // Bulk selection logic for Fasum
+    let selectedIds = [];
+    const selectAllCb = document.getElementById('selectAllFasum');
+    const rowCheckboxes = container.querySelectorAll('.fasum-select-checkbox');
+    const bulkBar = document.getElementById('fasumBulkActionBar');
+    const selectedCountEl = document.getElementById('fasumSelectedCount');
+    const btnCancelBulk = document.getElementById('btnCancelFasumBulkSelect');
+    const btnDeleteBulk = document.getElementById('btnDeleteFasumBulkSelected');
+
+    function updateBulkBar() {
+      if (selectedIds.length > 0) {
+        if (bulkBar) bulkBar.style.display = 'flex';
+        if (selectedCountEl) selectedCountEl.textContent = selectedIds.length;
+      } else {
+        if (bulkBar) bulkBar.style.display = 'none';
+      }
+      if (selectAllCb) {
+        selectAllCb.checked = selectedIds.length === rowCheckboxes.length && rowCheckboxes.length > 0;
+        selectAllCb.indeterminate = selectedIds.length > 0 && selectedIds.length < rowCheckboxes.length;
+      }
+    }
+
+    selectAllCb?.addEventListener('change', () => {
+      const isChecked = selectAllCb.checked;
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) selectedIds.push(cb.dataset.id);
+      });
+      updateBulkBar();
+    });
+
+    rowCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.id;
+        if (cb.checked) {
+          if (!selectedIds.includes(id)) selectedIds.push(id);
+        } else {
+          selectedIds = selectedIds.filter(x => x !== id);
+        }
+        updateBulkBar();
+      });
+    });
+
+    btnCancelBulk?.addEventListener('click', () => {
+      selectedIds = [];
+      rowCheckboxes.forEach(cb => cb.checked = false);
+      if (selectAllCb) selectAllCb.checked = false;
+      updateBulkBar();
+    });
+
+    btnDeleteBulk?.addEventListener('click', async () => {
+      if (selectedIds.length === 0) return;
+      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} fasilitas umum terpilih?`)) {
+        if (btnDeleteBulk) {
+          btnDeleteBulk.disabled = true;
+          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+        }
+        try {
+          await deletePublicFacilitiesBatch(selectedIds);
+          showToast(`${selectedIds.length} fasilitas umum berhasil dihapus`, 'success');
+          loadTabContent('fasum');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+          if (btnDeleteBulk) {
+            btnDeleteBulk.disabled = false;
+            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+          }
+        }
+      }
+    });
+
     document.getElementById('addFasumBtn')?.addEventListener('click', () => openFasumForm());
+    document.getElementById('downloadFasumTemplateBtn')?.addEventListener('click', () => downloadFasumTemplate(masterWilayah));
+    document.getElementById('uploadFasumExcelBtn')?.addEventListener('click', () => openFasumExcelUpload(masterWilayah, facilities));
     container.querySelectorAll('[data-edit-fasum]').forEach(btn => btn.addEventListener('click', () => {
       const f = facilities.find(x => x.id === btn.dataset.editFasum);
       if (f) openFasumForm(f);
     }));
     container.querySelectorAll('[data-del-fasum]').forEach(btn => btn.addEventListener('click', async () => {
       if (confirm('Yakin ingin menghapus fasilitas umum ini?')) {
-        await deletePublicFacility(btn.dataset.delFasum);
-        showToast('Fasilitas umum berhasil dihapus', 'success');
-        loadTabContent('fasum');
+        try {
+          await deletePublicFacility(btn.dataset.delFasum);
+          showToast('Fasilitas umum berhasil dihapus', 'success');
+          loadTabContent('fasum');
+        } catch (err) {
+          showToast('Gagal menghapus: ' + err.message, 'error');
+        }
       }
     }));
+  }
+
+  async function downloadFasumTemplate(masterWilayah = []) {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      // 1. Template Sheet
+      const headers = [
+        'Nama Fasilitas',
+        'Kategori',
+        'Kecamatan',
+        'Alamat',
+        'Latitude',
+        'Longitude',
+        'Nilai Kapasitas',
+        'Satuan Kapasitas',
+        'Timbulan per Unit (kg/hari)'
+      ];
+
+      const descriptionRow = [
+        'Contoh: SDN 1 Krandegan',
+        'Pilih salah satu: Pasar, Sekolah, Terminal, Perkantoran, Rumah Sakit, Destinasi Wisata, MBG / Dapur Umum, Hotel / Penginapan, Industri, Lainnya',
+        'Contoh: Banjarnegara (Harus sesuai referensi)',
+        'Contoh: Jl. Pemuda No. 12',
+        'Contoh: -7.398500',
+        'Contoh: 109.697000',
+        'Contoh: 500 (Jumlah siswa, bed, dll.)',
+        'Pilih salah satu: Orang, m2, Bed, Kios, Kamar, Porsi, Unit',
+        'Contoh: 0.15 (Isi angka saja)'
+      ];
+
+      const templateData = [
+        headers,
+        descriptionRow
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(templateData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Template');
+
+      // 2. Reference Sheet for Kecamatan
+      const refHeaders = ['Kecamatan Resmi'];
+      const uniqueKecamatans = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+      const refRows = uniqueKecamatans.map(k => [k]);
+      const wsRef = XLSX.utils.aoa_to_sheet([refHeaders, ...refRows]);
+      XLSX.utils.book_append_sheet(wb, wsRef, 'Referensi Kecamatan');
+
+      // 3. Reference Sheet for Categories & Units
+      const catHeaders = ['Kategori Resmi', 'Satuan Kapasitas Resmi'];
+      const cats = ['Pasar', 'Sekolah', 'Terminal', 'Perkantoran', 'Rumah Sakit', 'Destinasi Wisata', 'MBG / Dapur Umum', 'Hotel / Penginapan', 'Industri', 'Lainnya'];
+      const units = ['Orang', 'm2', 'Bed', 'Kios', 'Kamar', 'Porsi', 'Unit'];
+      
+      const maxRows = Math.max(cats.length, units.length);
+      const refCatRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        refCatRows.push([cats[i] || '', units[i] || '']);
+      }
+      const wsCats = XLSX.utils.aoa_to_sheet([catHeaders, ...refCatRows]);
+      XLSX.utils.book_append_sheet(wb, wsCats, 'Referensi Kategori & Satuan');
+
+      XLSX.writeFile(wb, 'Template_Upload_Fasum.xlsx');
+      showToast('Templat Excel Fasum berhasil diunduh', 'success');
+    } catch (err) {
+      showToast('Gagal mengunduh templat: ' + err.message, 'error');
+      console.error('[MasterData] Fasum template creation error:', err);
+    }
+  }
+
+  function openFasumExcelUpload(masterWilayah = [], facilities = []) {
+    const modalEl = document.querySelector('.md-modal');
+    if (modalEl) modalEl.style.maxWidth = '950px';
+
+    openModal('Upload Batch Fasilitas Umum', `
+      <div class="excel-upload-wizard">
+        <!-- Step 1: Download Template -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4); padding-bottom:var(--space-4); border-bottom:1px solid var(--border-color)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; align-items:center; gap:8px">
+            1. Unduh Templat Excel Resmi
+          </h4>
+          <p style="font-size:var(--font-xs); color:var(--text-secondary); margin-bottom:var(--space-3)">
+            Gunakan templat resmi kami untuk memastikan format data Fasum Anda sesuai.
+          </p>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadTemplate" style="display:inline-flex; align-items:center; gap:6px">
+            ${icons.download} Unduh Templat Excel
+          </button>
+        </div>
+
+        <!-- Step 2: Upload File -->
+        <div class="wizard-section" style="margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2)">
+            2. Unggah File Excel Anda
+          </h4>
+          <div id="excelDropzone" style="border:2px dashed var(--border-color); border-radius:var(--radius-lg); padding:var(--space-6); text-align:center; background:var(--gray-50); cursor:pointer; transition:all 0.2s">
+            <div style="font-size:32px; margin-bottom:var(--space-2)">📄</div>
+            <p style="font-weight:600; font-size:var(--font-sm); color:var(--text-primary)">
+              Seret & taruh file Excel di sini, atau klik untuk memilih file
+            </p>
+            <p style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">
+              Format yang didukung: .xlsx, .xls
+            </p>
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display:none" />
+          </div>
+        </div>
+
+        <!-- Step 3: Preview & Validasi -->
+        <div id="previewSection" style="display:none; margin-bottom:var(--space-4)">
+          <h4 style="font-weight:600; font-size:var(--font-sm); margin-bottom:var(--space-2); display:flex; justify-content:space-between; align-items:center">
+            <span>3. Preview & Validasi Data</span>
+            <span id="previewSummary" class="md-badge blue" style="font-size:10px; padding:2px 8px">0 Baris Terdeteksi</span>
+          </h4>
+          <div class="md-table-container" style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-md)">
+            <table class="md-table" style="font-size:var(--font-xs)">
+              <thead style="position:sticky; top:0; z-index:10; background:var(--gray-50)">
+                <tr>
+                  <th>Status</th>
+                  <th>Nama Fasilitas</th>
+                  <th>Kategori</th>
+                  <th>Kecamatan</th>
+                  <th>Alamat</th>
+                  <th>Koordinat</th>
+                  <th>Kapasitas</th>
+                  <th>Satuan</th>
+                  <th>Timbulan/Unit</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="validationAlert" style="margin-top:var(--space-3)"></div>
+        </div>
+
+        <div class="form-actions" style="margin-top:var(--space-4); padding-top:var(--space-4); border-top:1px solid var(--border-color); display:flex; justify-content:flex-end; gap:var(--space-3)">
+          <button type="button" class="btn btn-ghost" id="btnCancelUpload">Batal</button>
+          <button type="button" class="btn btn-primary" id="btnImportExcel" disabled>Impor Data</button>
+        </div>
+      </div>
+    `);
+
+    const dropzone = document.getElementById('excelDropzone');
+    const fileInput = document.getElementById('excelFileInput');
+    const btnDownload = document.getElementById('btnDownloadTemplate');
+    const btnCancel = document.getElementById('btnCancelUpload');
+    const btnImport = document.getElementById('btnImportExcel');
+
+    let validRowsToUpload = [];
+
+    btnDownload?.addEventListener('click', () => downloadFasumTemplate(masterWilayah));
+    dropzone?.addEventListener('click', () => fileInput?.click());
+    dropzone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--primary-color)';
+        dropzone.style.background = 'rgba(16, 185, 129, 0.05)';
+      }
+    });
+    const resetDropzoneStyle = () => {
+      if (dropzone) {
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = 'var(--gray-50)';
+      }
+    };
+    dropzone?.addEventListener('dragleave', resetDropzoneStyle);
+    dropzone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      resetDropzoneStyle();
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+    fileInput?.addEventListener('change', (e) => {
+      const files = fileInput.files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+
+    btnCancel?.addEventListener('click', () => closeModal());
+
+    btnImport?.addEventListener('click', async () => {
+      if (validRowsToUpload.length === 0) return;
+      btnImport.disabled = true;
+      btnImport.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Mengimpor...';
+      try {
+        await addPublicFacilitiesBatch(validRowsToUpload);
+        showToast(`Berhasil mengimpor ${validRowsToUpload.length} fasilitas umum`, 'success');
+        closeModal();
+        loadTabContent('fasum');
+      } catch (err) {
+        showToast('Gagal mengimpor data: ' + err.message, 'error');
+        btnImport.disabled = false;
+        btnImport.innerHTML = 'Impor Data';
+      }
+    });
+
+    async function handleFileSelect(file) {
+      try {
+        const XLSX = await import('xlsx');
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (rawData.length < 2) {
+            showToast('File Excel kosong atau tidak sesuai templat.', 'warning');
+            return;
+          }
+
+          processExcelData(rawData);
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (err) {
+        showToast('Gagal membaca file Excel: ' + err.message, 'error');
+      }
+    }
+
+    function processExcelData(rows) {
+      const headers = rows[0].map(h => String(h).trim());
+      const expectedHeaders = [
+        'Nama Fasilitas',
+        'Kategori',
+        'Kecamatan',
+        'Alamat',
+        'Latitude',
+        'Longitude',
+        'Nilai Kapasitas',
+        'Satuan Kapasitas',
+        'Timbulan per Unit (kg/hari)'
+      ];
+
+      const hasRequiredHeaders = expectedHeaders.every(h => headers.includes(h));
+      if (!hasRequiredHeaders) {
+        showToast('Format kolom Excel tidak sesuai dengan templat resmi.', 'error');
+        return;
+      }
+
+      const idxMap = {};
+      expectedHeaders.forEach(h => {
+        idxMap[h] = headers.indexOf(h);
+      });
+
+      const records = rows.slice(2);
+      const validCategories = ['Pasar', 'Sekolah', 'Terminal', 'Perkantoran', 'Rumah Sakit', 'Destinasi Wisata', 'MBG / Dapur Umum', 'Hotel / Penginapan', 'Industri', 'Lainnya'];
+      const validUnits = ['Orang', 'm2', 'Bed', 'Kios', 'Kamar', 'Porsi', 'Unit'];
+      const validKecamatans = [...new Set(masterWilayah.map(w => w.kecamatan.toLowerCase()))];
+
+      const tbody = document.getElementById('previewTableBody');
+      const previewSection = document.getElementById('previewSection');
+      const summaryBadge = document.getElementById('previewSummary');
+      const valAlert = document.getElementById('validationAlert');
+
+      if (!tbody || !previewSection) return;
+
+      tbody.innerHTML = '';
+      validRowsToUpload = [];
+      let errorCount = 0;
+      let warningCount = 0;
+
+      records.forEach((row, i) => {
+        if (row.length === 0 || row.every(cell => cell === null || cell === undefined || String(cell).trim() === '')) {
+          return;
+        }
+
+        const name = String(row[idxMap['Nama Fasilitas']] || '').trim();
+        const category = String(row[idxMap['Kategori']] || '').trim();
+        const kec = String(row[idxMap['Kecamatan']] || '').trim();
+        const address = String(row[idxMap['Alamat']] || '').trim();
+        const latRaw = row[idxMap['Latitude']];
+        const lngRaw = row[idxMap['Longitude']];
+        const capValRaw = row[idxMap['Nilai Kapasitas']];
+        const capUnit = String(row[idxMap['Satuan Kapasitas']] || 'Unit').trim();
+        const timbulanRaw = row[idxMap['Timbulan per Unit (kg/hari)']];
+
+        let status = 'valid';
+        const errors = [];
+        const warnings = [];
+
+        if (!name) {
+          status = 'invalid';
+          errors.push('Nama Fasilitas wajib diisi');
+        }
+
+        if (!category) {
+          status = 'invalid';
+          errors.push('Kategori wajib diisi');
+        } else if (!validCategories.includes(category)) {
+          status = 'invalid';
+          errors.push(`Kategori harus salah satu dari: ${validCategories.join(', ')}`);
+        }
+
+        if (!kec) {
+          status = 'invalid';
+          errors.push('Kecamatan wajib diisi');
+        } else if (!validKecamatans.includes(kec.toLowerCase())) {
+          status = 'invalid';
+          errors.push(`Kecamatan "${kec}" tidak ditemukan di referensi wilayah Banjarnegara`);
+        }
+
+        const lat = parseFloat(latRaw);
+        const lng = parseFloat(lngRaw);
+        if (latRaw !== undefined && latRaw !== '' && (isNaN(lat) || lat < -90 || lat > 90)) {
+          status = 'invalid';
+          errors.push('Latitude harus berupa angka koordinat valid (-90 s/d 90)');
+        }
+        if (lngRaw !== undefined && lngRaw !== '' && (isNaN(lng) || lng < -180 || lng > 180)) {
+          status = 'invalid';
+          errors.push('Longitude harus berupa angka koordinat valid (-180 s/d 180)');
+        }
+
+        const capVal = parseInt(capValRaw);
+        if (capValRaw !== undefined && capValRaw !== '' && (isNaN(capVal) || capVal < 0)) {
+          status = 'invalid';
+          errors.push('Nilai kapasitas harus berupa angka non-negatif');
+        }
+
+        if (capUnit && !validUnits.includes(capUnit)) {
+          warnings.push(`Satuan kapasitas disesuaikan ke "Unit" karena "${capUnit}" tidak dikenal`);
+        }
+
+        const timbulan = parseFloat(timbulanRaw);
+        if (timbulanRaw !== undefined && timbulanRaw !== '' && (isNaN(timbulan) || timbulan < 0)) {
+          status = 'invalid';
+          errors.push('Timbulan per unit harus berupa angka non-negatif');
+        }
+
+        const isDuplicate = facilities.some(f => f.name.toLowerCase() === name.toLowerCase());
+        if (isDuplicate) {
+          warnings.push(`Fasilitas "${name}" sudah terdaftar sebelumnya (kemungkinan duplikat)`);
+          if (status !== 'invalid') status = 'warning';
+        }
+
+        let statusBadge = '';
+        if (status === 'invalid') {
+          errorCount++;
+          statusBadge = `<span class="md-badge red" title="${errors.join('; ')}">Error</span>`;
+        } else if (status === 'warning') {
+          warningCount++;
+          statusBadge = `<span class="md-badge amber" title="${warnings.join('; ')}">Warning</span>`;
+          validRowsToUpload.push({
+            name,
+            category,
+            kecamatan: kec,
+            address: address || null,
+            latitude: isNaN(lat) ? null : lat,
+            longitude: isNaN(lng) ? null : lng,
+            capacity_value: isNaN(capVal) ? 0 : capVal,
+            capacity_unit: validUnits.includes(capUnit) ? capUnit : 'Unit',
+            timbulan_per_unit: isNaN(timbulan) ? 0.15 : timbulan
+          });
+        } else {
+          statusBadge = `<span class="md-badge green">Valid</span>`;
+          validRowsToUpload.push({
+            name,
+            category,
+            kecamatan: kec,
+            address: address || null,
+            latitude: isNaN(lat) ? null : lat,
+            longitude: isNaN(lng) ? null : lng,
+            capacity_value: isNaN(capVal) ? 0 : capVal,
+            capacity_unit: validUnits.includes(capUnit) ? capUnit : 'Unit',
+            timbulan_per_unit: isNaN(timbulan) ? 0.15 : timbulan
+          });
+        }
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td style="vertical-align:middle; text-align:center">${statusBadge}</td>
+            <td><strong>${name}</strong></td>
+            <td>${category}</td>
+            <td>${kec}</td>
+            <td>${address || '-'}</td>
+            <td>${isNaN(lat) || isNaN(lng) ? '-' : `${lat.toFixed(4)}, ${lng.toFixed(4)}`}</td>
+            <td>${isNaN(capVal) ? '-' : capVal}</td>
+            <td>${capUnit}</td>
+            <td>${isNaN(timbulan) ? '-' : `${timbulan} kg`}</td>
+          </tr>
+        `);
+      });
+
+      previewSection.style.display = 'block';
+      if (summaryBadge) {
+        summaryBadge.textContent = `${validRowsToUpload.length + errorCount} Baris Terdeteksi`;
+      }
+
+      if (errorCount > 0) {
+        if (valAlert) {
+          valAlert.className = 'md-badge red';
+          valAlert.style.display = 'block';
+          valAlert.style.width = '100%';
+          valAlert.style.padding = '8px 12px';
+          valAlert.innerHTML = `⚠️ Terdeteksi <strong>${errorCount} baris bermasalah</strong>. Perbaiki file Excel Anda sebelum melakukan impor.`;
+        }
+        if (btnImport) btnImport.disabled = true;
+      } else {
+        if (valAlert) {
+          valAlert.className = 'md-badge green';
+          valAlert.style.display = 'block';
+          valAlert.style.width = '100%';
+          valAlert.style.padding = '8px 12px';
+          valAlert.innerHTML = `✅ Seluruh data valid! Silakan klik <strong>Impor Data</strong> untuk menyimpan <strong>${validRowsToUpload.length} fasilitas umum</strong>.`;
+        }
+        if (btnImport) btnImport.disabled = validRowsToUpload.length === 0;
+      }
+    }
   }
 
   function openFasumForm(existing = null) {

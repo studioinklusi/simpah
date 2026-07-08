@@ -1,0 +1,11 @@
+Nama Lokasi,Tipe,Kecamatan,Desa Lokasi Fisik,Alamat,Latitude,Longitude,Kapasitas (kg),Desa yang Dilayani (Opsional - Pisahkan Koma)
+TPS Krandegan Utama,TPS,Banjarnegara,Krandegan,Jl. Pemuda No. 12, Krandegan,-7.398500,109.697000,1500,Krandegan
+TPS3R Semampir Asri,TPS3R,Banjarnegara,Semampir,Jl. Semampir Indah No. 5,-7.405000,109.689000,3000,"Semampir, Krandegan"
+Bank Sampah Klampok Bersih,Bank Sampah,Purwareja Klampok,Klampok,Jl. Raya Klampok No. 88,-7.421000,109.615000,1000,Klampok
+Pengepul Mandiraja Sejahtera,Pengepul,Mandiraja,Mandiraja Wetan,Jl. Gatot Subroto No. 24,-7.452000,109.623000,5000,"Mandiraja Wetan, Mandiraja Kulon"
+TPS3R Purwareja Madani,TPS3R,Purwareja Klampok,Purwareja,Jl. Purwareja Baru No. 10,-7.418000,109.629000,2000,Purwareja
+TPS Parakancanggah Jaya,TPS,Banjarnegara,Parakancanggah,Jl. Selamanik Gg. IV,-7.391200,109.692000,1200,Parakancanggah
+Bank Sampah Mandiraja Kulon,Bank Sampah,Mandiraja,Mandiraja Kulon,Jl. Kemerdekaan No. 50,-7.458000,109.619000,800,Mandiraja Kulon
+TPS Pagentan Lestari,TPS,Pagentan,Pagentan,Desa Pagentan RT 02/RW 01,-7.320000,109.730000,1000,Pagentan
+TPS3R Wanayasa Hijau,TPS3R,Wanayasa,Wanayasa,Jl. Raya Wanayasa No. 15,-7.225000,109.755000,2500,Wanayasa
+TPA Rakit Agung,TPA,Rakit,Rakit,"Area TPA Rakit, Desa Rakit",-7.375000,109.580000,60000,Rakit

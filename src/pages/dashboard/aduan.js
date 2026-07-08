@@ -6,7 +6,7 @@ import { hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import { renderPWALayout } from '../pwa/layout.js';
-import { escapeHTML } from '../../utils/sanitize.js';
+import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: icons.download },
@@ -309,6 +309,13 @@ export async function renderAduanManagement() {
       ${c.is_anonymous ? '<div class="am-detail-row"><span class="am-detail-label">Mode</span><span class="am-detail-value"><span class="am-badge" style="background:rgba(107,114,128,0.1);color:#6b7280">🔒 Anonim</span></span></div>' : ''}
 
       <div class="am-desc-box"><strong>Deskripsi:</strong><br/>${escapeHTML(c.description)}</div>
+
+      ${c.photo_url 
+        ? `<div style="margin:var(--space-4) 0;text-align:center">
+            <img src="${escapeHTML(sanitizeURL(c.photo_url))}" style="max-width:100%;max-height:240px;border-radius:var(--radius-lg);cursor:pointer;border:1px solid var(--border-color)" onclick="window.open('${escapeHTML(sanitizeURL(c.photo_url))}','_blank')" title="Klik untuk memperbesar" />
+           </div>`
+        : ''
+      }
 
       ${c.response ? `<div class="am-desc-box" style="border-left:3px solid var(--primary-500)"><strong><span style="display:inline-flex;align-items:center;gap:4px;vertical-align:-4px">${icons.messageCircle}</span> Tanggapan Dinas:</strong><br/>${escapeHTML(c.response)}</div>` : ''}
 

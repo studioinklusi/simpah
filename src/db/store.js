@@ -171,9 +171,10 @@ export async function getAllLocations() {
     try {
       const { data, error } = await supabase.from('locations').select('*');
       if (!error && data) {
-        // Cache to IDB
+        // Cache to IDB — clear first to remove stale/deleted entries
         const db = await getDB();
         const tx = db.transaction('locations', 'readwrite');
+        await tx.store.clear();
         data.forEach(item => tx.store.put(item));
         await tx.done;
         return data;
@@ -203,6 +204,30 @@ export async function addLocation(location) {
   return data;
 }
 
+export async function addLocationsBatch(locations) {
+  if (!navigator.onLine) throw new Error('Penambahan lokasi secara batch harus dalam keadaan online');
+  if (!Array.isArray(locations) || locations.length === 0) return [];
+  
+  const preparedLocations = locations.map(loc => ({
+    ...loc,
+    id: loc.id || crypto.randomUUID(),
+    created_at: new Date().toISOString()
+  }));
+  
+  const { data, error } = await supabase.from('locations').insert(preparedLocations).select();
+  if (error) throw new Error(error.message);
+  
+  const db = await getDB();
+  const tx = db.transaction('locations', 'readwrite');
+  for (const item of data) {
+    await tx.store.put(item);
+  }
+  await tx.done;
+  
+  return data;
+}
+
+
 export async function updateLocation(id, updates) {
   if (!navigator.onLine) throw new Error('Perubahan lokasi harus dalam keadaan online');
   
@@ -210,6 +235,7 @@ export async function updateLocation(id, updates) {
   
   const { data, error } = await supabase.from('locations').update(updatedData).eq('id', id).select().single();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error('Gagal memperbarui lokasi: data tidak ditemukan di server');
   
   await put('locations', data);
   return data;
@@ -218,11 +244,47 @@ export async function updateLocation(id, updates) {
 export async function deleteLocation(id) {
   if (!navigator.onLine) throw new Error('Penghapusan lokasi harus dalam keadaan online');
   
+  // Verify item exists first
+  const { data: existing } = await supabase.from('locations').select('id').eq('id', id).single();
+  if (!existing) {
+    // Not in Supabase (might be local-only seed data), just remove from IDB
+    await deleteById('locations', id);
+    return;
+  }
+  
   const { error } = await supabase.from('locations').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Gagal menghapus dari server: ' + error.message);
+  
+  // Verify deletion actually happened (RLS might silently block)
+  const { data: checkAfter } = await supabase.from('locations').select('id').eq('id', id).single();
+  if (checkAfter) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda login sebagai Admin.');
+  }
   
   await deleteById('locations', id);
 }
+
+export async function deleteLocationsBatch(ids) {
+  if (!navigator.onLine) throw new Error('Penghapusan lokasi secara batch harus dalam keadaan online');
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  
+  const { error } = await supabase.from('locations').delete().in('id', ids);
+  if (error) throw new Error('Gagal menghapus lokasi dari server: ' + error.message);
+  
+  // Verify deletion actually happened (RLS check)
+  const { data: stillPresent, error: checkError } = await supabase.from('locations').select('id').in('id', ids);
+  if (!checkError && stillPresent && stillPresent.length > 0) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS) untuk beberapa lokasi. Pastikan Anda login sebagai Admin.');
+  }
+  
+  const db = await getDB();
+  const tx = db.transaction('locations', 'readwrite');
+  for (const id of ids) {
+    await tx.store.delete(id);
+  }
+  await tx.done;
+}
+
 
 const FALLBACK_WILAYAH = [
   { id: 'wil-001', kecamatan: 'Banjarnegara', desa_kelurahan: 'Krandegan', jumlah_penduduk: 7200, jumlah_kk: 1850, luas_km2: 2.5 },
@@ -322,8 +384,10 @@ export async function getAllFleet() {
     try {
       const { data, error } = await supabase.from('fleet').select('*');
       if (!error && data) {
+        // Cache to IDB — clear first to remove stale/deleted entries
         const db = await getDB();
         const tx = db.transaction('fleet', 'readwrite');
+        await tx.store.clear();
         data.forEach(item => tx.store.put(item));
         await tx.done;
         return data;
@@ -364,8 +428,21 @@ export async function updateFleet(id, updates) {
 export async function deleteFleet(id) {
   if (!navigator.onLine) throw new Error('Penghapusan armada harus dalam keadaan online');
   
+  // Verify item exists first
+  const { data: existing } = await supabase.from('fleet').select('id').eq('id', id).single();
+  if (!existing) {
+    await deleteById('fleet', id);
+    return;
+  }
+  
   const { error } = await supabase.from('fleet').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Gagal menghapus dari server: ' + error.message);
+  
+  // Verify deletion actually happened
+  const { data: checkAfter } = await supabase.from('fleet').select('id').eq('id', id).single();
+  if (checkAfter) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda login sebagai Admin.');
+  }
   
   await deleteById('fleet', id);
 }
@@ -594,8 +671,10 @@ export async function getAllUsers() {
     try {
       const { data, error } = await supabase.from('profiles').select('*');
       if (!error && data) {
+        // Cache to IDB — clear first to remove stale/deleted entries
         const db = await getDB();
         const tx = db.transaction('users', 'readwrite');
+        await tx.store.clear();
         for (const item of data) {
           await tx.store.put(item);
         }
@@ -622,11 +701,38 @@ export async function updateUser(id, updates) {
   const user = await getById('users', id);
   if (!user) throw new Error('Pengguna tidak ditemukan');
   const updated = { ...user, ...updates, updated_at: new Date().toISOString() };
+  
+  // Sync to Supabase if online
+  if (navigator.onLine) {
+    try {
+      const supabaseUpdates = { ...updates, updated_at: updated.updated_at };
+      // Don't send password as plaintext to profiles table
+      delete supabaseUpdates.password;
+      const { error } = await supabase.from('profiles').update(supabaseUpdates).eq('id', id);
+      if (error) console.warn('[updateUser] Gagal update ke Supabase:', error.message);
+    } catch (e) {
+      console.warn('[updateUser] Gagal sync ke Supabase:', e);
+    }
+  }
+  
   await put('users', updated);
   return updated;
 }
 
 export async function deleteUser(id) {
+  // Sync to Supabase if online
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabase.from('profiles').delete().eq('id', id).select();
+      if (error) console.warn('[deleteUser] Gagal hapus dari Supabase:', error.message);
+      if (!data || data.length === 0) {
+        console.warn(`[deleteUser] Supabase delete returned 0 rows for id=${id}, mungkin RLS memblokir.`);
+      }
+    } catch (e) {
+      console.warn('[deleteUser] Gagal sync ke Supabase:', e);
+    }
+  }
+  
   await deleteById('users', id);
 }
 
@@ -862,6 +968,82 @@ export async function validateInvitationCode(code) {
   });
   if (error) throw error;
   return data && data[0] ? data[0] : null;
+}
+
+// ========== Batch Operations ==========
+
+export async function deletePublicFacilitiesBatch(ids) {
+  if (!navigator.onLine) throw new Error('Penghapusan fasilitas umum secara batch harus dalam keadaan online');
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  
+  const { error } = await supabase.from('public_facilities').delete().in('id', ids);
+  if (error) throw new Error('Gagal menghapus fasilitas umum: ' + error.message);
+}
+
+export async function addPublicFacilitiesBatch(facilities) {
+  if (!navigator.onLine) throw new Error('Pengunggahan fasilitas umum secara batch harus dalam keadaan online');
+  if (!Array.isArray(facilities) || facilities.length === 0) return;
+  
+  const preparedFacilities = facilities.map(f => ({
+    ...f,
+    id: f.id || crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
+  
+  const { data, error } = await supabase.from('public_facilities').insert(preparedFacilities).select();
+  if (error) throw new Error('Gagal mengimpor fasilitas umum ke database: ' + error.message);
+  
+  return data;
+}
+
+export async function deleteUsersBatch(ids) {
+  if (!navigator.onLine) throw new Error('Penghapusan pengguna secara batch harus dalam keadaan online');
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  
+  // Protect admin accounts from deletion just in case
+  const { data: adminCheck } = await supabase.from('profiles').select('role').in('id', ids).eq('role', 'admin');
+  if (adminCheck && adminCheck.length > 0) {
+    throw new Error('Tidak diizinkan menghapus akun Administrator secara batch.');
+  }
+
+  const { error } = await supabase.from('profiles').delete().in('id', ids);
+  if (error) throw new Error('Gagal menghapus pengguna dari server: ' + error.message);
+  
+  // Verify deletion actually happened (RLS check)
+  const { data: stillPresent, error: checkError } = await supabase.from('profiles').select('id').in('id', ids);
+  if (!checkError && stillPresent && stillPresent.length > 0) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS) untuk beberapa pengguna.');
+  }
+  
+  const db = await getDB();
+  const tx = db.transaction('users', 'readwrite');
+  for (const id of ids) {
+    await tx.store.delete(id);
+  }
+  await tx.done;
+}
+
+export async function updatePopulationBatch(records) {
+  if (!navigator.onLine) throw new Error('Pembaruan data kependudukan harus dalam keadaan online');
+  if (!Array.isArray(records) || records.length === 0) return;
+  
+  const preparedRecords = records.map(r => ({
+    ...r,
+    updated_at: new Date().toISOString()
+  }));
+  
+  const { data, error } = await supabase.from('master_wilayah').upsert(preparedRecords).select();
+  if (error) throw new Error('Gagal memperbarui data wilayah di server: ' + error.message);
+  
+  const db = await getDB();
+  const tx = db.transaction('master_wilayah', 'readwrite');
+  for (const item of data) {
+    await tx.store.put(item);
+  }
+  await tx.done;
+  
+  return data;
 }
 
 // ========== Helpers ==========

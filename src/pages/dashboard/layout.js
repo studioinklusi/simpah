@@ -71,9 +71,6 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             </a>
             <a href="#/dashboard/masterdata" class="sidebar-link ${isActiveRoute('/dashboard/masterdata') ? 'active' : ''}">
               ${icons.settings} <span>Master Data</span>
-            </a>
-            <a href="#/dashboard/audit" class="sidebar-link ${isActiveRoute('/dashboard/audit') ? 'active' : ''}">
-              ${icons.activity} <span>Audit Log</span>
             </a>` : ''}
           </div>
           ` : ''}

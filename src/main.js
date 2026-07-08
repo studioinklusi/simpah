@@ -37,7 +37,7 @@ import { renderIntervensiFasum } from './pages/dashboard/intervensi-fasum.js';
 import { renderMasterData } from './pages/dashboard/masterdata.js';
 import { renderValidasi } from './pages/dashboard/validasi.js';
 import { renderAduanManagement } from './pages/dashboard/aduan.js';
-import { renderAuditLog } from './pages/dashboard/audit.js';
+
 
 async function bootstrap() {
   try {
@@ -79,7 +79,7 @@ async function bootstrap() {
     registerRoute('/dashboard/intervensi-fasum', () => renderIntervensiFasum(), ['admin']);
     registerRoute('/dashboard/masterdata', () => renderMasterData(), ['admin']);
     registerRoute('/dashboard/aduan', () => renderAduanManagement(), ['warga', 'petugas', 'eksekutif', 'admin']);
-    registerRoute('/dashboard/audit', () => renderAuditLog(), ['admin']);
+
 
 
 
