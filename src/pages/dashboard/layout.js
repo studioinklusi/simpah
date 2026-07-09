@@ -118,10 +118,6 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           </div>
           <div class="navbar-right">
             <button class="navbar-icon-btn" id="dashThemeBtn">${getState('theme') === 'dark' ? icons.sun : icons.moon}</button>
-            <button class="navbar-icon-btn" style="position:relative">
-              ${icons.bell}
-              <span class="notif-dot"></span>
-            </button>
             <button class="navbar-icon-btn" id="dashLogoutBtn">${icons.logout}</button>
           </div>
         </nav>
