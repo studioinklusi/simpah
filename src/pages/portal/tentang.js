@@ -69,7 +69,7 @@ export function renderPortalTentang() {
             <div class="grid-2" style="gap:var(--space-10); align-items:center">
               <div>
                 <div style="border-radius:var(--radius-2xl); overflow:hidden; box-shadow:var(--shadow-lg); border:4px solid var(--bg-secondary)">
-                  <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=800" alt="Lingkungan Hijau" style="width:100%; display:block; object-fit:cover; height:350px" />
+                  <img src="/about_background_env.png" alt="Lingkungan Hijau" style="width:100%; display:block; object-fit:cover; height:350px" />
                 </div>
               </div>
               <div>
