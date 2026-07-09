@@ -131,19 +131,19 @@ export async function renderDashboardEdukasi() {
         <div class="card" style="margin-bottom:var(--space-6); padding:var(--space-4)">
           <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:center">
             <div class="form-group" style="flex:1; min-width:260px; margin-bottom:0">
-              <div style="position:relative">
-                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted)">${icons.search}</span>
-                <input type="text" id="artSearch" class="form-control" placeholder="Cari judul atau ringkasan..." value="${searchQuery}" style="padding-left:36px; border-radius:8px" />
+              <div style="position:relative; display:flex; align-items:center">
+                <span style="position:absolute; left:14px; color:var(--text-muted); display:flex; align-items:center">${icons.search}</span>
+                <input type="text" id="artSearch" class="form-input" placeholder="Cari judul atau ringkasan..." value="${searchQuery}" style="padding-left:42px" />
               </div>
             </div>
-            <div class="form-group" style="width:160px; margin-bottom:0">
-              <select id="artFilterCategory" class="form-control" style="border-radius:8px">
+            <div class="form-group" style="width:180px; margin-bottom:0">
+              <select id="artFilterCategory" class="form-select">
                 <option value="">Semua Kategori</option>
                 ${categories.map(c => `<option value="${c}" ${filterCategory === c ? 'selected' : ''}>${c}</option>`).join('')}
               </select>
             </div>
             <div class="form-group" style="width:160px; margin-bottom:0">
-              <select id="artFilterStatus" class="form-control" style="border-radius:8px">
+              <select id="artFilterStatus" class="form-select">
                 <option value="">Semua Status</option>
                 <option value="published" ${filterStatus === 'published' ? 'selected' : ''}>Diterbitkan</option>
                 <option value="draft" ${filterStatus === 'draft' ? 'selected' : ''}>Draft</option>
@@ -225,13 +225,13 @@ export async function renderDashboardEdukasi() {
               
               <div class="form-group">
                 <label class="form-label">Judul Artikel <span style="color:var(--danger-500)">*</span></label>
-                <input type="text" id="artTitle" class="form-control" placeholder="Masukkan judul menarik..." required />
+                <input type="text" id="artTitle" class="form-input" placeholder="Masukkan judul menarik..." required />
               </div>
 
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4)">
                 <div class="form-group">
                   <label class="form-label">Kategori <span style="color:var(--danger-500)">*</span></label>
-                  <select id="artCategory" class="form-control" required>
+                  <select id="artCategory" class="form-select" required>
                     ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
                   </select>
                 </div>
@@ -261,7 +261,7 @@ export async function renderDashboardEdukasi() {
 
               <div class="form-group">
                 <label class="form-label">Ringkasan Singkat (Excerpt) <span style="color:var(--danger-500)">*</span></label>
-                <textarea id="artExcerpt" class="form-control" rows="2" placeholder="Tulis deskripsi singkat 1-2 kalimat..." required style="resize:vertical"></textarea>
+                <textarea id="artExcerpt" class="form-textarea" rows="2" placeholder="Tulis deskripsi singkat 1-2 kalimat..." required></textarea>
               </div>
 
               <div class="form-group">
@@ -277,7 +277,7 @@ export async function renderDashboardEdukasi() {
                     <button type="button" class="btn btn-sm btn-ghost" data-editor-cmd="ol" title="Ordered List" style="padding:2px 6px">1. List</button>
                   </div>
                 </div>
-                <textarea id="artContent" class="form-control" rows="8" placeholder="Tulis isi lengkap artikel menggunakan HTML atau ketik teks biasa..." required style="font-family:monospace; resize:vertical"></textarea>
+                <textarea id="artContent" class="form-textarea" rows="8" placeholder="Tulis isi lengkap artikel menggunakan HTML atau ketik teks biasa..." required style="font-family:monospace"></textarea>
               </div>
 
               <div class="form-actions">
