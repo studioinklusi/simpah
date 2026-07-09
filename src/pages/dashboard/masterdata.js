@@ -1133,6 +1133,7 @@ export async function renderMasterData() {
               <th style="width:40px; text-align:center"><input type="checkbox" id="selectAllUsers" style="cursor:pointer; transform:scale(1.1)" /></th>
               <th>Nama</th>
               <th>Username</th>
+              <th>Email</th>
               <th>Role</th>
               <th>Wilayah</th>
               <th>Status</th>
@@ -1140,13 +1141,14 @@ export async function renderMasterData() {
             </tr>
           </thead>
           <tbody>
-            ${users.length === 0 ? '<tr><td colspan="7" class="md-empty">Belum ada data pengguna</td></tr>' :
+            ${users.length === 0 ? '<tr><td colspan="8" class="md-empty">Belum ada data pengguna</td></tr>' :
               users.map(u => `<tr>
                 <td style="text-align:center; vertical-align:middle">
                   ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
                 </td>
                 <td><strong>${u.full_name || u.name || ''}</strong></td>
                 <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
+                <td><span style="font-size:var(--font-sm);color:var(--text-secondary)">${u.email || (u.username.includes('@') ? u.username : `${u.username}@simpah.dev`)}</span></td>
                 <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
                 <td>${u.wilayah || '-'}</td>
                 <td>
