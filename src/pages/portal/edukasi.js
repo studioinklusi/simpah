@@ -3,6 +3,7 @@ import { icons } from '../../components/icons.js';
 import { renderPortalNav, renderPortalFooter, initPortalNav } from './beranda.js';
 import { supabase } from '../../lib/supabase.js';
 import { formatDate } from '../../utils/helpers.js';
+import { showToast } from '../../components/toast.js';
 
 // Static fallback articles
 const FALLBACK_ARTICLES = [
@@ -247,6 +248,11 @@ export async function renderEdukasi() {
     articles = FALLBACK_ARTICLES;
   }
 
+  // Parse active article from URL hash
+  const currentHash = window.location.hash.slice(1) || '/portal/edukasi';
+  const hashParts = currentHash.split('/');
+  const activeArticleId = hashParts.length > 3 ? hashParts[3] : null;
+
   // Render grids
   const grid = document.getElementById('edukasiArticlesGrid');
   const gridSection = document.getElementById('edukasiGridViewSection');
@@ -282,18 +288,29 @@ export async function renderEdukasi() {
 
       card.addEventListener('click', () => {
         const id = card.dataset.articleId;
-        const art = articles.find(x => x.id === id);
-        if (art) switchToReadingMode(art);
+        window.location.hash = `#/portal/edukasi/${id}`;
       });
     });
+  }
+
+  // Rerender state dynamically based on active ID
+  if (activeArticleId) {
+    const activeArt = articles.find(x => x.id === activeArticleId);
+    if (activeArt) {
+      switchToReadingMode(activeArt);
+    } else {
+      showToast('Artikel tidak ditemukan atau telah dihapus.', 'warning');
+      window.location.hash = '#/portal/edukasi';
+    }
+  } else {
+    if (readingSection) readingSection.style.display = 'none';
+    if (gridSection) gridSection.style.display = '';
   }
 
   // Back button functionality
   const backBtn = document.getElementById('backToGridBtn');
   backBtn?.addEventListener('click', () => {
-    if (readingSection) readingSection.style.display = 'none';
-    if (gridSection) gridSection.style.display = '';
-    gridSection?.scrollIntoView({ behavior: 'smooth' });
+    window.location.hash = '#/portal/edukasi';
   });
 
   // Switch display mode helper
@@ -336,10 +353,7 @@ export async function renderEdukasi() {
         relatedList.querySelectorAll('.related-art-item').forEach(item => {
           item.addEventListener('click', () => {
             const relId = item.dataset.relId;
-            const targetArt = articles.find(x => x.id === relId);
-            if (targetArt) {
-              switchToReadingMode(targetArt);
-            }
+            window.location.hash = `#/portal/edukasi/${relId}`;
           });
         });
       }
