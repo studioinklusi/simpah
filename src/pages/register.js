@@ -138,15 +138,18 @@ export async function renderRegister() {
             <div class="form-group" style="margin-bottom: var(--space-4);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-1)">
                 <label class="form-label" style="margin-bottom:0">Kode Undangan (Opsional)</label>
-                <span style="font-size:var(--font-xs); color:var(--text-muted)">Khusus Petugas & Eksekutif</span>
+                <span style="font-size:var(--font-xs); color:var(--text-muted)">Kosongkan jika mendaftar sebagai Warga</span>
               </div>
               <div class="input-with-icon">
                 <span class="input-icon-left">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
                 <input type="text" id="regInvitationCode" class="form-input form-input-lg has-icon-left" 
-                  placeholder="Masukkan kode (jika ada)" 
+                  placeholder="Masukkan kode petugas / eksekutif" 
                   autocomplete="off" style="text-transform: uppercase;" />
+              </div>
+              <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:var(--space-1); display:flex; align-items:center; gap:4px">
+                <span>💡 Jika dikosongkan, Anda akan otomatis terdaftar sebagai Warga.</span>
               </div>
               <div id="invitationFeedback" style="display:none; font-size:var(--font-xs); margin-top:var(--space-1); align-items:center; gap:4px">
               </div>
