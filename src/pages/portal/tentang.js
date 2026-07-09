@@ -42,7 +42,7 @@ export function renderPortalTentang() {
             <!-- Teaser Dashboard -->
             <div style="position: relative; width: 100%; max-width: 960px; margin: 0 auto;">
               <div style="border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-card); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);">
-                <img style="width: 100%; height: auto; display: block; object-fit: cover;" alt="GIS Waste Management Dashboard" src="/dashboard_teaser.png" />
+                <img style="width: 100%; height: auto; display: block; object-fit: cover;" alt="GIS Waste Management Dashboard" src="/dashboard_live.png" />
               </div>
               
               <!-- Floating Card 1 -->
@@ -253,7 +253,7 @@ export function renderPortalTentang() {
               <!-- Right -->
               <div style="position: relative;">
                 <div style="padding: 16px; background: var(--bg-secondary); border-radius: 32px; border: 1px solid var(--border-color); box-shadow: var(--shadow-xl); overflow: hidden;">
-                  <img style="width: 100%; border-radius: 20px; display: block;" alt="SIMPAH Analytics Platform Map" src="/dashboard_teaser.png" />
+                  <img style="width: 100%; border-radius: 20px; display: block;" alt="SIMPAH Analytics Platform Map" src="/dashboard_live.png" />
                 </div>
               </div>
             </div>
