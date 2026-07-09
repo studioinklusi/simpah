@@ -1,6 +1,6 @@
 // SIMPAH - Insidental (Incidental Events)
 import { icons } from '../../components/icons.js';
-import { INCIDENTAL_TYPES } from '../../utils/sipsn.js';
+import { INCIDENTAL_TYPES, SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { getCurrentUser, formatDateTime } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
 import { addEvent, getAllEvents, getAllMasterWilayah } from '../../db/store.js';
@@ -86,6 +86,21 @@ export async function renderInsidental() {
             <label class="form-label">Deskripsi</label>
             <textarea id="eventDesc" class="form-textarea" rows="3" placeholder="Deskripsi kegiatan..."></textarea>
           </div>
+          
+          <!-- Waste properties (optional for volume chart calculations) -->
+          <div class="form-group">
+            <label class="form-label">Estimasi Sampah Terkumpul (kg) <span style="font-weight:normal;color:var(--text-muted)">(Opsional)</span></label>
+            <input type="number" id="eventWeight" class="form-input" placeholder="Contoh: 25" min="0" step="any" inputmode="decimal" />
+          </div>
+          
+          <div class="form-group" id="categoryGroup" style="display:none">
+            <label class="form-label">Kategori Sampah SIPSN</label>
+            <select id="eventCategorySipsn" class="form-select">
+              <option value="">-- Pilih Kategori --</option>
+              ${SIPSN_CATEGORIES.map(c => `<option value="${c.code}">${c.name}</option>`).join('')}
+            </select>
+          </div>
+
           ${photoPickerHTML('insidental', false, 3)}
           <button type="submit" class="btn btn-primary btn-lg btn-block">${icons.plus} Simpan Kegiatan</button>
         </form>
@@ -115,6 +130,7 @@ export async function renderInsidental() {
                     : ''
                   }
                   <div>${e.participants || '-'}<small> org</small></div>
+                  ${e.weight_kg ? `<div style="font-size:11px;font-weight:600;color:var(--warning-600);margin-top:2px">${e.weight_kg} kg</div>` : ''}
                 </div>
               </div>
             `;
@@ -174,6 +190,23 @@ export async function renderInsidental() {
     });
   }
 
+  // Toggle SIPSN Category dropdown based on weight input
+  const weightInput = document.getElementById('eventWeight');
+  const catGroup = document.getElementById('categoryGroup');
+  const catSelect = document.getElementById('eventCategorySipsn');
+
+  weightInput?.addEventListener('input', () => {
+    const val = parseFloat(weightInput.value) || 0;
+    if (val > 0) {
+      catGroup.style.display = 'block';
+      catSelect.setAttribute('required', 'required');
+    } else {
+      catGroup.style.display = 'none';
+      catSelect.removeAttribute('required');
+      catSelect.value = '';
+    }
+  });
+
   // Type grid selection
   let selectedType = null;
   document.querySelectorAll('#eventTypeGrid .category-chip').forEach(chip => {
@@ -204,6 +237,8 @@ export async function renderInsidental() {
         participants: parseInt(document.getElementById('eventParticipants').value) || 0,
         description: document.getElementById('eventDesc').value.trim(),
         desa_id: desaId,
+        weight_kg: parseFloat(weightInput.value) || 0,
+        category_sipsn: catSelect.value || null,
         lat: gpsData?.latitude, lng: gpsData?.longitude,
         photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
         photo_count: photos.length,

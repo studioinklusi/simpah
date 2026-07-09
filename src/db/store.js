@@ -780,15 +780,22 @@ export async function deleteUser(id) {
 }
 
 export async function getWasteStats(filterUserId = null) {
-  let allRecords = await getAllWasteRecords();
+  const [allRecords, allEvents] = await Promise.all([
+    getAllWasteRecords(),
+    getAllEvents()
+  ]);
+
+  let filteredRecords = allRecords;
+  let filteredEvents = allEvents;
   
   if (filterUserId) {
-    allRecords = allRecords.filter(r => r.created_by === filterUserId || r.user_id === filterUserId);
+    filteredRecords = allRecords.filter(r => r.created_by === filterUserId || r.user_id === filterUserId);
+    filteredEvents = allEvents.filter(e => e.user_id === filterUserId);
   }
   
   // Include all records except rejected ones for stats
   // (pending records should be visible to the inputting user)
-  const records = allRecords
+  const records = filteredRecords
     .filter(r => r.verification_status !== 'rejected')
     .map(r => ({ ...r, date_str: r.date_str || r.record_date }));
 
@@ -799,16 +806,27 @@ export async function getWasteStats(filterUserId = null) {
   const todayRecords = records.filter(r => r.date_str === today);
   const monthRecords = records.filter(r => r.date_str?.startsWith(thisMonth));
 
-  const totalWeight = records.reduce((sum, r) => sum + (r.weight_kg || 0), 0);
-  const todayWeight = todayRecords.reduce((sum, r) => sum + (r.weight_kg || 0), 0);
-  const monthWeight = monthRecords.reduce((sum, r) => sum + (r.weight_kg || 0), 0);
+  // Incidental events calculations
+  const todayEvents = filteredEvents.filter(e => e.created_at?.startsWith(today));
+  const monthEvents = filteredEvents.filter(e => e.created_at?.startsWith(thisMonth));
+
+  const insidentalWeightFromEvents = filteredEvents.reduce((s, e) => s + (parseFloat(e.weight_kg) || 0), 0);
+  const todayInsidentalWeightFromEvents = todayEvents.reduce((s, e) => s + (parseFloat(e.weight_kg) || 0), 0);
+  const monthInsidentalWeightFromEvents = monthEvents.reduce((s, e) => s + (parseFloat(e.weight_kg) || 0), 0);
+
+  const insidentalWeight = records.filter(r => r.is_incidental).reduce((s, r) => s + (r.weight_kg || 0), 0) + insidentalWeightFromEvents;
+  const todayInsidentalWeight = todayRecords.filter(r => r.is_incidental).reduce((s, r) => s + (r.weight_kg || 0), 0) + todayInsidentalWeightFromEvents;
+  const monthInsidentalWeight = monthRecords.filter(r => r.is_incidental).reduce((s, r) => s + (r.weight_kg || 0), 0) + monthInsidentalWeightFromEvents;
+
+  const totalWeight = records.reduce((sum, r) => sum + (r.weight_kg || 0), 0) + insidentalWeightFromEvents;
+  const todayWeight = todayRecords.reduce((sum, r) => sum + (r.weight_kg || 0), 0) + todayInsidentalWeightFromEvents;
+  const monthWeight = monthRecords.reduce((sum, r) => sum + (r.weight_kg || 0), 0) + monthInsidentalWeightFromEvents;
 
   const masukWeight = records.filter(r => r.type === 'masuk').reduce((s, r) => s + (r.weight_kg || 0), 0);
   const campurWeight = records.filter(r => r.type === 'campur').reduce((s, r) => s + (r.weight_kg || 0), 0);
   const pilahWeight = records.filter(r => r.type === 'pilah').reduce((s, r) => s + (r.weight_kg || 0), 0);
   const olahWeight = records.filter(r => r.type === 'olah').reduce((s, r) => s + (r.weight_kg || 0), 0);
   const residuWeight = records.filter(r => r.type === 'residu').reduce((s, r) => s + (r.weight_kg || 0), 0);
-  const insidentalWeight = records.filter(r => r.is_incidental).reduce((s, r) => s + (r.weight_kg || 0), 0);
 
   // Waste Reduction Rate = (Pilah + Olah) / (Masuk + Campur) × 100
   const reductionTotal = pilahWeight + olahWeight;
@@ -822,6 +840,12 @@ export async function getWasteStats(filterUserId = null) {
     }
   });
 
+  filteredEvents.forEach(e => {
+    if (e.category_sipsn && e.weight_kg > 0) {
+      byCategory[e.category_sipsn] = (byCategory[e.category_sipsn] || 0) + (parseFloat(e.weight_kg) || 0);
+    }
+  });
+
   // Aggregate treatment methods
   const byTreatment = {};
   records.filter(r => r.type === 'olah' && r.treatment_method).forEach(r => {
@@ -829,11 +853,11 @@ export async function getWasteStats(filterUserId = null) {
   });
 
   return {
-    totalRecords: records.length,
+    totalRecords: records.length + filteredEvents.length,
     totalWeight,
     todayWeight,
     monthWeight,
-    todayRecords: todayRecords.length,
+    todayRecords: todayRecords.length + todayEvents.length,
     masukWeight,
     campurWeight,
     pilahWeight,
