@@ -121,11 +121,11 @@ export function renderLogin() {
 
             <form id="loginForm" class="login-form">
               <div class="form-group">
-                <label class="form-label">Email / Username</label>
+                <label class="form-label">Email atau Nama Pengguna</label>
                 <div class="input-with-icon">
                   <span class="input-icon-left">${icons.user}</span>
                   <input type="text" id="loginUsername" class="form-input form-input-lg has-icon-left" 
-                    placeholder="contoh: admin1 atau admin1@simpah.dev" 
+                    placeholder="Masukkan email atau nama pengguna Anda" 
                     required autocomplete="username" autofocus />
                 </div>
               </div>
