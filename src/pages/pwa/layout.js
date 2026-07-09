@@ -74,12 +74,12 @@ export function renderPWALayout(title, content, activeTab = 'home') {
           ${icons.chart}
           <span>Dashboard</span>
         </a>
-        ` : `
+        ` : (user?.role === 'petugas' ? '' : `
         <a href="#/dashboard/gis" class="bottom-nav-item ${activeTab === 'map' ? 'active' : ''}">
           ${icons.map}
           <span>Peta</span>
         </a>
-        `}
+        `)}
 
       </nav>
     </div>
