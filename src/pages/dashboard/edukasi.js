@@ -248,7 +248,7 @@ export async function renderDashboardEdukasi() {
                 <div class="photo-upload" id="artCoverArea" style="border:2px dashed var(--border-color); border-radius:var(--radius-lg); padding:var(--space-4); text-align:center; cursor:pointer; transition:all 0.15s; background:var(--bg-secondary)">
                   <div style="font-size:24px; margin-bottom:8px; color:var(--text-muted)">${icons.image}</div>
                   <div id="artCoverHint" style="font-size:var(--font-sm); font-weight:600; color:var(--text-secondary)">Klik atau seret gambar cover ke sini</div>
-                  <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">Ukuran maks 5MB.</div>
+                  <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">Ukuran maks 2MB.</div>
                 </div>
                 <input type="file" id="artCoverFileInput" accept="image/*" style="display:none" />
                 <div id="artCoverPreviewArea" style="display:none; margin-top:var(--space-3); position:relative; border-radius:var(--radius-lg); overflow:hidden">
@@ -292,12 +292,12 @@ export async function renderDashboardEdukasi() {
       <style>
         .md-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px var(--space-4); }
         .md-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:95%; max-width:680px; box-shadow:0 20px 60px rgba(0,0,0,0.25); border:1px solid var(--border-color); margin-bottom:40px; }
-        .md-modal-header { display:flex; justify-content:space-between; align-items:center; padding:var(--space-4) var(--space-6); border-bottom:1px solid var(--border-color); }
-        .md-modal-header h3 { font-size:var(--font-md); font-weight:700; margin:0; }
+        .md-modal-header { display:flex; justify-content:space-between; align-items:center; padding: 24px 28px; border-bottom:1px solid var(--border-color); margin-bottom: 8px; }
+        .md-modal-header h3 { font-size:var(--font-lg); font-weight:800; margin:0; }
         .md-modal-close { width:32px; height:32px; border-radius:50%; border:none; background:var(--bg-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); transition:all 0.15s; }
         .md-modal-close:hover { background:var(--border-color); color:var(--text-primary); }
-        .md-modal-body { padding:var(--space-5) var(--space-6); }
-        .md-modal-body .form-group { margin-bottom:var(--space-4); }
+        .md-modal-body { padding: 24px 28px; }
+        .md-modal-body .form-group { margin-bottom: 20px; }
         .md-modal-body .form-label { display:block; font-size:var(--font-sm); font-weight:600; margin-bottom:var(--space-2); color:var(--text-primary) }
         .md-modal-body .form-actions { display:flex; gap:var(--space-3); justify-content:flex-end; margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border-color); }
         .editor-toolbar button { font-size:var(--font-xs); border:1px solid var(--border-color); background:var(--bg-secondary); border-radius:4px; cursor:pointer }
@@ -622,8 +622,8 @@ export async function renderDashboardEdukasi() {
       showToast('Hanya berkas gambar yang didukung!', 'warning');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Berkas terlalu besar (Maks 5MB)', 'warning');
+    if (file.size > 2 * 1024 * 1024) {
+      showToast('Berkas terlalu besar (Maks 2MB)', 'warning');
       return;
     }
 
