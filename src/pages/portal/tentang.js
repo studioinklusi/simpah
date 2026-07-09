@@ -20,7 +20,7 @@ export function renderPortalTentang() {
             
             <!-- Heading -->
             <h1 style="font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.15; color: var(--text-primary); max-width: 900px; margin-bottom: var(--space-6); letter-spacing: -0.03em;">
-              Smart Waste Intelligence for a <span class="gradient-text" style="font-style: italic;">Sustainable Banjarnegara</span>
+              Smart Waste Intelligence for a <span class="gradient-text" style="font-style: italic; padding-right: 0.15em;">Sustainable Banjarnegara</span>
             </h1>
             
             <!-- Subtitle -->
