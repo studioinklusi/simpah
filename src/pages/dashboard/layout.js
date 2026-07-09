@@ -38,16 +38,19 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           </div>
         </div>
         <nav class="sidebar-nav">
+          ${(canViewExecutive(user) || !(user?.role === 'petugas' && user?.job_type === 'kader')) ? `
           <div class="sidebar-section">
             <div class="sidebar-section-title">Pemantauan</div>
             ${canViewExecutive(user) ? `
             <a href="#/dashboard/eksekutif" class="sidebar-link ${isActiveRoute('/dashboard/eksekutif') ? 'active' : ''}">
               ${icons.chart} <span>Ringkasan Eksekutif</span>
             </a>` : ''}
+            ${!(user?.role === 'petugas' && user?.job_type === 'kader') ? `
             <a href="#/dashboard/gis" class="sidebar-link ${isActiveRoute('/dashboard/gis') ? 'active' : ''}">
               ${icons.map} <span>Peta GIS</span>
-            </a>
+            </a>` : ''}
           </div>
+          ` : ''}
            ${(isAdmin(user) || canValidate(user)) ? `
           <div class="sidebar-section">
             <div class="sidebar-section-title">Pengelolaan</div>

@@ -8,6 +8,10 @@ import { LOCATION_TYPES } from '../../utils/sipsn.js';
 export async function renderGIS() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
+  if (user.role === 'petugas' && user.job_type === 'kader') {
+    window.location.hash = '#/pwa/home';
+    return;
+  }
 
   const locations = await getAllLocations();
   const records = await getAllWasteRecords();
