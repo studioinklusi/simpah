@@ -71,7 +71,7 @@ async function bootstrap() {
     registerRoute('/reset-password', () => renderResetPassword());
 
     // Portal routes
-    registerRoute('/portal', () => renderPortalBeranda());
+    registerRoute('/portal', () => { window.location.hash = '#/portal/tentang'; });
     registerRoute('/portal/edukasi', () => renderEdukasi());
     registerRoute('/portal/galeri', () => renderGaleri());
     registerRoute('/portal/regulasi', () => renderRegulasi());

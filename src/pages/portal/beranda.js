@@ -99,18 +99,14 @@ export function renderPortalNav(active = '') {
   return `
     <nav class="portal-nav">
       <div class="portal-nav-inner">
-        <a href="#/portal" class="portal-nav-brand">
+        <a href="#/portal/tentang" class="portal-nav-brand">
           <div class="portal-nav-brand-icon">S</div>
           <h1>SIMPAH</h1>
         </a>
         <div class="portal-nav-links" id="portalNavLinks">
-          <a href="#/portal" class="portal-nav-link ${active==='beranda'?'active':''}">Beranda</a>
           <a href="#/portal/tentang" class="portal-nav-link ${active==='tentang'?'active':''}">Tentang</a>
           <a href="#/portal/edukasi" class="portal-nav-link ${active==='edukasi'?'active':''}">Edukasi</a>
-          <a href="#/portal/galeri" class="portal-nav-link ${active==='galeri'?'active':''}">Galeri</a>
           <a href="#/portal/regulasi" class="portal-nav-link ${active==='regulasi'?'active':''}">Regulasi</a>
-          <a href="#/portal/aduan" class="portal-nav-link ${active==='aduan'?'active':''}">Lapor Baru</a>
-          <a href="#/portal/cek-aduan" class="portal-nav-link ${active==='cek-aduan'?'active':''}">Cek Resi</a>
           <a href="#/login" class="btn btn-primary portal-nav-cta">Masuk</a>
         </div>
         <button class="portal-mobile-toggle" id="portalMenuToggle">${icons.menu}</button>
@@ -130,18 +126,14 @@ export function renderPortalFooter() {
         <div>
           <h4>Menu</h4>
           <div class="portal-footer-links">
-            <a href="#/portal">Beranda</a>
             <a href="#/portal/tentang">Tentang</a>
             <a href="#/portal/edukasi">Edukasi</a>
-            <a href="#/portal/galeri">Galeri</a>
             <a href="#/portal/regulasi">Regulasi</a>
           </div>
         </div>
         <div>
           <h4>Layanan</h4>
           <div class="portal-footer-links">
-            <a href="#/portal/aduan">Form Aduan</a>
-            <a href="#/portal/cek-aduan">Cek Status Aduan</a>
             <a href="#/login">Login Petugas</a>
             <a href="#/dashboard/gis">Peta GIS</a>
           </div>
