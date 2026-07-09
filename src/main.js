@@ -87,16 +87,14 @@ async function bootstrap() {
 
 
 
-    // Hide loading screen
-    const loading = document.getElementById('loadingScreen');
-
     // Initialize auth FIRST (restore Supabase session)
+    // Splash screen stays visible until auth state is fully resolved
     try {
       const authInitPromise = (async () => {
         await initAuth();
         await waitForAuth();
       })();
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth initialization timed out after 8 seconds')), 8000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth initialization timed out after 10 seconds')), 10000));
       
       await Promise.race([authInitPromise, timeoutPromise]);
     } catch (authErr) {
@@ -104,14 +102,16 @@ async function bootstrap() {
       // Continue anyway — user can still access public routes
     }
 
+    // Start router AFTER auth is resolved — correct routing decision guaranteed
+    startRouter('/login');
+
+    // Hide splash screen AFTER routing decision is made
+    const loading = document.getElementById('loadingScreen');
     if (loading) {
       setTimeout(() => {
         loading.classList.add('hidden');
       }, 600);
     }
-
-    // Start router — default to login
-    startRouter('/login');
 
   } catch (error) {
     console.error('Bootstrap failed:', error);
