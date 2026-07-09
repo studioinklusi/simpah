@@ -48,6 +48,7 @@ import { renderIntervensiFasum } from './pages/dashboard/intervensi-fasum.js';
 import { renderMasterData } from './pages/dashboard/masterdata.js';
 import { renderValidasi } from './pages/dashboard/validasi.js';
 import { renderAduanManagement } from './pages/dashboard/aduan.js';
+import { renderDashboardEdukasi } from './pages/dashboard/edukasi.js';
 
 
 async function bootstrap() {
@@ -99,6 +100,7 @@ async function bootstrap() {
     registerRoute('/dashboard/mou', () => renderMou(), ['admin']);
     registerRoute('/dashboard/intervensi', () => renderIntervensi(), ['admin']);
     registerRoute('/dashboard/intervensi-fasum', () => renderIntervensiFasum(), ['admin']);
+    registerRoute('/dashboard/edukasi', () => renderDashboardEdukasi(), ['admin']);
     registerRoute('/dashboard/masterdata', () => renderMasterData(), ['admin']);
     registerRoute('/dashboard/aduan', () => renderAduanManagement(), ['warga', 'petugas', 'eksekutif', 'admin']);
 

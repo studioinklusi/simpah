@@ -36,6 +36,7 @@ export const PERMISSIONS = {
   MANAGE_INTERVENTION:     ['admin'],
   EXPORT_REPORTS:          ['admin'],
   VIEW_AUDIT_LOG:          ['admin'],
+  MANAGE_ARTICLES:         ['admin'],
 };
 
 /**

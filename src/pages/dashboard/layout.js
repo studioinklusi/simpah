@@ -69,12 +69,15 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <a href="#/dashboard/intervensi" class="sidebar-link ${isActiveRoute('/dashboard/intervensi') ? 'active' : ''}">
               ${icons.shield} <span>Intervensi Wilayah</span>
             </a>
-            <a href="#/dashboard/intervensi-fasum" class="sidebar-link ${isActiveRoute('/dashboard/intervensi-fasum') ? 'active' : ''}">
-              ${icons.grid} <span>Intervensi Fasum</span>
-            </a>
-            <a href="#/dashboard/masterdata" class="sidebar-link ${isActiveRoute('/dashboard/masterdata') ? 'active' : ''}">
-              ${icons.settings} <span>Master Data</span>
-            </a>` : ''}
+             <a href="#/dashboard/intervensi-fasum" class="sidebar-link ${isActiveRoute('/dashboard/intervensi-fasum') ? 'active' : ''}">
+               ${icons.grid} <span>Intervensi Fasum</span>
+             </a>
+             <a href="#/dashboard/edukasi" class="sidebar-link ${isActiveRoute('/dashboard/edukasi') ? 'active' : ''}">
+               ${icons.book} <span>Kelola Edukasi</span>
+             </a>
+             <a href="#/dashboard/masterdata" class="sidebar-link ${isActiveRoute('/dashboard/masterdata') ? 'active' : ''}">
+               ${icons.settings} <span>Master Data</span>
+             </a>` : ''}
           </div>
           ` : ''}
           <div class="sidebar-section">
