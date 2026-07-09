@@ -29,7 +29,7 @@ export function renderPortalTentang() {
             </p>
             
             <!-- Buttons -->
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-16); justify-content: center;">
+            <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-10); justify-content: center;">
               <a href="#/login" class="portal-nav-btn" style="margin: 0; padding: var(--space-4) var(--space-8); font-size: var(--font-base); border-radius: var(--radius-xl); background: var(--primary-600); color: white; border-color: var(--primary-600); display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                 Masuk Sistem
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -42,11 +42,11 @@ export function renderPortalTentang() {
             <!-- Teaser Dashboard -->
             <div style="position: relative; width: 100%; max-width: 960px; margin: 0 auto;">
               <div style="border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-card); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);">
-                <img style="width: 100%; height: auto; display: block; object-fit: cover;" alt="GIS Waste Management Dashboard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0KvIbTWx7DJsSjmosG4ZsdRSlAyRz6y3u4gurUfG884KAWPjqAHwDMeHxQuJiI2-AxKFZq8F-zCU_uAoAOBUrBMzo5CgyP2ySfBy7PRVf09kA0xGM75d6RZh2S5BQYKQu5XifN0w3CCoMkjg6Ok9loj3JHfPxNVA5RVjXSmdGsgsBiXksJs7fqkC5bXJgHz_n3bFLsLtC4CGa__jAe-sVzJ2F9xLOgdrIG4pVN2b8CKdmgZDQ89NvsmVpianpfqgFRnB81opiSABE" />
+                <img style="width: 100%; height: auto; display: block; object-fit: cover;" alt="GIS Waste Management Dashboard" src="/dashboard_teaser.png" />
               </div>
               
               <!-- Floating Card 1 -->
-              <div class="card" style="position: absolute; top: -30px; right: 40px; display: none; padding: var(--space-4) var(--space-5); background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); align-items: center; gap: var(--space-4);" id="floatCard1">
+              <div class="card" style="position: absolute; top: -20px; right: -20px; display: none; padding: var(--space-4) var(--space-5); background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); align-items: center; gap: var(--space-4); z-index: 5;" id="floatCard1">
                 <div style="padding: var(--space-3); background: rgba(16, 185, 129, 0.1); color: var(--primary-600); border-radius: var(--radius-lg); display: flex; align-items: center;">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 </div>
@@ -57,7 +57,7 @@ export function renderPortalTentang() {
               </div>
               
               <!-- Floating Card 2 -->
-              <div class="card" style="position: absolute; bottom: 30px; left: -40px; display: none; padding: var(--space-4) var(--space-5); background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); align-items: center; gap: var(--space-4);" id="floatCard2">
+              <div class="card" style="position: absolute; bottom: 40px; left: -20px; display: none; padding: var(--space-4) var(--space-5); background: var(--bg-card); border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); align-items: center; gap: var(--space-4); z-index: 5;" id="floatCard2">
                 <div style="padding: var(--space-3); background: rgba(59, 130, 246, 0.1); color: #2563eb; border-radius: var(--radius-lg); display: flex; align-items: center;">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 </div>
@@ -137,19 +137,19 @@ export function renderPortalTentang() {
                 
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4);">
                   <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
-                    <p style="font-size: var(--font-lg); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">278</p>
+                    <p style="font-size: var(--font-xl); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">278</p>
                     <p style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Desa Terkoneksi</p>
                   </div>
                   <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
-                    <p style="font-size: var(--font-lg); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">100%</p>
+                    <p style="font-size: var(--font-xl); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">100%</p>
                     <p style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Laporan Digital</p>
                   </div>
                   <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
-                    <p style="font-size: var(--font-lg); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">Real-Time</p>
+                    <p style="font-size: var(--font-xl); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">Real-Time</p>
                     <p style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Monitoring Aktif</p>
                   </div>
                   <div style="padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-xl); border: 1px solid var(--border-color);">
-                    <p style="font-size: var(--font-lg); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">Terintegrasi</p>
+                    <p style="font-size: var(--font-xl); font-weight: 800; color: var(--primary-600); margin-bottom: 2px;">Terintegrasi</p>
                     <p style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Peta GIS</p>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export function renderPortalTentang() {
               <!-- Right -->
               <div style="position: relative;">
                 <div style="padding: 16px; background: var(--bg-secondary); border-radius: 32px; border: 1px solid var(--border-color); box-shadow: var(--shadow-xl); overflow: hidden;">
-                  <img style="width: 100%; border-radius: 20px; display: block;" alt="SIMPAH Analytics Platform Map" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0KvIbTWx7DJsSjmosG4ZsdRSlAyRz6y3u4gurUfG884KAWPjqAHwDMeHxQuJiI2-AxKFZq8F-zCU_uAoAOBUrBMzo5CgyP2ySfBy7PRVf09kA0xGM75d6RZh2S5BQYKQu5XifN0w3CCoMkjg6Ok9loj3JHfPxNVA5RVjXSmdGsgsBiXksJs7fqkC5bXJgHz_n3bFLsLtC4CGa__jAe-sVzJ2F9xLOgdrIG4pVN2b8CKdmgZDQ89NvsmVpianpfqgFRnB81opiSABE" />
+                  <img style="width: 100%; border-radius: 20px; display: block;" alt="SIMPAH Analytics Platform Map" src="/dashboard_teaser.png" />
                 </div>
               </div>
             </div>
