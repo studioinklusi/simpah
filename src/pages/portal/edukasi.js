@@ -94,7 +94,7 @@ export async function renderEdukasi() {
   app.innerHTML = `
     <div class="portal-layout">
       ${renderPortalNav('edukasi')}
-      <div style="padding-top:calc(var(--navbar-height) + var(--space-8))">
+      <div style="padding-top:calc(var(--navbar-height) + 32px)">
         <!-- Grid View Content -->
         <section class="portal-section" id="edukasiGridViewSection" style="min-height:70vh">
           <div class="portal-section-header">
@@ -109,30 +109,57 @@ export async function renderEdukasi() {
           </div>
         </section>
 
-        <!-- Dynamic Article Reading View (Hidden by default) -->
-        <section class="portal-section" id="edukasiReadingViewSection" style="display:none; max-width:800px; margin:0 auto; padding-bottom:80px; min-height:70vh">
-          <!-- Back button -->
-          <button class="portal-nav-btn" id="backToGridBtn" style="display:inline-flex; align-items:center; gap:8px; border:none; background:rgba(16,185,129,0.08); color:var(--primary-600); font-weight:700; padding:10px 20px; border-radius:24px; cursor:pointer; font-size:var(--font-sm); margin-bottom:32px; transition:all 0.2s">
-            ${icons.chevronLeft} Kembali ke Edukasi
-          </button>
+        <!-- Dynamic Article Reading View (Two-Column Layout) -->
+        <section class="portal-section" id="edukasiReadingViewSection" style="display:none; max-width:1200px; margin:0 auto; padding-bottom:80px; min-height:70vh">
+          <div class="read-layout-grid">
+            
+            <!-- Left Column: Main Article Content -->
+            <div class="read-main-col">
+              <!-- Back button -->
+              <button class="portal-nav-btn" id="backToGridBtn" style="display:inline-flex; align-items:center; gap:8px; border:none; background:rgba(16,185,129,0.08); color:var(--primary-600); font-weight:700; padding:10px 20px; border-radius:24px; cursor:pointer; font-size:var(--font-sm); margin-bottom:24px; transition:all 0.2s">
+                ${icons.chevronLeft} Kembali ke Edukasi
+              </button>
 
-          <!-- Article Header -->
-          <div style="margin-bottom:24px">
-            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
-              <span id="readCategoryBadge" class="portal-card-tag" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:var(--font-xs)"></span>
-              <span id="readDate" style="font-size:var(--font-sm); color:var(--text-muted)"></span>
+              <!-- Article Header -->
+              <div style="margin-bottom:24px">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px">
+                  <span id="readCategoryBadge" class="portal-card-tag" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:var(--font-xs)"></span>
+                  <span id="readDate" style="font-size:var(--font-sm); color:var(--text-muted)"></span>
+                </div>
+                <h1 id="readTitle" style="font-size:clamp(1.5rem, 3.5vw, 2.25rem); font-weight:800; line-height:1.25; color:var(--text-primary); letter-spacing:-0.02em; margin:0 0 16px 0"></h1>
+                <p id="readExcerpt" style="font-size:var(--font-sm); line-height:1.6; color:var(--text-secondary); font-style:italic; margin:0; padding-left:16px; border-left:4px solid var(--primary-500)"></p>
+              </div>
+
+              <!-- Cover Image -->
+              <div style="border-radius:var(--radius-xl); overflow:hidden; margin-bottom:32px; box-shadow:var(--shadow-md); height:clamp(200px, 35vw, 380px)">
+                <img id="readCoverImage" src="" style="width:100%; height:100%; object-fit:cover" />
+              </div>
+
+              <!-- Rich Text Content Body -->
+              <div id="readContentBody" class="article-rich-text"></div>
             </div>
-            <h1 id="readTitle" style="font-size:clamp(1.75rem, 4vw, 2.5rem); font-weight:800; line-height:1.25; color:var(--text-primary); letter-spacing:-0.02em; margin:0 0 16px 0"></h1>
-            <p id="readExcerpt" style="font-size:var(--font-md); line-height:1.6; color:var(--text-secondary); font-style:italic; margin:0; padding-left:16px; border-left:4px solid var(--primary-500)"></p>
-          </div>
 
-          <!-- Cover Image -->
-          <div style="border-radius:var(--radius-xl); overflow:hidden; margin-bottom:40px; box-shadow:var(--shadow-md); height:clamp(220px, 40vw, 420px)">
-            <img id="readCoverImage" src="" style="width:100%; height:100%; object-fit:cover" />
-          </div>
+            <!-- Right Column: Sidebar (Platform Info & Related Articles) -->
+            <div class="read-sidebar-col">
+              <!-- Platform About Card -->
+              <div class="sidebar-card">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px">
+                  <div style="width:36px; height:36px; border-radius:50%; background:rgba(16,185,129,0.1); color:var(--primary-600); display:flex; align-items:center; justify-content:center">
+                    ${icons.leaf}
+                  </div>
+                  <strong style="color:var(--text-primary); font-size:15px">SIMPAH Intelligence</strong>
+                </div>
+                <p style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin:0">Platform digital terintegrasi untuk pengelolaan sampah cerdas, visualisasi data, dan pelaporan transparansi lingkungan di Kabupaten Banjarnegara.</p>
+              </div>
 
-          <!-- Rich Text Content Body -->
-          <div id="readContentBody" class="article-rich-text"></div>
+              <!-- Related Articles Card -->
+              <div class="sidebar-card">
+                <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 16px 0; border-bottom:1px solid var(--border-color); padding-bottom:8px">Artikel Edukasi Lainnya</h4>
+                <div id="relatedArticlesList" style="display:flex; flex-direction:column; gap:16px"></div>
+              </div>
+            </div>
+
+          </div>
         </section>
       </div>
 
@@ -146,8 +173,39 @@ export async function renderEdukasi() {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
+        .read-layout-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+        @media (min-width: 992px) {
+          .read-layout-grid {
+            grid-template-columns: 8fr 4fr;
+          }
+        }
+        .read-main-col {
+          min-width: 0;
+        }
+        .read-sidebar-col {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        @media (min-width: 992px) {
+          .read-sidebar-col {
+            position: sticky;
+            top: 120px;
+            align-self: flex-start;
+          }
+        }
+        .sidebar-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          padding: 20px;
+        }
         .article-rich-text {
-          font-size: 1.1rem;
+          font-size: 1.05rem;
           line-height: 1.8;
           color: var(--text-secondary);
         }
@@ -157,6 +215,13 @@ export async function renderEdukasi() {
         .article-rich-text ul, .article-rich-text ol { margin-bottom:24px; padding-left:24px; }
         .article-rich-text li { margin-bottom:8px; line-height:1.6; }
         .article-rich-text strong { color:var(--text-primary); }
+        
+        .related-art-item {
+          transition: all 0.15s ease;
+        }
+        .related-art-item:hover h5 {
+          color: var(--primary-600) !important;
+        }
       </style>
       ${renderPortalFooter()}
     </div>
@@ -226,10 +291,8 @@ export async function renderEdukasi() {
   // Back button functionality
   const backBtn = document.getElementById('backToGridBtn');
   backBtn?.addEventListener('click', () => {
-    // Hide reading mode, show grid
     if (readingSection) readingSection.style.display = 'none';
     if (gridSection) gridSection.style.display = '';
-    // Scroll smoothly to grid section header
     gridSection?.scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -248,6 +311,39 @@ export async function renderEdukasi() {
     document.getElementById('readExcerpt').textContent = art.excerpt;
     document.getElementById('readCoverImage').src = art.image_url || 'https://placehold.co/800x450?text=No+Image';
     document.getElementById('readContentBody').innerHTML = art.content || `<p>${art.excerpt}</p>`;
+
+    // Render related articles in the sidebar
+    const related = articles.filter(x => x.id !== art.id).slice(0, 3);
+    const relatedList = document.getElementById('relatedArticlesList');
+    if (relatedList) {
+      if (related.length === 0) {
+        relatedList.innerHTML = '<p style="font-size:12px; color:var(--text-muted); margin:0">Tidak ada artikel lain.</p>';
+      } else {
+        relatedList.innerHTML = related.map(rel => {
+          const relStyle = CATEGORY_STYLES[rel.category] || CATEGORY_STYLES.Umum;
+          return `
+            <div class="related-art-item" data-rel-id="${rel.id}" style="display:flex; gap:12px; cursor:pointer; align-items:flex-start">
+              <img src="${rel.image_url || 'https://placehold.co/100x60?text=No+Image'}" style="width:64px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); flex-shrink:0" />
+              <div style="flex:1; min-width:0">
+                <span style="font-size:9px; font-weight:700; color:${relStyle.color}; background:${relStyle.color}15; padding:2px 6px; border-radius:4px">${rel.category}</span>
+                <h5 style="font-size:13px; font-weight:700; color:var(--text-primary); margin:4px 0 0 0; line-height:1.4; text-overflow:ellipsis; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical">${rel.title}</h5>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Attach click listeners to related articles
+        relatedList.querySelectorAll('.related-art-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const relId = item.dataset.relId;
+            const targetArt = articles.find(x => x.id === relId);
+            if (targetArt) {
+              switchToReadingMode(targetArt);
+            }
+          });
+        });
+      }
+    }
 
     // Hide grid, show reading mode
     gridSection.style.display = 'none';
