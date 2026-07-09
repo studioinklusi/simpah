@@ -3,17 +3,25 @@ import { icons } from '../../components/icons.js';
 import { INCIDENTAL_TYPES } from '../../utils/sipsn.js';
 import { getCurrentUser, formatDateTime } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
-import { addEvent, getAllEvents } from '../../db/store.js';
+import { addEvent, getAllEvents, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
+import { wireSearchableSelect } from '../../utils/searchable-select.js';
 
 export async function renderInsidental() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
   
-  const events = await getAllEvents();
+  const [events, masterWilayah] = await Promise.all([
+    getAllEvents(),
+    getAllMasterWilayah()
+  ]);
+  
+  const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
+  const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
+  
   let gpsData = null;
   let photoPicker = null;
   getCurrentPosition(false).then(p => { gpsData = p; }).catch(()=>{});
@@ -23,6 +31,33 @@ export async function renderInsidental() {
       <div class="pwa-form">
         <h3 class="pwa-form-title">${icons.alert} Catat Kegiatan</h3>
         <form id="eventForm">
+          
+          <!-- Location (Wilayah) -->
+          <div class="form-group">
+            <label class="form-label">Kecamatan</label>
+            <div class="custom-select-container" id="kecSelectContainer">
+              <div class="custom-select-wrapper">
+                <input type="text" id="kecamatanSelect" class="form-select" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
+                ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
+              </div>
+              <div class="custom-select-dropdown" id="kecDropdown" style="display:none;"></div>
+              <div id="kecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
+            </div>
+          </div>
+
+          <div class="form-group" id="desaGroup" style="display:${userDesa ? 'block' : 'none'}">
+            <label class="form-label">Desa / Kelurahan</label>
+            <div class="custom-select-container" id="desaSelectContainer">
+              <div class="custom-select-wrapper">
+                <input type="text" id="desaSelectInput" class="form-select" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
+                ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
+              </div>
+              <div class="custom-select-dropdown" id="desaDropdown" style="display:none;"></div>
+              <input type="hidden" id="desaSelect" value="${userDesa ? userDesa.id : ''}" />
+              <div id="desaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">Jenis Kegiatan</label>
             <div class="category-grid" style="grid-template-columns:repeat(2,1fr)" id="eventTypeGrid">
@@ -34,13 +69,14 @@ export async function renderInsidental() {
               `).join('')}
             </div>
           </div>
+          
           <div class="form-group">
             <label class="form-label">Judul Kegiatan</label>
             <input type="text" id="eventTitle" class="form-input" placeholder="Contoh: Kerja Bakti RT 05" required />
           </div>
           <div class="form-group">
-            <label class="form-label">Lokasi</label>
-            <input type="text" id="eventLocation" class="form-input" placeholder="Nama lokasi kegiatan" />
+            <label class="form-label">Lokasi Spesifik (Fasilitas / RT-RW)</label>
+            <input type="text" id="eventLocation" class="form-input" placeholder="Contoh: Balai Desa / RT 03" />
           </div>
           <div class="form-group">
             <label class="form-label">Jumlah Peserta</label>
@@ -60,22 +96,29 @@ export async function renderInsidental() {
           <h3 style="font-size:var(--font-base);font-weight:700">Riwayat Kegiatan</h3>
         </div>
         <div class="record-list">
-          ${events.map(e => `
-            <div class="record-item">
-              <div class="record-icon" style="background:rgba(139,92,246,0.12)">${INCIDENTAL_TYPES.find(t=>t.id===e.type)?.icon || icons.box}</div>
-              <div class="record-info">
-                <div class="record-title">${escapeHTML(e.title)}</div>
-                <div class="record-meta">${escapeHTML(e.location_name || '-')} · ${formatDateTime(e.created_at)}</div>
+          ${events.map(e => {
+            const eventDesa = e.desa_id ? masterWilayah.find(w => w.id === e.desa_id) : null;
+            const locationText = eventDesa 
+              ? `Desa ${eventDesa.desa_kelurahan}` + (e.location_name ? `, ${e.location_name}` : '') 
+              : (e.location_name || '-');
+            
+            return `
+              <div class="record-item">
+                <div class="record-icon" style="background:rgba(139,92,246,0.12)">${INCIDENTAL_TYPES.find(t=>t.id===e.type)?.icon || icons.box}</div>
+                <div class="record-info">
+                  <div class="record-title">${escapeHTML(e.title)}</div>
+                  <div class="record-meta">${escapeHTML(locationText)} · ${formatDateTime(e.created_at)}</div>
+                </div>
+                <div class="record-value" style="text-align:right">
+                  ${(e.photo_url || e.photo_count)
+                    ? `<div style="font-size:11px;color:var(--info-500);margin-bottom:2px;cursor:pointer" onclick="${e.photo_url ? `window.open('${escapeHTML(sanitizeURL(e.photo_url))}','_blank')` : ''}" title="Lihat Foto">${icons.camera} ${e.photo_count || 1}</div>`
+                    : ''
+                  }
+                  <div>${e.participants || '-'}<small> org</small></div>
+                </div>
               </div>
-              <div class="record-value" style="text-align:right">
-                ${(e.photo_url || e.photo_count)
-                  ? `<div style="font-size:11px;color:var(--info-500);margin-bottom:2px;cursor:pointer" onclick="${e.photo_url ? `window.open('${escapeHTML(sanitizeURL(e.photo_url))}','_blank')` : ''}" title="Lihat Foto">${icons.camera} ${e.photo_count || 1}</div>`
-                  : ''
-                }
-                <div>${e.participants || '-'}<small> org</small></div>
-              </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       ` : ''}
     </div>
@@ -83,6 +126,55 @@ export async function renderInsidental() {
 
   photoPicker = initPhotoPicker('insidental');
 
+  // Wilayah autocomplete wiring
+  const kecSelect = document.getElementById('kecamatanSelect');
+  const desaSelectInput = document.getElementById('desaSelectInput');
+  const desaSelect = document.getElementById('desaSelect');
+  const desaGroup = document.getElementById('desaGroup');
+  const kecFeedback = document.getElementById('kecFeedback');
+  const desaFeedback = document.getElementById('desaFeedback');
+
+  let selectKecInstance, selectDesaInstance;
+  const kecHidden = { value: userDesa ? userDesa.kecamatan : '' };
+
+  if (!isKader) {
+    selectKecInstance = wireSearchableSelect({
+      inputEl: kecSelect,
+      dropdownEl: document.getElementById('kecDropdown'),
+      hiddenEl: kecHidden,
+      feedbackEl: kecFeedback,
+      getOptions: () => {
+        const uniqueKec = [...new Set(masterWilayah.map(w => w.kecamatan))].sort();
+        return uniqueKec.map(k => ({ value: k, label: k }));
+      },
+      onSelect: () => {
+        desaGroup.style.display = 'block';
+        desaSelectInput.value = '';
+        desaSelect.value = '';
+      },
+      onClear: () => {
+        desaGroup.style.display = 'none';
+        desaSelectInput.value = '';
+        desaSelect.value = '';
+      }
+    });
+
+    selectDesaInstance = wireSearchableSelect({
+      inputEl: desaSelectInput,
+      dropdownEl: document.getElementById('desaDropdown'),
+      hiddenEl: desaSelect,
+      feedbackEl: desaFeedback,
+      getOptions: () => {
+        const selectedKec = kecSelect.value.trim();
+        const filtered = masterWilayah.filter(w => w.kecamatan.toLowerCase() === selectedKec.toLowerCase());
+        return filtered.map(w => ({ value: w.id, label: w.desa_kelurahan }));
+      },
+      onSelect: () => {},
+      onClear: () => {}
+    });
+  }
+
+  // Type grid selection
   let selectedType = null;
   document.querySelectorAll('#eventTypeGrid .category-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -92,9 +184,17 @@ export async function renderInsidental() {
     });
   });
 
+  // Submit form handler
   document.getElementById('eventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!selectedType) { showToast('Pilih jenis kegiatan', 'warning'); return; }
+    
+    const desaId = desaSelect.value;
+    if (!desaId) {
+      showToast('Pilih wilayah Kecamatan dan Desa terlebih dahulu', 'warning');
+      return;
+    }
+
     try {
       const photos = photoPicker?.getPhotos() || [];
       await addEvent({
@@ -103,6 +203,7 @@ export async function renderInsidental() {
         location_name: document.getElementById('eventLocation').value.trim(),
         participants: parseInt(document.getElementById('eventParticipants').value) || 0,
         description: document.getElementById('eventDesc').value.trim(),
+        desa_id: desaId,
         lat: gpsData?.latitude, lng: gpsData?.longitude,
         photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
         photo_count: photos.length,
