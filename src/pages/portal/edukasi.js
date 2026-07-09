@@ -94,9 +94,9 @@ export async function renderEdukasi() {
   app.innerHTML = `
     <div class="portal-layout">
       ${renderPortalNav('edukasi')}
-      <div style="padding-top:calc(var(--navbar-height) + 32px)">
+      <div style="padding-top:var(--navbar-height)">
         <!-- Grid View Content -->
-        <section class="portal-section" id="edukasiGridViewSection" style="min-height:70vh">
+        <section class="portal-section" id="edukasiGridViewSection" style="min-height:70vh; padding-top:40px">
           <div class="portal-section-header">
             <h2>Edukasi ${`<span class="gradient-text">Pengelolaan Sampah</span>`}</h2>
             <p>Artikel dan informasi untuk meningkatkan kesadaran masyarakat dalam pengelolaan sampah</p>
@@ -110,13 +110,13 @@ export async function renderEdukasi() {
         </section>
 
         <!-- Dynamic Article Reading View (Two-Column Layout) -->
-        <section class="portal-section" id="edukasiReadingViewSection" style="display:none; max-width:1200px; margin:0 auto; padding-bottom:80px; min-height:70vh">
+        <section class="portal-section" id="edukasiReadingViewSection" style="display:none; max-width:1200px; margin:0 auto; padding-top:24px; padding-bottom:80px; min-height:70vh">
           <div class="read-layout-grid">
             
             <!-- Left Column: Main Article Content -->
             <div class="read-main-col">
               <!-- Back button -->
-              <button class="portal-nav-btn" id="backToGridBtn" style="display:inline-flex; align-items:center; gap:8px; border:none; background:rgba(16,185,129,0.08); color:var(--primary-600); font-weight:700; padding:10px 20px; border-radius:24px; cursor:pointer; font-size:var(--font-sm); margin-bottom:24px; transition:all 0.2s">
+              <button id="backToGridBtn" style="display:inline-flex; align-items:center; gap:8px; border:none; background:rgba(16,185,129,0.08); color:var(--primary-600); font-weight:700; padding:10px 20px; border-radius:24px; cursor:pointer; font-size:var(--font-sm); margin-bottom:24px; transition:all 0.2s">
                 ${icons.chevronLeft} Kembali ke Edukasi
               </button>
 
