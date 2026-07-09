@@ -111,15 +111,19 @@ export async function renderInsidental() {
             <textarea id="eventDesc" class="form-textarea" rows="3" placeholder="Deskripsi kegiatan..."></textarea>
           </div>
           
-          <!-- Waste properties (optional for volume chart calculations) -->
+          <!-- Waste properties (required for volume chart calculations) -->
           <div class="form-group">
-            <label class="form-label">Estimasi Sampah Terkumpul (kg) <span style="font-weight:normal;color:var(--text-muted)">(Opsional)</span></label>
-            <input type="number" id="eventWeight" class="form-input" placeholder="Contoh: 25" min="0" step="any" inputmode="decimal" />
+            <label class="form-label">Estimasi Sampah Terkumpul (kg) <span style="color:var(--danger-500)">*</span></label>
+            <input type="number" id="eventWeight" class="form-input" placeholder="Contoh: 25" min="0.01" step="any" inputmode="decimal" required />
+            <div style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;padding:8px 10px;background:rgba(59,130,246,0.08);border-left:3px solid var(--info-500);border-radius:4px;font-size:var(--font-xs);color:var(--info-700)">
+              <span style="flex-shrink:0;margin-top:1px">📊</span>
+              <span>Data berat <strong>wajib diisi</strong> agar kegiatan ini terhitung di grafik <em>Volume per Jenis</em> pada Dashboard Eksekutif.</span>
+            </div>
           </div>
           
-          <div class="form-group" id="categoryGroup" style="display:none">
-            <label class="form-label">Kategori Sampah SIPSN</label>
-            <select id="eventCategorySipsn" class="form-select">
+          <div class="form-group" id="categoryGroup">
+            <label class="form-label">Kategori Sampah SIPSN <span style="color:var(--danger-500)">*</span></label>
+            <select id="eventCategorySipsn" class="form-select" required>
               <option value="">-- Pilih Kategori --</option>
               ${SIPSN_CATEGORIES.map(c => `<option value="${c.code}">${c.name}</option>`).join('')}
             </select>
@@ -214,22 +218,8 @@ export async function renderInsidental() {
     });
   }
 
-  // Toggle SIPSN Category dropdown based on weight input
   const weightInput = document.getElementById('eventWeight');
-  const catGroup = document.getElementById('categoryGroup');
   const catSelect = document.getElementById('eventCategorySipsn');
-
-  weightInput?.addEventListener('input', () => {
-    const val = parseFloat(weightInput.value) || 0;
-    if (val > 0) {
-      catGroup.style.display = 'block';
-      catSelect.setAttribute('required', 'required');
-    } else {
-      catGroup.style.display = 'none';
-      catSelect.removeAttribute('required');
-      catSelect.value = '';
-    }
-  });
 
   // Type grid selection
   let selectedType = null;
@@ -245,6 +235,9 @@ export async function renderInsidental() {
   document.getElementById('eventForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!selectedType) { showToast('Pilih jenis kegiatan', 'warning'); return; }
+    const weightVal = parseFloat(weightInput.value) || 0;
+    if (weightVal <= 0) { showToast('Estimasi berat sampah wajib diisi dan harus lebih dari 0 kg', 'warning'); weightInput.focus(); return; }
+    if (!catSelect.value) { showToast('Pilih kategori sampah SIPSN', 'warning'); catSelect.focus(); return; }
     
     const desaId = desaSelect.value;
     if (!desaId) {
