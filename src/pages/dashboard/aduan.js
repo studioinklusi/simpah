@@ -375,7 +375,8 @@ export async function renderAduanManagement() {
 
         <div class="form-group" style="margin-bottom:var(--space-4)">
           <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">No. Telepon</label>
-          <input type="tel" id="newReporterPhone" class="form-input" placeholder="08xxxxxxxxxx" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+          <input type="tel" id="newReporterPhone" class="form-input" placeholder="Nomor WhatsApp aktif (opsional, contoh: 081234567890)" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+          <div class="form-hint" style="font-size:var(--font-xs);color:var(--text-muted);margin-top:4px">Digunakan oleh petugas untuk konfirmasi jika lokasi sulit ditemukan.</div>
         </div>
 
         <div class="form-group" style="display:flex;align-items:center;gap:8px;background:var(--bg-secondary);padding:var(--space-3);border-radius:var(--radius-md);margin-bottom:var(--space-4);border:1px solid var(--border-color)">
@@ -401,12 +402,13 @@ export async function renderAduanManagement() {
 
         <div class="form-group" style="margin-bottom:var(--space-4)">
           <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Deskripsi <span style="color:var(--danger-500)">*</span></label>
-          <textarea id="newComplaintDesc" class="form-textarea" rows="4" placeholder="Jelaskan permasalahan yang Anda temui..." required style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)"></textarea>
+          <textarea id="newComplaintDesc" class="form-textarea" rows="4" placeholder="Jelaskan permasalahan yang Anda temui (minimal 10 karakter)..." required minlength="10" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)"></textarea>
         </div>
 
         <div class="form-group" style="margin-bottom:var(--space-4)">
-          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Alamat Lokasi</label>
-          <input type="text" id="newComplaintAddress" class="form-input" placeholder="Alamat atau patokan lokasi" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+          <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Alamat Lokasi <span style="color:var(--danger-500)">*</span></label>
+          <input type="text" id="newComplaintAddress" class="form-input" placeholder="Nama jalan, RT/RW, nomor rumah, atau patokan terdekat (minimal 10 karakter)" required minlength="10" style="width:100%;padding:var(--space-2) var(--space-3);border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)" />
+          <div class="form-hint" style="font-size:var(--font-xs);color:var(--text-muted);margin-top:4px">Alamat yang jelas membantu petugas menemukan lokasi lebih cepat.</div>
         </div>
 
         <div class="form-group" style="margin-bottom:var(--space-5)">

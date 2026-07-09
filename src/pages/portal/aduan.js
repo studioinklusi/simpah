@@ -46,7 +46,8 @@ export function renderAduan() {
 
               <div class="form-group">
                 <label class="form-label">No. Telepon</label>
-                <input type="tel" id="reporterPhone" class="form-input" placeholder="08xxxxxxxxxx" />
+                <input type="tel" id="reporterPhone" class="form-input" placeholder="Nomor WhatsApp aktif (opsional, contoh: 081234567890)" />
+                <div class="form-hint">Digunakan oleh petugas untuk konfirmasi jika lokasi sulit ditemukan.</div>
               </div>
 
               <div class="form-group" style="display:flex;align-items:center;gap:8px;background:rgba(107,114,128,0.05);padding:var(--space-3);border-radius:var(--radius-md);">
@@ -72,12 +73,13 @@ export function renderAduan() {
 
               <div class="form-group">
                 <label class="form-label">Deskripsi <span style="color:var(--danger-500)">*</span></label>
-                <textarea id="complaintDesc" class="form-textarea" rows="4" placeholder="Jelaskan permasalahan yang Anda temui..." required></textarea>
+                <textarea id="complaintDesc" class="form-textarea" rows="4" placeholder="Jelaskan permasalahan yang Anda temui (minimal 10 karakter)..." required minlength="10"></textarea>
               </div>
 
               <div class="form-group">
-                <label class="form-label">Alamat Lokasi</label>
-                <input type="text" id="complaintAddress" class="form-input" placeholder="Alamat atau patokan lokasi" />
+                <label class="form-label">Alamat Lokasi <span style="color:var(--danger-500)">*</span></label>
+                <input type="text" id="complaintAddress" class="form-input" placeholder="Nama jalan, RT/RW, nomor rumah, atau patokan terdekat (minimal 10 karakter)" required minlength="10" />
+                <div class="form-hint">Alamat yang jelas membantu petugas menemukan lokasi lebih cepat.</div>
               </div>
 
               <div class="form-group">
