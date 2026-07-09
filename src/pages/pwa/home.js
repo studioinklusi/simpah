@@ -128,7 +128,7 @@ export async function renderPWAHome() {
       ` : ''}
       ${user?.role !== 'warga' ? `
       <a href="#/pwa/riwayat" class="quick-action-btn">
-        <div class="quick-action-icon" style="background:rgba(107,114,128,0.12);color:#4b5563">${icons.clock}</div>
+        <div class="quick-action-icon gray">${icons.clock}</div>
         <span class="quick-action-label">Riwayat</span>
       </a>
       ` : ''}

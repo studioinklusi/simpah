@@ -167,6 +167,11 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
+[data-theme="dark"] .quick-action-btn:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+  background: #222b3e;
+}
 .quick-action-btn:active {
   transform: scale(0.97);
 }
@@ -184,6 +189,16 @@
 .quick-action-icon.red { background: rgba(239,68,68,0.12); color: var(--danger-600); }
 .quick-action-icon.purple { background: rgba(139,92,246,0.12); color: #7c3aed; }
 .quick-action-icon.teal { background: rgba(20,184,166,0.12); color: #0d9488; }
+.quick-action-icon.gray { background: rgba(107,114,128,0.12); color: #4b5563; }
+
+/* Dark Mode Overrides for Icons */
+[data-theme="dark"] .quick-action-icon.green { background: rgba(52,211,153,0.15); color: #34d399; }
+[data-theme="dark"] .quick-action-icon.blue { background: rgba(96,165,250,0.15); color: #60a5fa; }
+[data-theme="dark"] .quick-action-icon.amber { background: rgba(251,191,36,0.15); color: #fbbf24; }
+[data-theme="dark"] .quick-action-icon.red { background: rgba(248,113,113,0.15); color: #f87171; }
+[data-theme="dark"] .quick-action-icon.purple { background: rgba(192,132,252,0.15); color: #c084fc; }
+[data-theme="dark"] .quick-action-icon.teal { background: rgba(45,212,191,0.15); color: #2dd4bf; }
+[data-theme="dark"] .quick-action-icon.gray { background: rgba(156,163,175,0.15); color: #e5e7eb; }
 .quick-action-label {
   font-size: var(--font-xs);
   font-weight: 600;
@@ -205,6 +220,15 @@
   padding: var(--space-4);
   position: relative;
   overflow: hidden;
+  transition: all var(--transition-base);
+}
+.pwa-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+[data-theme="dark"] .pwa-summary-card:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
 }
 .pwa-summary-card .summary-value {
   font-size: var(--font-2xl);
@@ -355,6 +379,12 @@
 }
 .record-item:hover {
   box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .record-item:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.12);
+  background: #222b3e;
 }
 .record-icon {
   width: 40px;
