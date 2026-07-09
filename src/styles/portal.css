@@ -84,8 +84,22 @@
   color: var(--primary-600);
   font-weight: 600;
 }
-.portal-nav-cta {
+.portal-nav-btn {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-5);
+  font-weight: 600;
+  font-size: var(--font-sm);
+  text-decoration: none;
+  transition: all 0.2s ease;
   margin-left: var(--space-4);
+}
+.portal-nav-btn:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
 }
 .portal-mobile-toggle {
   display: none;
@@ -114,7 +128,7 @@
   .portal-nav-links.open {
     display: flex;
   }
-  .portal-nav-cta { margin-left: 0; margin-top: var(--space-2); }
+  .portal-nav-btn { margin-left: 0; margin-top: var(--space-2); }
   .portal-mobile-toggle { display: flex; }
 }
 

@@ -100,14 +100,19 @@ export function renderPortalNav(active = '') {
     <nav class="portal-nav">
       <div class="portal-nav-inner">
         <a href="#/portal/tentang" class="portal-nav-brand">
-          <div class="portal-nav-brand-icon">S</div>
-          <h1>SIMPAH</h1>
+          <div style="display:flex; align-items:center;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 20 2 20 2s-1.7 5.5-3.8 10.7A7 7 0 0 1 11 20z" fill="#ecfdf5" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+            </svg>
+          </div>
+          <span style="font-size: var(--font-lg); font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; margin-left: 8px;">SIMPAH<span style="color: #10b981;">.</span></span>
         </a>
         <div class="portal-nav-links" id="portalNavLinks">
           <a href="#/portal/tentang" class="portal-nav-link ${active==='tentang'?'active':''}">Tentang</a>
           <a href="#/portal/edukasi" class="portal-nav-link ${active==='edukasi'?'active':''}">Edukasi</a>
           <a href="#/portal/regulasi" class="portal-nav-link ${active==='regulasi'?'active':''}">Regulasi</a>
-          <a href="#/login" class="btn btn-primary portal-nav-cta">Masuk</a>
+          <a href="#/login" class="portal-nav-btn">Masuk</a>
         </div>
         <button class="portal-mobile-toggle" id="portalMenuToggle">${icons.menu}</button>
       </div>
