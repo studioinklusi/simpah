@@ -244,11 +244,11 @@ export async function renderDashboardEdukasi() {
               </div>
 
               <div class="form-group">
-                <label class="form-label">Cover Gambar (Format JPG/PNG, Akan Dikompres Otomatis) <span style="color:var(--danger-500)">*</span></label>
+                <label class="form-label">Cover Gambar (Format JPG/PNG) <span style="color:var(--danger-500)">*</span></label>
                 <div class="photo-upload" id="artCoverArea" style="border:2px dashed var(--border-color); border-radius:var(--radius-lg); padding:var(--space-4); text-align:center; cursor:pointer; transition:all 0.15s; background:var(--bg-secondary)">
                   <div style="font-size:24px; margin-bottom:8px; color:var(--text-muted)">${icons.image}</div>
                   <div id="artCoverHint" style="font-size:var(--font-sm); font-weight:600; color:var(--text-secondary)">Klik atau seret gambar cover ke sini</div>
-                  <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">Ukuran maks 5MB. Lebar gambar otomatis dikompres ke 1024px</div>
+                  <div style="font-size:var(--font-xs); color:var(--text-muted); margin-top:4px">Ukuran maks 5MB.</div>
                 </div>
                 <input type="file" id="artCoverFileInput" accept="image/*" style="display:none" />
                 <div id="artCoverPreviewArea" style="display:none; margin-top:var(--space-3); position:relative; border-radius:var(--radius-lg); overflow:hidden">
@@ -290,8 +290,8 @@ export async function renderDashboardEdukasi() {
       </div>
 
       <style>
-        .md-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; }
-        .md-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:95%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25); border:1px solid var(--border-color); }
+        .md-modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px var(--space-4); }
+        .md-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:95%; max-width:680px; box-shadow:0 20px 60px rgba(0,0,0,0.25); border:1px solid var(--border-color); margin-bottom:40px; }
         .md-modal-header { display:flex; justify-content:space-between; align-items:center; padding:var(--space-4) var(--space-6); border-bottom:1px solid var(--border-color); }
         .md-modal-header h3 { font-size:var(--font-md); font-weight:700; margin:0; }
         .md-modal-close { width:32px; height:32px; border-radius:50%; border:none; background:var(--bg-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); transition:all 0.15s; }
@@ -552,7 +552,7 @@ export async function renderDashboardEdukasi() {
             // Local mockup url for static testing
             finalImageUrl = selectedCoverBase64;
           } else {
-            showToast('Mengunggah dan mengompresi gambar cover...', 'info');
+            showToast('Mengunggah gambar cover...', 'info');
             const filePath = `articles/${id}/cover.jpg`;
             const uploadedUrl = await uploadBase64Image('simpah_media', filePath, selectedCoverBase64);
             if (!uploadedUrl) {
@@ -628,7 +628,7 @@ export async function renderDashboardEdukasi() {
     }
 
     try {
-      showToast('Mengompresi gambar cover...', 'info');
+      showToast('Memproses gambar cover...', 'info');
       // Automatic image compression via compressImage
       const compressedBase64 = await compressImage(file);
       
@@ -645,7 +645,7 @@ export async function renderDashboardEdukasi() {
       }
     } catch (err) {
       console.error(err);
-      showToast('Gagal mengompresi gambar.', 'danger');
+      showToast('Gagal memproses gambar.', 'danger');
     }
   }
 
