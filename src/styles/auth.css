@@ -924,19 +924,29 @@
 /* Responsiveness Media Queries */
 @media (max-width: 1024px) {
   .auth-navbar {
-    padding: 0 2rem;
+    padding: 0 1.5rem;
   }
   .auth-footer {
-    padding: 0 2rem;
+    padding: 0 1.5rem;
   }
   .auth-split-container {
     flex-direction: column;
-    padding: var(--space-6) 1.5rem;
-    gap: 3.5rem;
+    padding: var(--space-4) 1.25rem var(--space-8) 1.25rem;
+    gap: 1.5rem;
     align-items: center;
+    justify-content: flex-start;
   }
   .reference-left-panel {
     display: none !important;
+  }
+  .reference-right-panel {
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .reference-card {
+    padding: var(--space-6) var(--space-5);
+    border-radius: 24px;
   }
 }
 
