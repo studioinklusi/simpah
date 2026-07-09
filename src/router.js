@@ -71,6 +71,53 @@ export function startRouter(defaultRoute = '/login') {
     let handler = routeConfig ? (typeof routeConfig === 'function' ? routeConfig : routeConfig.handler) : null;
     let allowedRoles = routeConfig && typeof routeConfig !== 'function' ? routeConfig.allowedRoles : null;
 
+    // Inject and manage top progress bar loading indicator
+    let progressBar = document.getElementById('router-progress-bar');
+    if (!progressBar) {
+      progressBar = document.createElement('div');
+      progressBar.id = 'router-progress-bar';
+      progressBar.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #10b981, #059669);
+        z-index: 99999;
+        transition: width 0.2s ease, opacity 0.2s ease;
+        width: 0;
+        opacity: 0;
+        pointer-events: none;
+      `;
+      document.body.appendChild(progressBar);
+    }
+
+    let progressInterval = null;
+
+    function startProgress() {
+      if (progressInterval) clearInterval(progressInterval);
+      progressBar.style.opacity = '1';
+      progressBar.style.width = '10%';
+      let width = 10;
+      progressInterval = setInterval(() => {
+        if (width < 90) {
+          width += Math.random() * 10 + 2;
+          if (width > 90) width = 90;
+          progressBar.style.width = width + '%';
+        }
+      }, 100);
+    }
+
+    function finishProgress() {
+      if (progressInterval) clearInterval(progressInterval);
+      progressBar.style.width = '100%';
+      setTimeout(() => {
+        progressBar.style.opacity = '0';
+        setTimeout(() => {
+          progressBar.style.width = '0';
+        }, 200);
+      }, 150);
+    }
+
     if (handler) {
       // ── Centralized Role Authorization Guard ────────────────────
       if (allowedRoles) {
@@ -84,12 +131,15 @@ export function startRouter(defaultRoute = '/login') {
       }
 
       try {
+        startProgress();
         const cleanup = await handler(hash);
         if (typeof cleanup === 'function') {
           currentCleanup = cleanup;
         }
       } catch (e) {
         console.error('Route handler error:', e);
+      } finally {
+        finishProgress();
       }
     } else {
       // 404 - redirect to default
