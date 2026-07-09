@@ -1,5 +1,5 @@
-// SIMPAH - Hash Router with Auth Guard
 import { getAuthProfile, isPublicRoute, getDefaultRoute } from './lib/auth.js';
+import { initTheme } from './utils/helpers.js';
 
 const routes = {};
 let currentCleanup = null;
@@ -19,6 +19,13 @@ export function getCurrentRoute() {
 export function startRouter(defaultRoute = '/login') {
   async function handleRoute() {
     const hash = window.location.hash.slice(1) || defaultRoute;
+    
+    // Force light theme on public routes, restore saved theme on protected routes
+    if (isPublicRoute(hash)) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      initTheme();
+    }
     
     // Cleanup previous page
     if (currentCleanup && typeof currentCleanup === 'function') {
