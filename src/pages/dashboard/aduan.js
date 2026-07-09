@@ -7,6 +7,7 @@ import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import { renderPWALayout } from '../pwa/layout.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
+import { compressImage } from '../../components/photo-picker.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: icons.download },
@@ -461,15 +462,17 @@ export async function renderAduanManagement() {
       photoInput.value = '';
     });
 
-    function handlePhoto(file) {
+    async function handlePhoto(file) {
       if (file.size > 5 * 1024 * 1024) { showToast('Ukuran foto maksimal 5MB', 'warning'); return; }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImg.src = e.target.result;
+      try {
+        const compressedBase64 = await compressImage(file);
+        previewImg.src = compressedBase64;
         preview.style.display = 'block';
         uploadArea.style.display = 'none';
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Failed to compress image:', err);
+        showToast('Gagal memproses foto', 'error');
+      }
     }
 
     // Geolocation detection

@@ -132,7 +132,7 @@ export function initPhotoPicker(id, { onUpdate } = {}) {
 }
 
 // ─── Image Compression ───────────────────────────────────────────────────────
-function compressImage(file) {
+export function compressImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
