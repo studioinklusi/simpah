@@ -3,7 +3,7 @@ import { icons } from '../../components/icons.js';
 import { INCIDENTAL_TYPES, SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { getCurrentUser, formatDateTime } from '../../utils/helpers.js';
 import { getCurrentPosition } from '../../utils/gps.js';
-import { addEvent, getAllEvents, getAllMasterWilayah } from '../../db/store.js';
+import { addEvent, getAllEvents, getAllMasterWilayah, getDB } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
@@ -25,6 +25,29 @@ export async function renderInsidental() {
   let gpsData = null;
   let photoPicker = null;
   getCurrentPosition(false).then(p => { gpsData = p; }).catch(()=>{});
+
+  // Auto-resync legacy events to populate new columns (desa_id, weight_kg) after migration is run
+  if (navigator.onLine && events.length > 0) {
+    try {
+      let needsResync = false;
+      const db = await getDB();
+      const tx = db.transaction('incidental_events', 'readwrite');
+      for (const e of events) {
+        if ((e.weight_kg > 0 || e.desa_id) && e.synced && !e.is_demo) {
+          e.synced = false;
+          await tx.store.put(e);
+          needsResync = true;
+        }
+      }
+      await tx.done;
+      if (needsResync) {
+        const { triggerSync } = await import('../../db/sync.js');
+        triggerSync().catch(err => console.error('[Auto-Resync Error]', err));
+      }
+    } catch (err) {
+      console.warn('[Auto-Resync Check Failed]', err);
+    }
+  }
 
   renderPWALayout('Kegiatan Insidental', `
     <div class="page-enter">
