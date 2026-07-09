@@ -51,11 +51,11 @@ export async function renderPWAHome() {
     <div class="pwa-greeting page-enter">
       <div class="greeting-text">
         <h2>Halo, ${(user.full_name || 'User').split(' ')[0]}!</h2>
-        <div style="display:inline-flex; align-items:center; gap:6px; margin:4px 0; background:rgba(255,255,255,0.7); backdrop-filter:blur(4px); padding:4px 12px; border-radius:30px; border:1px solid rgba(5,150,105,0.15); font-size:11px; font-weight:700; color:var(--primary-700)">
-          <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--primary-600)"></span>
+        <div class="pwa-role-badge">
+          <span class="pwa-role-dot"></span>
           ${authorityText}
         </div>
-        <p style="font-size:var(--font-sm);color:var(--primary-600);font-weight:600;margin:4px 0">${getMotivationalGreeting()}</p>
+        <p class="pwa-greeting-moto">${getMotivationalGreeting()}</p>
         <p style="margin-top:2px; font-size:11px; color:var(--text-muted)">${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
       </div>
       <div class="sync-status ${navigator.onLine ? 'online' : 'offline'}" id="syncIndicator">

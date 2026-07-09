@@ -83,12 +83,6 @@ export function renderPWALayout(title, content, activeTab = 'home') {
 
       </nav>
     </div>
-    <style>
-      .pwa-greeting { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-5); }
-      .greeting-text h2 { font-size:var(--font-xl); font-weight:700; }
-      .greeting-text p { font-size:var(--font-sm); color:var(--text-secondary); margin-top:var(--space-1); }
-      .pwa-summary-row { grid-template-columns:repeat(2,1fr); }
-    </style>
   `;
 
   // Wire up theme toggle

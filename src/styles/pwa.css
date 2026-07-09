@@ -463,3 +463,61 @@
     border-right: 1px solid var(--border-color);
   }
 }
+
+/* --- PWA Greeting Section --- */
+.pwa-greeting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+.greeting-text h2 {
+  font-size: var(--font-xl);
+  font-weight: 700;
+}
+.greeting-text p {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+.pwa-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-700);
+}
+.pwa-role-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-600);
+}
+.pwa-greeting-moto {
+  font-size: var(--font-sm);
+  color: var(--primary-600);
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+/* Dark Mode greeting details */
+[data-theme="dark"] .pwa-role-badge {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+[data-theme="dark"] .pwa-role-dot {
+  background: #34d399;
+}
+[data-theme="dark"] .pwa-greeting-moto {
+  color: #34d399;
+}
