@@ -12,8 +12,9 @@ const FALLBACK_ARTICLES = [
     title: 'Panduan Praktis Memilah Sampah Rumah Tangga',
     excerpt: 'Langkah mudah memulai pilah sampah dari dapur Anda untuk mengurangi volume sampah ke TPA.',
     content: `
-      <h2>Pentingnya Memilah Sampah dari Rumah</h2>
       <p>Memilah sampah adalah langkah pertama yang paling krusial dalam siklus pengelolaan sampah modern. Dengan memisahkan sampah organik dan anorganik di tingkat rumah tangga, kita dapat meningkatkan tingkat daur ulang hingga 80% dan mencegah pencemaran lingkungan.</p>
+      <h2>Mengapa Harus Mulai Memilah?</h2>
+      <p>Setiap hari, ribuan ton sampah berakhir begitu saja di Tempat Pemrosesan Akhir (TPA). Sebagian besar di antaranya adalah sampah daur ulang berharga yang tercampur dengan sisa makanan sehingga menjadi membusuk dan tidak bernilai. Dengan memilah, Anda langsung berkontribusi memisahkan bahan baku sekunder industri daur ulang.</p>
       <h3>Langkah Praktis Memulai:</h3>
       <ol>
         <li><strong>Siapkan Wadah Terpisah:</strong> Sediakan minimal dua tempat sampah di rumah, satu untuk sampah organik (sisa makanan, dedaunan) dan satu untuk anorganik (plastik, kertas, logam).</li>
@@ -31,8 +32,9 @@ const FALLBACK_ARTICLES = [
     title: 'Membuat Kompos Organik dengan Metode Takakura',
     excerpt: 'Metode praktis pembuatan kompos skala rumah tangga tanpa bau dan tidak memerlukan lahan luas.',
     content: `
-      <h2>Mengenal Metode Kompos Takakura</h2>
       <p>Metode Takakura dikembangkan oleh Koji Takakura dari Jepang. Metode ini sangat cocok untuk daerah perkotaan atau rumah tangga dengan lahan terbatas karena prosesnya kering, tidak berbau, dan cepat menghasilkan kompos.</p>
+      <h2>Kelebihan Metode Takakura</h2>
+      <p>Berbeda dengan komposter konvensional yang sering kali menghasilkan cairan berbau menyengat, keranjang Takakura mengandalkan sirkulasi udara (aerobik) yang baik. Ragi dan bakteri baik di dalam starter akan mendekomposisi sampah dapur Anda dengan sangat cepat.</p>
       <h3>Persiapan Alat & Bahan:</h3>
       <ul>
         <li>Keranjang plastik berlubang udara (keranjang baju)</li>
@@ -59,10 +61,9 @@ const FALLBACK_ARTICLES = [
     title: 'Daur Ulang Plastik PET: Jenis dan Prosesnya',
     excerpt: 'Mengenal kode plastik nomor 1 (PET/PETE) dan bagaimana kontribusi Anda menyelamatkan laut.',
     content: `
-      <h2>Apa itu Plastik PET?</h2>
       <p>PET (Polyethylene Terephthalate) adalah jenis plastik yang paling umum digunakan untuk botol minuman sekali pakai. Plastik ini ditandai dengan kode angka 1 di dalam segitiga daur ulang.</p>
-      <h3>Proses Daur Ulang PET:</h3>
-      <p>Plastik PET 100% dapat didaur ulang menjadi serat poliester untuk pakaian, tas belanja, hingga botol minuman baru. Pengurangan limbah PET sangat krusial karena plastik ini membutuhkan waktu hingga 450 tahun untuk terurai di alam bebas.</p>
+      <h2>Mengapa PET Sangat Berharga?</h2>
+      <p>Di pasar daur ulang global, PET adalah raja. Serat botol bekas PET yang dihancurkan dapat dipintal kembali menjadi benang poliester berkualitas tinggi untuk pakaian olahraga, karpet, tas belanja, hingga casing perangkat elektronik baru. Melakukan daur ulang PET secara massal menghemat emisi karbon hingga 60% dibanding memproduksi plastik murni.</p>
       <h3>Cara Membantu Daur Ulang:</h3>
       <ol>
         <li>Kosongkan isi botol sepenuhnya.</li>
@@ -89,46 +90,50 @@ const CATEGORY_STYLES = {
 export async function renderEdukasi() {
   const app = document.getElementById('app');
   
-  // Render layout structure first with loading skeleton
+  // Render layout structure with skeleton loading
   app.innerHTML = `
     <div class="portal-layout">
       ${renderPortalNav('edukasi')}
       <div style="padding-top:calc(var(--navbar-height) + var(--space-8))">
-        <section class="portal-section" style="min-height:70vh">
+        <!-- Grid View Content -->
+        <section class="portal-section" id="edukasiGridViewSection" style="min-height:70vh">
           <div class="portal-section-header">
             <h2>Edukasi ${`<span class="gradient-text">Pengelolaan Sampah</span>`}</h2>
             <p>Artikel dan informasi untuk meningkatkan kesadaran masyarakat dalam pengelolaan sampah</p>
           </div>
           
-          <!-- Loading skeleton -->
           <div class="grid-auto" id="edukasiArticlesGrid">
             ${[1, 2, 3].map(() => `
               <div class="portal-card skeleton-loading" style="height:350px; border-radius:var(--radius-lg); opacity:0.6"></div>
             `).join('')}
           </div>
         </section>
-      </div>
 
-      <!-- Article Detail Modal -->
-      <div class="art-detail-overlay" id="articleDetailModal" style="display:none">
-        <div class="art-detail-modal">
-          <div style="position:relative">
-            <img id="modalCover" src="" style="width:100%; height:280px; object-fit:cover" />
-            <div style="position:absolute; inset:0; background:linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.7))"></div>
-            <button class="art-detail-close" id="modalCloseBtn">${icons.close}</button>
-            <div style="position:absolute; bottom:var(--space-4); left:var(--space-6); right:var(--space-6); color:#fff">
-              <span class="portal-card-tag" id="modalTag" style="color:#fff; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4)"></span>
-              <h2 id="modalTitle" style="font-size:var(--font-xl); font-weight:800; text-shadow:0 2px 4px rgba(0,0,0,0.5); margin-top:var(--space-2)"></h2>
+        <!-- Dynamic Article Reading View (Hidden by default) -->
+        <section class="portal-section" id="edukasiReadingViewSection" style="display:none; max-width:800px; margin:0 auto; padding-bottom:80px; min-height:70vh">
+          <!-- Back button -->
+          <button class="portal-nav-btn" id="backToGridBtn" style="display:inline-flex; align-items:center; gap:8px; border:none; background:rgba(16,185,129,0.08); color:var(--primary-600); font-weight:700; padding:10px 20px; border-radius:24px; cursor:pointer; font-size:var(--font-sm); margin-bottom:32px; transition:all 0.2s">
+            ${icons.chevronLeft} Kembali ke Edukasi
+          </button>
+
+          <!-- Article Header -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+              <span id="readCategoryBadge" class="portal-card-tag" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:var(--font-xs)"></span>
+              <span id="readDate" style="font-size:var(--font-sm); color:var(--text-muted)"></span>
             </div>
+            <h1 id="readTitle" style="font-size:clamp(1.75rem, 4vw, 2.5rem); font-weight:800; line-height:1.25; color:var(--text-primary); letter-spacing:-0.02em; margin:0 0 16px 0"></h1>
+            <p id="readExcerpt" style="font-size:var(--font-md); line-height:1.6; color:var(--text-secondary); font-style:italic; margin:0; padding-left:16px; border-left:4px solid var(--primary-500)"></p>
           </div>
-          <div class="art-detail-body">
-            <div style="font-size:var(--font-xs); color:var(--text-muted); margin-bottom:var(--space-4); display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:12px">
-              <span>Diterbitkan: <strong id="modalDate"></strong></span>
-              <span>SIMPAH Smart Intelligence</span>
-            </div>
-            <div id="modalContent" class="article-rich-text"></div>
+
+          <!-- Cover Image -->
+          <div style="border-radius:var(--radius-xl); overflow:hidden; margin-bottom:40px; box-shadow:var(--shadow-md); height:clamp(220px, 40vw, 420px)">
+            <img id="readCoverImage" src="" style="width:100%; height:100%; object-fit:cover" />
           </div>
-        </div>
+
+          <!-- Rich Text Content Body -->
+          <div id="readContentBody" class="article-rich-text"></div>
+        </section>
       </div>
 
       <style>
@@ -141,23 +146,24 @@ export async function renderEdukasi() {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }
         }
-        .art-detail-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(10,15,26,0.75); z-index:1000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-        .art-detail-modal { background:var(--bg-primary); border-radius:var(--radius-xl); width:95%; max-width:650px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow-hidden:hidden; border:1px solid var(--border-color); animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .art-detail-close { position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:50%; border:none; background:rgba(0,0,0,0.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(4px); transition:all 0.15s; }
-        .art-detail-close:hover { background:var(--danger-600); transform:scale(1.05); }
-        .art-detail-body { padding:var(--space-6) var(--space-8); }
-        .article-rich-text h2 { font-size:var(--font-lg); font-weight:700; color:var(--text-primary); margin-top:var(--space-5); margin-bottom:var(--space-3); }
-        .article-rich-text h3 { font-size:var(--font-md); font-weight:700; color:var(--text-primary); margin-top:var(--space-4); margin-bottom:var(--space-2); }
-        .article-rich-text p { font-size:var(--font-sm); line-height:1.6; color:var(--text-secondary); margin-bottom:var(--space-4); }
-        .article-rich-text ul, .article-rich-text ol { margin-bottom:var(--space-4); padding-left:20px; font-size:var(--font-sm); color:var(--text-secondary); }
-        .article-rich-text li { margin-bottom:6px; line-height:1.5 }
+        .article-rich-text {
+          font-size: 1.1rem;
+          line-height: 1.8;
+          color: var(--text-secondary);
+        }
+        .article-rich-text h2 { font-size:var(--font-lg); font-weight:800; color:var(--text-primary); margin-top:36px; margin-bottom:16px; letter-spacing:-0.01em; }
+        .article-rich-text h3 { font-size:var(--font-md); font-weight:700; color:var(--text-primary); margin-top:24px; margin-bottom:12px; }
+        .article-rich-text p { margin-bottom:20px; text-align:justify; }
+        .article-rich-text ul, .article-rich-text ol { margin-bottom:24px; padding-left:24px; }
+        .article-rich-text li { margin-bottom:8px; line-height:1.6; }
+        .article-rich-text strong { color:var(--text-primary); }
       </style>
       ${renderPortalFooter()}
     </div>
   `;
   initPortalNav();
 
-  // 2. Fetch published articles from database
+  // Fetch articles from Supabase
   let articles = [];
   try {
     const { data, error } = await supabase
@@ -172,13 +178,15 @@ export async function renderEdukasi() {
     console.warn('Database fetch failed for portal articles, using fallback data.', err);
   }
 
-  // Fallback to static if empty or error
   if (articles.length === 0) {
     articles = FALLBACK_ARTICLES;
   }
 
-  // 3. Render cards
+  // Render grids
   const grid = document.getElementById('edukasiArticlesGrid');
+  const gridSection = document.getElementById('edukasiGridViewSection');
+  const readingSection = document.getElementById('edukasiReadingViewSection');
+
   if (grid) {
     grid.innerHTML = articles.map((a, i) => {
       const style = CATEGORY_STYLES[a.category] || CATEGORY_STYLES.Umum;
@@ -201,55 +209,51 @@ export async function renderEdukasi() {
       `;
     }).join('');
 
-    // Hover effect animation on cards
+    // Setup interactive events
     grid.querySelectorAll('.portal-card').forEach(card => {
       const img = card.querySelector('img');
       card.addEventListener('mouseenter', () => { if (img) img.style.transform = 'scale(1.05)'; });
       card.addEventListener('mouseleave', () => { if (img) img.style.transform = 'scale(1)'; });
 
-      // Click to open detail modal
       card.addEventListener('click', () => {
         const id = card.dataset.articleId;
         const art = articles.find(x => x.id === id);
-        if (art) openArticleDetail(art);
+        if (art) switchToReadingMode(art);
       });
     });
   }
 
-  // 4. Modal actions
-  const modal = document.getElementById('articleDetailModal');
-  const closeBtn = document.getElementById('modalCloseBtn');
-  
-  if (closeBtn) {
-    closeBtn.onclick = () => { if (modal) modal.style.display = 'none'; };
-  }
-  
-  if (modal) {
-    modal.onclick = (e) => {
-      if (e.target === modal) modal.style.display = 'none';
-    };
-  }
+  // Back button functionality
+  const backBtn = document.getElementById('backToGridBtn');
+  backBtn?.addEventListener('click', () => {
+    // Hide reading mode, show grid
+    if (readingSection) readingSection.style.display = 'none';
+    if (gridSection) gridSection.style.display = '';
+    // Scroll smoothly to grid section header
+    gridSection?.scrollIntoView({ behavior: 'smooth' });
+  });
 
-  function openArticleDetail(art) {
-    const modal = document.getElementById('articleDetailModal');
-    const mCover = document.getElementById('modalCover');
-    const mTag = document.getElementById('modalTag');
-    const mTitle = document.getElementById('modalTitle');
-    const mDate = document.getElementById('modalDate');
-    const mContent = document.getElementById('modalContent');
+  // Switch display mode helper
+  function switchToReadingMode(art) {
+    if (!gridSection || !readingSection) return;
+
     const style = CATEGORY_STYLES[art.category] || CATEGORY_STYLES.Umum;
 
-    if (!modal) return;
+    // Fill reading mode data
+    document.getElementById('readCategoryBadge').textContent = art.category;
+    document.getElementById('readCategoryBadge').style.backgroundColor = style.color + '15';
+    document.getElementById('readCategoryBadge').style.color = style.color;
+    document.getElementById('readDate').textContent = formatDate(art.created_at);
+    document.getElementById('readTitle').textContent = art.title;
+    document.getElementById('readExcerpt').textContent = art.excerpt;
+    document.getElementById('readCoverImage').src = art.image_url || 'https://placehold.co/800x450?text=No+Image';
+    document.getElementById('readContentBody').innerHTML = art.content || `<p>${art.excerpt}</p>`;
 
-    mCover.src = art.image_url || 'https://placehold.co/600x400?text=No+Image';
-    mTag.textContent = art.category;
-    mTag.style.backgroundColor = style.color;
-    mTitle.textContent = art.title;
-    mDate.textContent = formatDate(art.created_at);
+    // Hide grid, show reading mode
+    gridSection.style.display = 'none';
+    readingSection.style.display = '';
 
-    // Render HTML content safely inside detail page
-    mContent.innerHTML = art.content || `<p>${art.excerpt}</p>`;
-
-    modal.style.display = 'flex';
+    // Scroll window smoothly to the top of reading mode
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
