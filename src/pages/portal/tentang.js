@@ -30,11 +30,11 @@ export function renderPortalTentang() {
             
             <!-- Buttons -->
             <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-10); justify-content: center;">
-              <a href="#/login" class="portal-nav-btn" style="margin: 0; padding: var(--space-4) var(--space-8); font-size: var(--font-base); border-radius: var(--radius-xl); background: var(--primary-600); color: white; border-color: var(--primary-600); display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+              <a href="#/login" class="portal-nav-btn" style="margin: 0; padding: var(--space-3) var(--space-6); font-size: var(--font-base); display: inline-flex; align-items: center; gap: 8px;">
                 Masuk Sistem
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
               </a>
-              <button id="btnLearnMore" class="card" style="margin: 0; padding: var(--space-4) var(--space-8); font-size: var(--font-base); border-radius: var(--radius-xl); background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-secondary)'" onmouseout="this.style.backgroundColor='var(--bg-card)'">
+              <button id="btnLearnMore" class="portal-nav-btn" style="margin: 0; padding: var(--space-3) var(--space-6); font-size: var(--font-base); cursor: pointer; display: inline-flex; align-items: center;">
                 Pelajari Selengkapnya
               </button>
             </div>
@@ -269,7 +269,7 @@ export function renderPortalTentang() {
                 <p style="color: rgba(255, 255, 255, 0.85); font-size: var(--font-base); line-height: 1.6; margin-bottom: var(--space-10);">
                   Mari bergabung dalam ekosistem digital tata kelola persampahan terpadu. Masuk ke sistem monitoring untuk merekam setoran sampah desa secara akurat dan transparan.
                 </p>
-                <a href="#/login" class="portal-nav-btn" style="margin: 0 auto; display: inline-block; padding: var(--space-4) var(--space-8); font-size: var(--font-base); border-radius: var(--radius-xl); background: white; color: #0d7c3d; border-color: white; font-weight: 700; transition: transform 0.2s; box-shadow: var(--shadow-md);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <a href="#/login" class="portal-nav-btn" style="margin: 0 auto; display: inline-block; padding: var(--space-3) var(--space-6); font-size: var(--font-base); background: #ffffff; color: #059669; border-color: #ffffff; font-weight: 700; transition: all 0.2s ease;" onmouseover="this.style.background='#ecfdf5'; this.style.color='#047857';" onmouseout="this.style.background='#ffffff'; this.style.color='#059669';">
                   Masuk Sekarang
                 </a>
               </div>
