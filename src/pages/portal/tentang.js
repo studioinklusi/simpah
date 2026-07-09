@@ -40,7 +40,7 @@ export function renderPortalTentang() {
             </div>
             
             <!-- Teaser Dashboard -->
-            <div style="position: relative; width: 100%; max-width: 960px; margin: 0 auto;">
+            <div style="position: relative; width: 100%; max-width: 960px; margin: 0 auto var(--space-16) auto;">
               <div style="border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-card); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);">
                 <img style="width: 100%; height: auto; display: block; object-fit: cover;" alt="GIS Waste Management Dashboard" src="/dashboard_live.png" />
               </div>
@@ -113,7 +113,7 @@ export function renderPortalTentang() {
         </section>
 
         <!-- Problem Story (Latar Belakang) -->
-        <section class="portal-section" style="padding-top: var(--space-20); padding-bottom: var(--space-20);">
+        <section class="portal-section" style="padding-top: var(--space-24); padding-bottom: var(--space-28);">
           <div style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-4);">
             <div class="grid-2" style="gap: var(--space-12); align-items: center;">
               <!-- Left: Image -->
@@ -159,7 +159,7 @@ export function renderPortalTentang() {
         </section>
 
         <!-- Platform Features -->
-        <section class="portal-section" style="background: var(--bg-secondary); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding-top: var(--space-20); padding-bottom: var(--space-20);">
+        <section class="portal-section" style="background: var(--bg-secondary); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding-top: var(--space-24); padding-bottom: var(--space-28);">
           <div style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-4);">
             <div style="text-align: center; margin-bottom: var(--space-12);">
               <p style="font-size: 11px; font-weight: 600; color: var(--primary-600); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.15em;">Capabilities</p>
@@ -225,7 +225,7 @@ export function renderPortalTentang() {
         </section>
 
         <!-- Dashboard Showcase -->
-        <section class="portal-section" style="padding-top: var(--space-20); padding-bottom: var(--space-20);">
+        <section class="portal-section" style="padding-top: var(--space-28); padding-bottom: var(--space-28);">
           <div style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-4);">
             <div class="grid-2" style="gap: var(--space-12); align-items: center;">
               <!-- Left -->
@@ -261,7 +261,7 @@ export function renderPortalTentang() {
         </section>
 
         <!-- CTA Section -->
-        <section class="portal-section" style="padding-bottom: var(--space-20);">
+        <section class="portal-section" style="padding-top: var(--space-16); padding-bottom: var(--space-28);">
           <div style="max-width: 1100px; margin: 0 auto; padding: 0 var(--space-4);">
             <div style="background: linear-gradient(135deg, #0d7c3d 0%, #059669 100%); color: white; border-radius: 40px; padding: var(--space-16) var(--space-10); text-align: center; position: relative; overflow: hidden; box-shadow: var(--shadow-lg);">
               <div style="max-width: 700px; margin: 0 auto; position: relative; z-index: 2;">
