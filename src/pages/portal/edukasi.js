@@ -5,79 +5,6 @@ import { supabase } from '../../lib/supabase.js';
 import { formatDate } from '../../utils/helpers.js';
 import { showToast } from '../../components/toast.js';
 
-// Static fallback articles
-const FALLBACK_ARTICLES = [
-  {
-    id: 'a1111111-1111-1111-1111-111111111111', 
-    category: 'Pemilahan', 
-    title: 'Panduan Praktis Memilah Sampah Rumah Tangga',
-    excerpt: 'Langkah mudah memulai pilah sampah dari dapur Anda untuk mengurangi volume sampah ke TPA.',
-    content: `
-      <p>Memilah sampah adalah langkah pertama yang paling krusial dalam siklus pengelolaan sampah modern. Dengan memisahkan sampah organik dan anorganik di tingkat rumah tangga, kita dapat meningkatkan tingkat daur ulang hingga 80% dan mencegah pencemaran lingkungan.</p>
-      <h2>Mengapa Harus Mulai Memilah?</h2>
-      <p>Setiap hari, ribuan ton sampah berakhir begitu saja di Tempat Pemrosesan Akhir (TPA). Sebagian besar di antaranya adalah sampah daur ulang berharga yang tercampur dengan sisa makanan sehingga menjadi membusuk dan tidak bernilai. Dengan memilah, Anda langsung berkontribusi memisahkan bahan baku sekunder industri daur ulang.</p>
-      <h3>Langkah Praktis Memulai:</h3>
-      <ol>
-        <li><strong>Siapkan Wadah Terpisah:</strong> Sediakan minimal dua tempat sampah di rumah, satu untuk sampah organik (sisa makanan, dedaunan) dan satu untuk anorganik (plastik, kertas, logam).</li>
-        <li><strong>Bersihkan Sampah Anorganik:</strong> Sebelum membuang botol plastik atau wadah bekas makanan, bilas terlebih dahulu dengan air agar tidak mengundang lalat dan mempermudah proses daur ulang.</li>
-        <li><strong>Konsistensi:</strong> Jadikan memilah sampah sebagai kebiasaan sehari-hari seluruh anggota keluarga.</li>
-      </ol>
-    `,
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), 
-    color: '#10b981', 
-    image_url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80'
-  },
-  {
-    id: 'a2222222-2222-2222-2222-222222222222', 
-    category: 'Kompos', 
-    title: 'Membuat Kompos Organik dengan Metode Takakura',
-    excerpt: 'Metode praktis pembuatan kompos skala rumah tangga tanpa bau dan tidak memerlukan lahan luas.',
-    content: `
-      <p>Metode Takakura dikembangkan oleh Koji Takakura dari Jepang. Metode ini sangat cocok untuk daerah perkotaan atau rumah tangga dengan lahan terbatas karena prosesnya kering, tidak berbau, dan cepat menghasilkan kompos.</p>
-      <h2>Kelebihan Metode Takakura</h2>
-      <p>Berbeda dengan komposter konvensional yang sering kali menghasilkan cairan berbau menyengat, keranjang Takakura mengandalkan sirkulasi udara (aerobik) yang baik. Ragi dan bakteri baik di dalam starter akan mendekomposisi sampah dapur Anda dengan sangat cepat.</p>
-      <h3>Persiapan Alat & Bahan:</h3>
-      <ul>
-        <li>Keranjang plastik berlubang udara (keranjang baju)</li>
-        <li>Bantalan sekam padi</li>
-        <li>Starter bakteri/kompos matang</li>
-        <li>Kain penutup hitam</li>
-      </ul>
-      <h3>Cara Pembuatan:</h3>
-      <ol>
-        <li>Letakkan bantalan sekam di dasar keranjang untuk menyerap kelebihan air.</li>
-        <li>Masukkan starter bakteri atau kompos matang ke dalam keranjang.</li>
-        <li>Masukkan sampah organik dapur yang sudah dipotong kecil-kecil.</li>
-        <li>Aduk rata dengan starter.</li>
-        <li>Tutup dengan bantalan sekam kedua dan kain hitam untuk menjaga kelembapan dan panas.</li>
-      </ol>
-    `,
-    created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), 
-    color: '#f59e0b', 
-    image_url: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&w=600&q=80'
-  },
-  {
-    id: 'a3333333-3333-3333-3333-333333333333', 
-    category: 'Daur Ulang', 
-    title: 'Daur Ulang Plastik PET: Jenis dan Prosesnya',
-    excerpt: 'Mengenal kode plastik nomor 1 (PET/PETE) dan bagaimana kontribusi Anda menyelamatkan laut.',
-    content: `
-      <p>PET (Polyethylene Terephthalate) adalah jenis plastik yang paling umum digunakan untuk botol minuman sekali pakai. Plastik ini ditandai dengan kode angka 1 di dalam segitiga daur ulang.</p>
-      <h2>Mengapa PET Sangat Berharga?</h2>
-      <p>Di pasar daur ulang global, PET adalah raja. Serat botol bekas PET yang dihancurkan dapat dipintal kembali menjadi benang poliester berkualitas tinggi untuk pakaian olahraga, karpet, tas belanja, hingga casing perangkat elektronik baru. Melakukan daur ulang PET secara massal menghemat emisi karbon hingga 60% dibanding memproduksi plastik murni.</p>
-      <h3>Cara Membantu Daur Ulang:</h3>
-      <ol>
-        <li>Kosongkan isi botol sepenuhnya.</li>
-        <li>Remas botol untuk menghemat ruang penyimpanan.</li>
-        <li>Buang ke bank sampah terdekat.</li>
-      </ol>
-    `,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), 
-    color: '#3b82f6', 
-    image_url: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=600&q=80'
-  }
-];
-
 const CATEGORY_STYLES = {
   Pemilahan: { color: '#10b981', icon: icons.recycle },
   'Daur Ulang': { color: '#3b82f6', icon: icons.refreshCw },
@@ -241,11 +168,7 @@ export async function renderEdukasi() {
     if (error) throw error;
     articles = data || [];
   } catch (err) {
-    console.warn('Database fetch failed for portal articles, using fallback data.', err);
-  }
-
-  if (articles.length === 0) {
-    articles = FALLBACK_ARTICLES;
+    console.warn('Database fetch failed for portal articles.', err);
   }
 
   // Parse active article from URL hash
@@ -259,42 +182,64 @@ export async function renderEdukasi() {
   const readingSection = document.getElementById('edukasiReadingViewSection');
 
   if (grid) {
-    grid.innerHTML = articles.map((a, i) => {
-      const style = CATEGORY_STYLES[a.category] || CATEGORY_STYLES.Umum;
-      return `
-        <div class="portal-card" data-article-id="${a.id}" style="animation:fadeInUp 0.4s ease ${i * 0.08}s both; cursor:pointer">
-          <div class="portal-card-image" style="position:relative; overflow:hidden; padding:0;">
-            <img src="${a.image_url || 'https://placehold.co/600x400?text=No+Image'}" alt="${a.title}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.3s ease;" />
-            <div style="position:absolute; inset:0; background:linear-gradient(to bottom, transparent 40%, ${style.color}dd 100%); opacity:0.6; mix-blend-mode:multiply;"></div>
-            <div style="position:absolute; bottom:var(--space-3); right:var(--space-3); background:rgba(255,255,255,0.9); padding:var(--space-2); border-radius:50%; color:${style.color}; box-shadow:var(--shadow-sm);">
-              ${style.icon}
-            </div>
+    if (articles.length === 0) {
+      grid.className = "";
+      grid.style.display = "flex";
+      grid.style.justifyContent = "center";
+      grid.style.alignItems = "center";
+      grid.style.minHeight = "280px";
+      grid.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); max-width: 400px; width: 100%;">
+          <div style="font-size: 48px; margin-bottom: 16px; color: var(--primary-500); opacity: 0.8; display: flex; justify-content: center;">
+            ${icons.book}
           </div>
-          <div class="portal-card-body">
-            <span class="portal-card-tag" style="background:${style.color}15; color:${style.color}">${a.category}</span>
-            <h3 class="portal-card-title">${a.title}</h3>
-            <p class="portal-card-excerpt">${a.excerpt}</p>
-            <p style="font-size:var(--font-xs); color:var(--text-muted); margin-top:var(--space-3)">${formatDate(a.created_at)}</p>
-          </div>
+          <h4 style="font-size: var(--font-md); font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0;">Belum Ada Artikel</h4>
+          <p style="font-size: var(--font-sm); margin: 0; line-height: 1.5;">Belum ada artikel edukasi yang diterbitkan saat ini. Silakan kembali lagi nanti.</p>
         </div>
       `;
-    }).join('');
+    } else {
+      grid.className = "grid-auto";
+      grid.style.display = "";
+      grid.style.justifyContent = "";
+      grid.style.alignItems = "";
+      grid.style.minHeight = "";
+      grid.innerHTML = articles.map((a, i) => {
+        const style = CATEGORY_STYLES[a.category] || CATEGORY_STYLES.Umum;
+        return `
+          <div class="portal-card" data-article-id="${a.id}" style="animation:fadeInUp 0.4s ease ${i * 0.08}s both; cursor:pointer">
+            <div class="portal-card-image" style="position:relative; overflow:hidden; padding:0;">
+              <img src="${a.image_url || 'https://placehold.co/600x400?text=No+Image'}" alt="${a.title}" style="width:100%; height:100%; object-fit:cover; transition: transform 0.3s ease;" />
+              <div style="position:absolute; inset:0; background:linear-gradient(to bottom, transparent 40%, ${style.color}dd 100%); opacity:0.6; mix-blend-mode:multiply;"></div>
+              <div style="position:absolute; bottom:var(--space-3); right:var(--space-3); background:rgba(255,255,255,0.9); padding:var(--space-2); border-radius:50%; color:${style.color}; box-shadow:var(--shadow-sm);">
+                ${style.icon}
+              </div>
+            </div>
+            <div class="portal-card-body">
+              <span class="portal-card-tag" style="background:${style.color}15; color:${style.color}">${a.category}</span>
+              <h3 class="portal-card-title">${a.title}</h3>
+              <p class="portal-card-excerpt">${a.excerpt}</p>
+              <p style="font-size:var(--font-xs); color:var(--text-muted); margin-top:var(--space-3)">${formatDate(a.created_at)}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
 
-    // Setup interactive events
-    grid.querySelectorAll('.portal-card').forEach(card => {
-      const img = card.querySelector('img');
-      card.addEventListener('mouseenter', () => { if (img) img.style.transform = 'scale(1.05)'; });
-      card.addEventListener('mouseleave', () => { if (img) img.style.transform = 'scale(1)'; });
+      // Setup interactive events
+      grid.querySelectorAll('.portal-card').forEach(card => {
+        const img = card.querySelector('img');
+        card.addEventListener('mouseenter', () => { if (img) img.style.transform = 'scale(1.05)'; });
+        card.addEventListener('mouseleave', () => { if (img) img.style.transform = 'scale(1)'; });
 
-      card.addEventListener('click', () => {
-        const id = card.dataset.articleId;
-        window.location.hash = `#/portal/edukasi/${id}`;
+        card.addEventListener('click', () => {
+          const id = card.dataset.articleId;
+          window.location.hash = `#/portal/edukasi/${id}`;
+        });
       });
-    });
+    }
   }
 
   // Rerender state dynamically based on active ID
-  if (activeArticleId) {
+  if (activeArticleId && articles.length > 0) {
     const activeArt = articles.find(x => x.id === activeArticleId);
     if (activeArt) {
       switchToReadingMode(activeArt);
