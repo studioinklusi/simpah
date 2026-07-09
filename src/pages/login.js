@@ -26,7 +26,7 @@ export function renderLogin() {
           <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
         </div>
         <div class="auth-navbar-right">
-          <a href="#" class="nav-link">Tentang Kami</a>
+          <a href="#/portal/tentang" class="nav-link">Tentang Kami</a>
           <a href="#/register" class="nav-btn">Daftar</a>
         </div>
       </nav>

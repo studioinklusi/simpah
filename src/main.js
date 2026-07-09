@@ -21,6 +21,15 @@ import { renderLogin } from './pages/login.js';
 import { renderRegister } from './pages/register.js';
 import { renderForgotPassword } from './pages/forgot-password.js';
 import { renderResetPassword } from './pages/reset-password.js';
+
+// Portal Pages
+import { renderPortalBeranda } from './pages/portal/beranda.js';
+import { renderEdukasi } from './pages/portal/edukasi.js';
+import { renderGaleri } from './pages/portal/galeri.js';
+import { renderRegulasi } from './pages/portal/regulasi.js';
+import { renderAduan } from './pages/portal/aduan.js';
+import { renderCekAduan } from './pages/portal/cek-aduan.js';
+import { renderPortalTentang } from './pages/portal/tentang.js';
 import { renderPWAHome } from './pages/pwa/home.js';
 import { renderSampahHub } from './pages/pwa/sampah-hub.js';
 import { renderInputSampah } from './pages/pwa/input-sampah.js';
@@ -60,6 +69,15 @@ async function bootstrap() {
     registerRoute('/register', () => renderRegister());
     registerRoute('/forgot-password', () => renderForgotPassword());
     registerRoute('/reset-password', () => renderResetPassword());
+
+    // Portal routes
+    registerRoute('/portal', () => renderPortalBeranda());
+    registerRoute('/portal/edukasi', () => renderEdukasi());
+    registerRoute('/portal/galeri', () => renderGaleri());
+    registerRoute('/portal/regulasi', () => renderRegulasi());
+    registerRoute('/portal/aduan', () => renderAduan());
+    registerRoute('/portal/cek-aduan', () => renderCekAduan());
+    registerRoute('/portal/tentang', () => renderPortalTentang());
 
     // PWA routes
     registerRoute('/pwa/home', () => renderPWAHome(), ['warga', 'petugas', 'eksekutif', 'admin']);

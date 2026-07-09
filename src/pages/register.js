@@ -37,7 +37,7 @@ export async function renderRegister() {
         <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
       </div>
       <div class="auth-navbar-right">
-        <a href="#" class="nav-link">Tentang Kami</a>
+        <a href="#/portal/tentang" class="nav-link">Tentang Kami</a>
         <a href="#/login" class="nav-btn">Masuk</a>
       </div>
     </nav>

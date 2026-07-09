@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   '/register',
   '/forgot-password',
   '/reset-password',
+  '/portal',
 ];
 
 // ── Public API ──────────────────────────────────────────────────────────────

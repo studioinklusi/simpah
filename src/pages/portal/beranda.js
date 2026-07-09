@@ -105,6 +105,7 @@ export function renderPortalNav(active = '') {
         </a>
         <div class="portal-nav-links" id="portalNavLinks">
           <a href="#/portal" class="portal-nav-link ${active==='beranda'?'active':''}">Beranda</a>
+          <a href="#/portal/tentang" class="portal-nav-link ${active==='tentang'?'active':''}">Tentang</a>
           <a href="#/portal/edukasi" class="portal-nav-link ${active==='edukasi'?'active':''}">Edukasi</a>
           <a href="#/portal/galeri" class="portal-nav-link ${active==='galeri'?'active':''}">Galeri</a>
           <a href="#/portal/regulasi" class="portal-nav-link ${active==='regulasi'?'active':''}">Regulasi</a>
@@ -130,6 +131,7 @@ export function renderPortalFooter() {
           <h4>Menu</h4>
           <div class="portal-footer-links">
             <a href="#/portal">Beranda</a>
+            <a href="#/portal/tentang">Tentang</a>
             <a href="#/portal/edukasi">Edukasi</a>
             <a href="#/portal/galeri">Galeri</a>
             <a href="#/portal/regulasi">Regulasi</a>
