@@ -124,7 +124,7 @@ export async function renderInputOlah() {
         </div>
 
         <div class="form-group" id="locationGroup" style="display:${userDesa ? 'block' : 'none'}">
-          <label class="form-label">Lokasi Tujuan / Fasilitas (Opsional)</label>
+          <label class="form-label">Dicatat di Fasilitas (Opsional)</label>
           <select id="locationSelect" class="form-select">
             <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
             ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}

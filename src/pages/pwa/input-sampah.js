@@ -58,10 +58,11 @@ export async function renderInputSampah() {
 
         <!-- Destination -->
         <div class="form-group">
-          <label class="form-label">Tujuan Pembuangan</label>
+          <label class="form-label">Metode Pembuangan Akhir (SIPSN)</label>
           <select id="campurDestSelect" class="form-select form-input-lg">
-            <option value="tpa">TPA</option>
-            <option value="sanitary_landfill">Sanitary Landfill</option>
+            <option value="tpa_open_dumping">TPA - Open Dumping</option>
+            <option value="tpa">TPA - Controlled Landfill</option>
+            <option value="sanitary_landfill">TPA - Sanitary Landfill</option>
             <option value="insinerasi">Insinerasi</option>
             <option value="lainnya">Lainnya</option>
           </select>
@@ -127,7 +128,7 @@ export async function renderInputSampah() {
           </div>
         </div>
         <div class="form-group" id="locationGroup" style="display:${userDesa ? 'block' : 'none'}">
-          <label class="form-label">Lokasi Tujuan / Fasilitas (Opsional)</label>
+          <label class="form-label">Dicatat di Fasilitas (Opsional)</label>
           <select id="locationSelect" class="form-select form-input-lg">
             <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
             ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}

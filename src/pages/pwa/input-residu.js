@@ -76,10 +76,11 @@ export async function renderInputResidu() {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tujuan Residu</label>
+          <label class="form-label">Metode Pembuangan Akhir (SIPSN)</label>
           <select id="destinationSelect" class="form-select">
-            <option value="tpa">TPA</option>
-            <option value="sanitary_landfill">Sanitary Landfill</option>
+            <option value="tpa_open_dumping">TPA - Open Dumping</option>
+            <option value="tpa">TPA - Controlled Landfill</option>
+            <option value="sanitary_landfill">TPA - Sanitary Landfill</option>
             <option value="insinerasi">Insinerasi</option>
             <option value="lainnya">Lainnya</option>
           </select>
