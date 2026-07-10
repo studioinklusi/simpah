@@ -92,9 +92,26 @@ export function isAuthReady() {
  * Returns { user, profile } on success, throws on failure.
  */
 export async function login(emailOrUsername, password) {
-  const email = emailOrUsername.includes('@')
-    ? emailOrUsername
-    : `${emailOrUsername}@simpah.dev`;
+  let email = emailOrUsername.trim();
+
+  // Jika input login adalah username (tidak ada '@')
+  if (!email.includes('@')) {
+    try {
+      const { data: resolvedEmail, error: rpcError } = await supabase
+        .rpc('get_email_by_username', { p_username: email.toLowerCase() });
+      
+      if (!rpcError && resolvedEmail) {
+        email = resolvedEmail;
+      } else {
+        // Fallback jika RPC error atau tidak menemukan email
+        console.warn('[Auth] Gagal translate username via RPC, menggunakan fallback default:', rpcError?.message);
+        email = `${email.toLowerCase()}@simpah.dev`;
+      }
+    } catch (err) {
+      console.warn('[Auth] Gagal panggil RPC get_email_by_username:', err);
+      email = `${email.toLowerCase()}@simpah.dev`;
+    }
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
