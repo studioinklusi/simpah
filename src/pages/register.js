@@ -532,6 +532,40 @@ export async function renderRegister() {
       // Cleared
     }
   });
+  // Helper: lock/unlock wilayah fields based on invitation code
+  const kecArrow = document.querySelector('#regKecSelectContainer .custom-select-arrow');
+  const desaArrow = document.querySelector('#regDesaSelectContainer .custom-select-arrow');
+
+  function lockWilayahFields(lockKec, lockDesa) {
+    if (lockKec) {
+      regKecamatan.disabled = true;
+      regKecamatan.style.backgroundColor = 'var(--bg-secondary)';
+      regKecamatan.style.cursor = 'not-allowed';
+      regKecamatan.style.opacity = '0.7';
+      if (kecArrow) kecArrow.style.display = 'none';
+    }
+    if (lockDesa) {
+      regDesaInput.disabled = true;
+      regDesaInput.style.backgroundColor = 'var(--bg-secondary)';
+      regDesaInput.style.cursor = 'not-allowed';
+      regDesaInput.style.opacity = '0.7';
+      if (desaArrow) desaArrow.style.display = 'none';
+    }
+  }
+
+  function unlockWilayahFields() {
+    regKecamatan.disabled = false;
+    regKecamatan.style.backgroundColor = '';
+    regKecamatan.style.cursor = '';
+    regKecamatan.style.opacity = '';
+    if (kecArrow) kecArrow.style.display = '';
+    regDesaInput.disabled = false;
+    regDesaInput.style.backgroundColor = '';
+    regDesaInput.style.cursor = '';
+    regDesaInput.style.opacity = '';
+    if (desaArrow) desaArrow.style.display = '';
+  }
+
   invitationCodeInput.addEventListener('change', async () => {
     const code = invitationCodeInput.value.trim();
     if (!code) {
@@ -539,6 +573,8 @@ export async function renderRegister() {
       invitationFeedback.innerHTML = '';
       isInvitationCodeValid = true;
       resolvedRole = 'warga';
+      unlockWilayahFields();
+      desaFromCodeBadge.style.display = 'none';
       return;
     }
 
@@ -589,11 +625,14 @@ export async function renderRegister() {
             regDesaInput.value = desaData.desa_kelurahan;
             regDesa.value = desaData.id;
 
+            // Lock both fields — desa is fully determined by invitation code
+            lockWilayahFields(true, true);
+
             // Show badge
             desaFromCodeBadge.style.display = 'flex';
             desaFromCodeBadge.innerHTML = `
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#059669"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Desa otomatis dari kode undangan: <strong>${res.desa_name || desaData.desa_kelurahan}</strong></span>
+              <span>Desa otomatis dari kode undangan: <strong>Desa ${res.desa_name || desaData.desa_kelurahan}, Kec. ${desaData.kecamatan}</strong></span>
             `;
           }
         } else if (res.kecamatan) {
@@ -601,6 +640,9 @@ export async function renderRegister() {
           regDesaGroup.style.display = 'none';
           regDesaInput.value = '';
           regDesa.value = '';
+
+          // Lock only kecamatan — user still needs to pick desa
+          lockWilayahFields(true, false);
 
           // Show badge
           desaFromCodeBadge.style.display = 'flex';
@@ -612,6 +654,8 @@ export async function renderRegister() {
       } else {
         isInvitationCodeValid = false;
         resolvedRole = 'warga';
+        unlockWilayahFields();
+        desaFromCodeBadge.style.display = 'none';
         invitationFeedback.style.color = '#b91c1c';
         invitationFeedback.innerHTML = `
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color:#b91c1c;margin-right:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
