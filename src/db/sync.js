@@ -80,8 +80,8 @@ export async function triggerSync() {
           'response_text', 'responded_at', 'responded_by'
         ];
         const INCIDENTAL_FIELDS = [
-          'id', 'type', 'description', 'location_text', 'lat', 'lng',
-          'photo_url', 'weight_kg', 'user_id', 'user_name',
+          'id', 'type', 'title', 'description', 'location_text', 'lat', 'lng',
+          'photo_url', 'weight_kg', 'participants', 'user_id', 'user_name',
           'location_id', 'location_name', 'created_at',
           'category_sipsn', 'desa_id'
         ];

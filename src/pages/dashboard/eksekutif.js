@@ -413,13 +413,34 @@ async function renderCharts(stats, period = 'daily') {
           borderSkipped: false
         }]
       },
+      plugins: [{
+        id: 'barLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart;
+          chart.data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            meta.data.forEach((bar, index) => {
+              const dataVal = dataset.data[index];
+              if (dataVal !== undefined && dataVal !== null) {
+                const label = dataVal >= 1000 
+                  ? (dataVal / 1000).toFixed(1) + ' t' 
+                  : dataVal.toFixed(0) + ' kg';
+                ctx.fillStyle = textColor;
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, bar.x, bar.y - 6);
+              }
+            });
+          });
+        }
+      }],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { grid: { display: false }, ticks: { color: textColor, font: { size: 12 } } },
-          y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: true }
+          y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: true, grace: '10%' }
         }
       }
     });
