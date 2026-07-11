@@ -956,7 +956,9 @@
   .auth-navbar {
     height: 70px;
   }
-  .auth-navbar-right .nav-link,
+  .auth-navbar-right {
+    gap: var(--space-3);
+  }
   #navbarInstallBtn {
     display: none !important;
   }
