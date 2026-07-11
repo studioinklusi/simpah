@@ -32,7 +32,12 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
       <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <div class="sidebar-logo">S</div>
+          <div class="sidebar-logo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 20 2 20 2s-1.7 5.5-3.8 10.7A7 7 0 0 1 11 20z" fill="rgba(255,255,255,0.2)" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+            </svg>
+          </div>
           <div class="sidebar-brand">
             <h2>SIMPAH</h2>
             <p>Monitoring Sampah</p>
