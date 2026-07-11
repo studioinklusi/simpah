@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css';
 
 import { registerRoute, startRouter } from './router.js';
 import { icons } from './components/icons.js';
-import { initTheme } from './utils/helpers.js';
+import { initTheme, getCurrentUser } from './utils/helpers.js';
 import { initAuth, waitForAuth } from './lib/auth.js';
 import { initDB } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
@@ -92,7 +92,14 @@ async function bootstrap() {
     registerRoute('/pwa/riwayat', () => renderRiwayat(), ['petugas', 'eksekutif', 'admin']);
 
     // Dashboard routes
-    registerRoute('/dashboard', () => { window.location.hash = '#/dashboard/gis'; }, ['warga', 'petugas', 'eksekutif', 'admin']);
+    registerRoute('/dashboard', () => {
+      const user = getCurrentUser();
+      if (user && (user.role === 'admin' || user.role === 'eksekutif')) {
+        window.location.hash = '#/dashboard/eksekutif';
+      } else {
+        window.location.hash = '#/dashboard/gis';
+      }
+    }, ['warga', 'petugas', 'eksekutif', 'admin']);
     registerRoute('/dashboard/gis', () => renderGIS(), ['warga', 'petugas', 'eksekutif', 'admin']);
     registerRoute('/dashboard/eksekutif', () => renderEksekutif(), ['eksekutif', 'admin']);
     registerRoute('/dashboard/laporan', () => renderLaporan(), ['admin']);

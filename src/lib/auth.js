@@ -458,7 +458,7 @@ function _getDefaultRoute(roleOrProfile) {
     case 'eksekutif':
       return '#/dashboard/eksekutif';
     case 'admin':
-      return '#/dashboard/gis';
+      return '#/dashboard/eksekutif';
     case 'petugas':
       if (profile.job_type === 'koordinator') {
         return '#/dashboard/validasi';
