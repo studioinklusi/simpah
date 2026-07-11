@@ -2,6 +2,7 @@
 import { icons } from '../components/icons.js';
 import { login as authLogin, getAuthProfile, getDefaultRoute } from '../lib/auth.js';
 import { showToast } from '../components/toast.js';
+import { getNavbarInstallButton, bindInstallButtons } from '../lib/pwa.js';
 
 export function renderLogin() {
   // If already logged in, redirect to default page
@@ -27,6 +28,7 @@ export function renderLogin() {
         </div>
         <div class="auth-navbar-right">
           <a href="#/portal/tentang" class="nav-link">Tentang Kami</a>
+          ${getNavbarInstallButton('nav-link')}
           <a href="#/register" class="nav-btn">Daftar</a>
         </div>
       </nav>
@@ -309,4 +311,7 @@ export function renderLogin() {
     errorBanner.style.display = 'none';
     errorText.textContent = '';
   }
+
+  // Bind PWA install buttons
+  bindInstallButtons();
 }

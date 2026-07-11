@@ -103,6 +103,19 @@ export function getPortalInstallButton() {
 }
 
 /**
+ * Get the install button HTML for navbars (e.g. login navbar, public header).
+ * Hidden by default, shown when beforeinstallprompt fires.
+ */
+export function getNavbarInstallButton(className = 'nav-link') {
+  const downloadIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:text-bottom"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+  return `
+    <a href="javascript:void(0)" id="navbarInstallBtn" data-pwa-install class="${className}" style="display:none;align-items:center">
+      ${downloadIcon} Download Aplikasi
+    </a>
+  `;
+}
+
+/**
  * Get the install banner HTML for the dashboard sidebar.
  * Hidden by default, shown when beforeinstallprompt fires.
  */
@@ -130,6 +143,15 @@ export function getSidebarInstallBanner() {
  * Call this after rendering any page that contains install buttons.
  */
 export function bindInstallButtons() {
+  // Check and show buttons if install is available
+  document.querySelectorAll('[data-pwa-install]').forEach(el => {
+    if (canInstall()) {
+      el.style.display = el.tagName === 'A' ? 'inline-flex' : '';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+
   // Portal hero install button
   const portalBtn = document.getElementById('portalInstallBtn');
   if (portalBtn) {
@@ -140,8 +162,15 @@ export function bindInstallButtons() {
         portalBtn.disabled = true;
       }
     });
-    // Show if install is available
-    if (canInstall()) portalBtn.style.display = '';
+  }
+
+  // Navbar install button (Login/Portal)
+  const navbarBtn = document.getElementById('navbarInstallBtn');
+  if (navbarBtn) {
+    navbarBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await triggerInstallPrompt();
+    });
   }
 
   // Sidebar install button
@@ -154,7 +183,5 @@ export function bindInstallButtons() {
         sidebarBanner.style.display = 'none';
       }
     });
-    // Show banner if install is available
-    if (canInstall() && sidebarBanner) sidebarBanner.style.display = '';
   }
 }

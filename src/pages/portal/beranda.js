@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getWasteStats } from '../../db/store.js';
 import { formatNumber, formatWeight, toggleTheme, getState } from '../../utils/helpers.js';
-import { getPortalInstallButton, bindInstallButtons } from '../../lib/pwa.js';
+import { getPortalInstallButton, getNavbarInstallButton, bindInstallButtons } from '../../lib/pwa.js';
 
 export async function renderPortalBeranda() {
   const stats = await getWasteStats();
@@ -117,6 +117,7 @@ export function renderPortalNav(active = '') {
           <a href="#/portal/tentang" class="portal-nav-link ${active==='tentang'?'active':''}">Tentang</a>
           <a href="#/portal/edukasi" class="portal-nav-link ${active==='edukasi'?'active':''}">Edukasi</a>
           <a href="#/portal/regulasi" class="portal-nav-link ${active==='regulasi'?'active':''}">Regulasi</a>
+          ${getNavbarInstallButton('portal-nav-link')}
           <a href="#/login" class="portal-nav-btn">Masuk</a>
         </div>
         <button class="portal-mobile-toggle" id="portalMenuToggle">${icons.menu}</button>
@@ -171,5 +172,7 @@ export function initPortalNav() {
     if (toggle && links) {
       toggle.addEventListener('click', () => links.classList.toggle('open'));
     }
+    // Bind PWA install buttons on this page
+    bindInstallButtons();
   }, 50);
 }
