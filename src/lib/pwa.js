@@ -254,6 +254,18 @@ export function bindInstallButtons() {
     });
   }
 
+  // Login card inline install link
+  const loginCardLink = document.getElementById('loginCardInstallLink');
+  if (loginCardLink) {
+    loginCardLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const accepted = await triggerInstallPrompt();
+      if (!accepted) {
+        showInstallGuideModal();
+      }
+    });
+  }
+
   // Sidebar install button
   const sidebarBtn = document.getElementById('sidebarInstallBtn');
   const sidebarBanner = document.getElementById('sidebarInstallBanner');
