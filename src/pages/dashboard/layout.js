@@ -6,6 +6,7 @@ import { isActiveRoute } from '../../router.js';
 import { canValidate, isAdmin, canViewExecutive } from '../../utils/permissions.js';
 import { supabase } from '../../lib/supabase.js';
 import { showToast } from '../../components/toast.js';
+import { getSidebarInstallBanner, bindInstallButtons } from '../../lib/pwa.js';
 
 export function renderDashboardLayout(title, content, activeMenu = '') {
   const user = getCurrentUser();
@@ -93,6 +94,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             </a>
           </div>
         </nav>
+        ${getSidebarInstallBanner()}
         <div class="sidebar-footer">
           <div class="sidebar-user" id="sidebarUser">
             <div class="sidebar-user-avatar">${user ? (user.full_name || 'U').charAt(0).toUpperCase() : 'U'}</div>
@@ -153,6 +155,9 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
 
   // Logout
   document.getElementById('dashLogoutBtn')?.addEventListener('click', () => confirmLogout());
+
+  // Bind PWA install buttons
+  bindInstallButtons();
 
 
 

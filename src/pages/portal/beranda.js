@@ -2,6 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getWasteStats } from '../../db/store.js';
 import { formatNumber, formatWeight, toggleTheme, getState } from '../../utils/helpers.js';
+import { getPortalInstallButton, bindInstallButtons } from '../../lib/pwa.js';
 
 export async function renderPortalBeranda() {
   const stats = await getWasteStats();
@@ -33,6 +34,7 @@ export async function renderPortalBeranda() {
             <a href="#/portal/aduan" class="btn btn-secondary btn-lg" style="padding:var(--space-4) var(--space-8);background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:white">
               ${icons.messageCircle} Laporkan Masalah
             </a>
+            ${getPortalInstallButton()}
           </div>
           <div class="portal-hero-stats">
             <div class="portal-hero-stat">
@@ -93,6 +95,9 @@ export async function renderPortalBeranda() {
       ${renderPortalFooter()}
     </div>
   `;
+
+  // Bind PWA install buttons after render
+  setTimeout(() => bindInstallButtons(), 100);
 }
 
 export function renderPortalNav(active = '') {

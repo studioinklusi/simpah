@@ -12,6 +12,7 @@ import { registerRoute, startRouter } from './router.js';
 import { icons } from './components/icons.js';
 import { initTheme, getCurrentUser } from './utils/helpers.js';
 import { initAuth, waitForAuth } from './lib/auth.js';
+import { initPWAInstall } from './lib/pwa.js';
 import { initDB } from './db/schema.js';
 import { seedDatabase } from './db/seed.js';
 import { initSync } from './db/sync.js';
@@ -55,6 +56,9 @@ async function bootstrap() {
   try {
     // Initialize theme
     initTheme();
+
+    // Initialize PWA install prompt handling
+    initPWAInstall();
 
     // Initialize IndexedDB
     await initDB();
