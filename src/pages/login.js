@@ -17,7 +17,7 @@ export function renderLogin() {
     <div class="auth-page-wrapper">
       <!-- Header Navbar -->
       <nav class="auth-navbar">
-        <div class="auth-navbar-left">
+        <a href="#/portal/beranda" class="auth-navbar-left" style="text-decoration:none">
           <div class="auth-navbar-left-logo">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 20 2 20 2s-1.7 5.5-3.8 10.7A7 7 0 0 1 11 20z" fill="#ecfdf5" />
@@ -25,7 +25,7 @@ export function renderLogin() {
             </svg>
           </div>
           <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
-        </div>
+        </a>
         <div class="auth-navbar-right">
           <a href="#/portal/tentang" class="nav-link">Tentang Kami</a>
           ${getNavbarInstallButton('nav-link')}

@@ -1,6 +1,7 @@
 // SIMPAH - Portal Tentang Kami (About Us)
 import { icons } from '../../components/icons.js';
 import { renderPortalNav, renderPortalFooter, initPortalNav } from './beranda.js';
+import { getPortalInstallButton } from '../../lib/pwa.js';
 
 export function renderPortalTentang() {
   const app = document.getElementById('app');
@@ -37,6 +38,7 @@ export function renderPortalTentang() {
               <button id="btnLearnMore" class="portal-nav-btn" style="margin: 0; padding: var(--space-3) var(--space-6); font-size: var(--font-base); cursor: pointer; display: inline-flex; align-items: center;">
                 Pelajari Selengkapnya
               </button>
+              ${getPortalInstallButton()}
             </div>
             
             <!-- Teaser Dashboard -->
