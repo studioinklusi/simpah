@@ -695,3 +695,15 @@
   border-color: var(--border-color) !important;
 }
 
+/* --- Brand Logo Styling (Shared) --- */
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+[data-theme="dark"] .logo-text {
+  color: #f3f4f6;
+}
+

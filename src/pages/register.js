@@ -34,7 +34,7 @@ export async function renderRegister() {
             <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
           </svg>
         </div>
-        <span class="logo-text">SIMPAH<span class="logo-dot">.</span></span>
+        <span class="logo-text">SIMPAH</span>
       </div>
       <div class="auth-navbar-right">
         <a href="#/portal/tentang" class="nav-link">Tentang Kami</a>

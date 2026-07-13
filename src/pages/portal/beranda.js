@@ -111,7 +111,7 @@ export function renderPortalNav(active = '') {
               <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
             </svg>
           </div>
-          <span style="font-size: var(--font-lg); font-weight: 800; color: var(--text-primary); letter-spacing: -0.02em; margin-left: 8px;">SIMPAH<span style="color: #10b981;">.</span></span>
+          <span class="logo-text" style="margin-left: 8px;">SIMPAH</span>
         </a>
         <div class="portal-nav-links" id="portalNavLinks">
           <a href="#/portal/tentang" class="portal-nav-link ${active==='tentang'?'active':''}">Tentang</a>
