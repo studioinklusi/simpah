@@ -53,9 +53,9 @@ export async function renderAduanManagement() {
           <!-- Stats Row -->
           <div class="am-stats" id="aduanStats"></div>
 
-          <!-- Filter -->
-          <div class="am-filter">
-            <div class="am-filter-group">
+          <!-- Filter & Search Row -->
+          <div class="am-controls-row" style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-4); margin-bottom:var(--space-5); flex-wrap:wrap;">
+            <div class="am-filter-group" style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
               <button class="am-filter-btn active" data-filter="all">Semua</button>
               <button class="am-filter-btn" data-filter="baru" style="display:inline-flex;align-items:center;gap:4px;">${icons.download} Baru</button>
               <button class="am-filter-btn" data-filter="diproses" style="display:inline-flex;align-items:center;gap:4px;">${icons.clock} Diproses</button>
@@ -63,10 +63,18 @@ export async function renderAduanManagement() {
               <button class="am-filter-btn" data-filter="selesai" style="display:inline-flex;align-items:center;gap:4px;">${icons.checkCircle} Selesai</button>
               <button class="am-filter-btn" data-filter="ditolak" style="display:inline-flex;align-items:center;gap:4px;">${icons.xCircle} Ditolak</button>
             </div>
+            
+            <div class="am-search-wrapper" style="position:relative; min-width:240px; flex:1; max-width:320px;">
+              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); display:flex; align-items:center;">${icons.search}</span>
+              <input type="text" id="aduanSearchInput" class="form-input" placeholder="Cari resi, kategori, isi aduan..." style="padding-left:36px; padding-top:8px; padding-bottom:8px; width:100%; border:1px solid var(--border-color); border-radius:var(--radius-full); font-size:var(--font-sm);" />
+            </div>
           </div>
 
           <!-- List -->
           <div id="aduanList"></div>
+          
+          <!-- Pagination -->
+          <div id="aduanPagination" style="display:flex; justify-content:center; align-items:center; gap:var(--space-2); margin-top:var(--space-6); margin-bottom:var(--space-4);"></div>
         </div>
 
         ${!canViewAll ? `
@@ -212,6 +220,9 @@ export async function renderAduanManagement() {
     ? await getAllComplaints()
     : await getComplaintsByUser(user.id);
   let activeFilter = 'all';
+  let searchQuery = '';
+  let currentPage = 1;
+  const itemsPerPage = 6;
 
   // Render stats
   function renderStats() {
@@ -228,19 +239,36 @@ export async function renderAduanManagement() {
 
   // Render list
   function renderList() {
-    const filtered = activeFilter === 'all' ? allComplaints : allComplaints.filter(c => c.status === activeFilter);
+    let filtered = activeFilter === 'all' ? allComplaints : allComplaints.filter(c => c.status === activeFilter);
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(c => 
+        (c.tracking_number && c.tracking_number.toLowerCase().includes(q)) ||
+        (c.category && c.category.toLowerCase().includes(q)) ||
+        (c.description && c.description.toLowerCase().includes(q)) ||
+        (c.reporter_name && c.reporter_name.toLowerCase().includes(q))
+      );
+    }
+
     filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
     const container = document.getElementById('aduanList');
+    const paginationContainer = document.getElementById('aduanPagination');
+    
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="am-empty-state">
           <div class="am-empty-icon">${icons.clipboard || '📋'}</div>
           <h3>Belum Ada Laporan</h3>
-          <p>${activeFilter === 'all' 
-            ? 'Anda belum pernah mengirimkan laporan pengaduan sampah. Semua laporan Anda akan tercatat di sini.' 
-            : `Tidak ada laporan dengan status <strong>${STATUS_CONFIG[activeFilter].label}</strong> saat ini.`
+          <p>${searchQuery.trim()
+            ? 'Tidak ditemukan aduan yang cocok dengan pencarian Anda.'
+            : (activeFilter === 'all' 
+                ? 'Anda belum pernah mengirimkan laporan pengaduan sampah. Semua laporan Anda akan tercatat di sini.' 
+                : `Tidak ada laporan dengan status <strong>${STATUS_CONFIG[activeFilter].label}</strong> saat ini.`
+              )
           }</p>
-          ${!canViewAll && activeFilter === 'all' ? `
+          ${!canViewAll && activeFilter === 'all' && !searchQuery.trim() ? `
             <button class="btn btn-primary btn-sm" id="emptyStateCreateBtn" style="margin-top:var(--space-4);display:inline-flex;align-items:center;gap:8px">
               ${icons.plus} Buat Aduan Pertama
             </button>
@@ -248,9 +276,20 @@ export async function renderAduanManagement() {
         </div>
       `;
       document.getElementById('emptyStateCreateBtn')?.addEventListener('click', openCreateComplaintModal);
+      if (paginationContainer) paginationContainer.innerHTML = '';
       return;
     }
-    container.innerHTML = filtered.map(c => {
+    
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    container.innerHTML = paginatedItems.map(c => {
       const cfg = STATUS_CONFIG[c.status] || STATUS_CONFIG.baru;
       const dt = new Date(c.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
       const reporterDisplay = getReporterDisplay(c, canViewAll);
@@ -273,6 +312,50 @@ export async function renderAduanManagement() {
     container.querySelectorAll('.am-card').forEach(card => {
       card.addEventListener('click', () => openDetail(card.dataset.id));
     });
+
+    // Render pagination controls
+    if (paginationContainer) {
+      if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+      }
+      
+      let html = '';
+      // Prev button
+      html += `
+        <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+          ${icons.chevronLeft || '◀'}
+        </button>
+      `;
+      
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const isActive = i === currentPage;
+        html += `
+          <button class="btn btn-sm pagination-btn ${isActive ? 'btn-primary' : 'btn-ghost'}" data-page="${i}" style="min-width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-md); font-weight:${isActive ? '700' : '500'};">
+            ${i}
+          </button>
+        `;
+      }
+      
+      // Next button
+      html += `
+        <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+          ${icons.chevronRight || '▶'}
+        </button>
+      `;
+      
+      paginationContainer.innerHTML = html;
+      
+      paginationContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.disabled) return;
+          currentPage = parseInt(btn.dataset.page);
+          renderList();
+          document.querySelector('.aduan-mgmt')?.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    }
   }
 
   // Filter
@@ -281,8 +364,16 @@ export async function renderAduanManagement() {
       document.querySelectorAll('.am-filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilter = btn.dataset.filter;
+      currentPage = 1;
       renderList();
     });
+  });
+
+  // Search input binding
+  document.getElementById('aduanSearchInput')?.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    currentPage = 1;
+    renderList();
   });
 
   // Modal
