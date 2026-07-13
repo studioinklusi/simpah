@@ -7,6 +7,7 @@ import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import { hasPermission } from '../../utils/permissions.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
+import { SIPSN_CATEGORIES, getCategoryByCode } from '../../utils/sipsn.js';
 
 export async function renderLaporan() {
   const user = getCurrentUser();
@@ -17,7 +18,7 @@ export async function renderLaporan() {
 
   const locations = [...new Set(sorted.map(r => r.location_name).filter(Boolean))].sort();
   const users = [...new Set(sorted.map(r => r.user_name).filter(Boolean))].sort();
-  const categories = [...new Set(sorted.map(r => r.category_sipsn).filter(Boolean))].sort();
+
 
   // Get default dates (first and last day of current month)
   const defaultStartDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -71,7 +72,7 @@ export async function renderLaporan() {
           <label class="form-label" style="font-size:11px">Kategori</label>
           <select id="categoryFilter" class="form-select">
             <option value="">Semua Kategori</option>
-            ${categories.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('')}
+            ${SIPSN_CATEGORIES.map(cat => `<option value="${cat.code}">${cat.name} (${cat.code})</option>`).join('')}
           </select>
         </div>
         <div class="report-actions">
@@ -294,7 +295,7 @@ function renderReportRows(records, startIndex = 0) {
       <td>${startIndex + i + 1}</td>
       <td>${formatDate(r.created_at)}</td>
       <td><span class="badge ${r.is_incidental ? 'badge-warning' : (r.type === 'masuk' || r.type === 'campur') ? 'badge-warning' : r.type === 'pilah' ? 'badge-info' : r.type === 'olah' ? 'badge-primary' : 'badge-danger'}">${getTypeLabel(r)}</span></td>
-      <td>${r.category_sipsn || '-'}</td>
+      <td>${r.category_sipsn ? ((getCategoryByCode(r.category_sipsn) || {}).name || r.category_sipsn) : '-'}</td>
       <td style="font-weight:600">${formatWeight(r.weight_kg)}</td>
       <td>${r.location_name || '-'}</td>
       <td>${r.user_name || '-'}</td>
