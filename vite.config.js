@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: null,
       includeAssets: ['icons/*.png', 'logo.svg'],
       manifest: {
         name: 'SIMPAH - Monitoring Pengelolaan Sampah',
@@ -55,6 +56,17 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'esbuild'
+    minify: 'esbuild',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-charts': ['chart.js'],
+          'vendor-maps': ['leaflet', 'leaflet.heat'],
+          'vendor-xlsx': ['xlsx'],
+        }
+      }
+    }
   }
 }));
