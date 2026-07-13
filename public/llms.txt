@@ -1,0 +1,22 @@
+# SIMPAH - Sistem Informasi Monitoring Pengelolaan Sampah
+
+> Platform digital terpadu untuk monitoring dan pengelolaan data sampah Kabupaten Banjarnegara, bekerja sama dengan DPKPLH.
+
+## Tentang
+
+SIMPAH adalah sistem informasi berbasis web yang dirancang untuk memantau, mengumpulkan, dan menganalisis data pengelolaan sampah secara real-time di Kabupaten Banjarnegara, Jawa Tengah, Indonesia.
+
+## Fitur Utama
+
+- Dashboard monitoring data sampah real-time
+- Peta interaktif lokasi TPS dan TPA
+- Pelaporan dan analisis volume sampah
+- Manajemen petugas dan wilayah
+- Deteksi anomali data berbasis Machine Learning
+
+## Tautan
+
+- [Halaman Utama](https://www.simpah.id/)
+- [Login](https://www.simpah.id/#/login)
+- [Portal Informasi](https://www.simpah.id/#/portal)
+- [Tentang SIMPAH](https://www.simpah.id/#/portal/tentang)

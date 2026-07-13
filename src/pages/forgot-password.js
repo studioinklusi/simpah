@@ -141,9 +141,8 @@ export function renderForgotPassword() {
               Ingat kata sandi Anda? <a href="#/login">Masuk sekarang</a>
             </div>
 
-            <!-- Back to Email Button for Step 2 -->
-            <div class="login-footer" id="otpBackLink" style="display:none; margin-top: var(--space-4); text-align: center;">
-              <a href="javascript:void(0)" id="btnBackToEmail" style="color: var(--gray-500); font-weight: 500; text-decoration: none;">← Kembali masukkan email</a>
+             <div class="login-footer" id="otpBackLink" style="display:none; margin-top: var(--space-4); text-align: center;">
+              <button type="button" id="btnBackToEmail" style="color: var(--gray-500); font-weight: 500; text-decoration: none; background: none; border: none; padding: 0; font: inherit; cursor: pointer;">← Kembali masukkan email</button>
             </div>
           </div>
         </div>

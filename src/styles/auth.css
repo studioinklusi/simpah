@@ -500,9 +500,9 @@
 }
 
 .auth-navbar-right .nav-btn {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(6, 78, 59, 0.1);
+  color: #047857;
+  border: 1px solid rgba(6, 78, 59, 0.2);
   border-radius: var(--radius-full);
   padding: var(--space-2) var(--space-5);
   font-weight: 600;
@@ -912,13 +912,13 @@
 }
 
 .auth-footer a {
-  color: #9ca3af;
+  color: #6b7280;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .auth-footer a:hover {
-  color: #4b5563;
+  color: #374151;
   text-decoration: underline;
 }
 
