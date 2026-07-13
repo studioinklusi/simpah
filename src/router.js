@@ -1,4 +1,4 @@
-import { getAuthProfile, isPublicRoute, getDefaultRoute } from './lib/auth.js';
+import { getAuthProfile, isPublicRoute, getDefaultRoute, isAuthReady, waitForAuth } from './lib/auth.js';
 import { initTheme } from './utils/helpers.js';
 
 const routes = {};
@@ -37,6 +37,9 @@ export function startRouter(defaultRoute = '/login') {
     // Protected routes require authentication.
     // Public routes (/login, /portal/*) are always accessible.
     if (!isPublicRoute(hash)) {
+      if (!isAuthReady()) {
+        await waitForAuth();
+      }
       const user = getAuthProfile();
       if (!user) {
         // Not authenticated — redirect to login

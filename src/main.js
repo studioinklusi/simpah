@@ -62,7 +62,7 @@ function initBackgroundServices() {
   // Initialize auth in background
   (async () => {
     try {
-      const { initAuth, waitForAuth } = await import('./lib/auth.js');
+      const { initAuth, waitForAuth, getAuthProfile, getDefaultRoute } = await import('./lib/auth.js');
       const authInitPromise = (async () => {
         await initAuth();
         await waitForAuth();
@@ -71,6 +71,15 @@ function initBackgroundServices() {
         setTimeout(() => reject(new Error('Auth initialization timed out after 10 seconds')), 10000)
       );
       await Promise.race([authInitPromise, timeoutPromise]);
+
+      // If user is logged in, and they are currently on the login page or root, redirect them!
+      const user = getAuthProfile();
+      if (user) {
+        const currentHash = window.location.hash.slice(1) || '/';
+        if (currentHash === '/login' || currentHash === '/') {
+          window.location.hash = getDefaultRoute(user);
+        }
+      }
     } catch (authErr) {
       console.warn('Auth init warning:', authErr);
     }
