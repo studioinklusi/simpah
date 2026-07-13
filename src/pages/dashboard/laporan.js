@@ -15,6 +15,14 @@ export async function renderLaporan() {
   const records = await getAllWasteRecords();
   const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
+  const locations = [...new Set(sorted.map(r => r.location_name).filter(Boolean))].sort();
+  const users = [...new Set(sorted.map(r => r.user_name).filter(Boolean))].sort();
+  const categories = [...new Set(sorted.map(r => r.category_sipsn).filter(Boolean))].sort();
+
+  // Get default dates (first and last day of current month)
+  const defaultStartDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  const defaultEndDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
+
   renderDashboardLayout('Laporan & Export', `
     <div class="page-enter">
       <div class="section-header">
@@ -26,20 +34,45 @@ export async function renderLaporan() {
 
       <!-- Report Controls -->
       <div class="report-controls">
-        <div class="form-group" style="margin-bottom:0;min-width:140px">
-          <label class="form-label" style="font-size:11px">Periode</label>
-          <input type="month" id="periodInput" class="form-input" value="${new Date().toISOString().substring(0,7)}" />
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Tanggal Mulai</label>
+          <input type="date" id="startDateInput" class="form-input" value="${defaultStartDate}" />
+        </div>
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Tanggal Selesai</label>
+          <input type="date" id="endDateInput" class="form-input" value="${defaultEndDate}" />
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
           <label class="form-label" style="font-size:11px">Jenis</label>
           <select id="typeFilter" class="form-select">
-            <option value="">Semua</option>
+            <option value="">Semua Jenis</option>
             <option value="masuk">Sampah Masuk</option>
             <option value="campur">Sampah Campur</option>
             <option value="pilah">Terpilah</option>
             <option value="olah">Olah Sampah</option>
             <option value="residu">Residu</option>
             <option value="insidental">Insidental</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Lokasi</label>
+          <select id="locationFilter" class="form-select">
+            <option value="">Semua Lokasi</option>
+            ${locations.map(loc => `<option value="${escapeHTML(loc)}">${escapeHTML(loc)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Petugas</label>
+          <select id="userFilter" class="form-select">
+            <option value="">Semua Petugas</option>
+            ${users.map(u => `<option value="${escapeHTML(u)}">${escapeHTML(u)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Kategori</label>
+          <select id="categoryFilter" class="form-select">
+            <option value="">Semua Kategori</option>
+            ${categories.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('')}
           </select>
         </div>
         <div class="report-actions">
@@ -89,7 +122,8 @@ export async function renderLaporan() {
   });
 
   document.getElementById('exportSIPSN')?.addEventListener('click', () => {
-    const period = document.getElementById('periodInput').value;
+    const startDate = document.getElementById('startDateInput').value;
+    const period = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
     const filtered = getFilteredRecords(sorted);
     exportToSIPSN(filtered, period);
     showToast('Data format SIPSN berhasil di-export!', 'success');
@@ -204,7 +238,7 @@ export async function renderLaporan() {
   };
 
   // Filter change
-  const filterInputs = ['periodInput', 'typeFilter'];
+  const filterInputs = ['startDateInput', 'endDateInput', 'typeFilter', 'locationFilter', 'userFilter', 'categoryFilter'];
   filterInputs.forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
       currentPage = 1;
@@ -218,11 +252,18 @@ export async function renderLaporan() {
 
 function getFilteredRecords(records) {
   let filtered = [...records];
-  const period = document.getElementById('periodInput')?.value;
+  const startDate = document.getElementById('startDateInput')?.value;
+  const endDate = document.getElementById('endDateInput')?.value;
   const type = document.getElementById('typeFilter')?.value;
+  const location = document.getElementById('locationFilter')?.value;
+  const user = document.getElementById('userFilter')?.value;
+  const category = document.getElementById('categoryFilter')?.value;
 
-  if (period) {
-    filtered = filtered.filter(r => r.date_str?.startsWith(period));
+  if (startDate) {
+    filtered = filtered.filter(r => r.date_str && r.date_str >= startDate);
+  }
+  if (endDate) {
+    filtered = filtered.filter(r => r.date_str && r.date_str <= endDate);
   }
   if (type) {
     if (type === 'insidental') {
@@ -230,6 +271,15 @@ function getFilteredRecords(records) {
     } else {
       filtered = filtered.filter(r => r.type === type && !r.is_incidental);
     }
+  }
+  if (location) {
+    filtered = filtered.filter(r => r.location_name === location);
+  }
+  if (user) {
+    filtered = filtered.filter(r => r.user_name === user);
+  }
+  if (category) {
+    filtered = filtered.filter(r => r.category_sipsn === category);
   }
   return filtered;
 }
