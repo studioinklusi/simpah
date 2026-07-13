@@ -46,7 +46,6 @@ export async function renderLaporan() {
           <label class="form-label" style="font-size:11px">Jenis</label>
           <select id="typeFilter" class="form-select">
             <option value="">Semua Jenis</option>
-            <option value="masuk">Sampah Masuk</option>
             <option value="campur">Sampah Campur</option>
             <option value="pilah">Terpilah</option>
             <option value="olah">Olah Sampah</option>
