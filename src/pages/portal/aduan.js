@@ -1,6 +1,6 @@
 // SIMPAH - Portal Aduan (Public Complaint Form)
 import { icons } from '../../components/icons.js';
-import { getCurrentPosition } from '../../utils/gps.js';
+import { initGPSIndicator } from '../../utils/gps.js';
 import { addComplaint } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { getCurrentUser } from '../../utils/helpers.js';
@@ -9,17 +9,6 @@ import { compressImage } from '../../components/photo-picker.js';
 
 export function renderAduan() {
   let gpsData = null;
-  getCurrentPosition(false).then(p => {
-    gpsData = p;
-    const el = document.getElementById('aduanGps');
-    if (el) {
-      el.className = 'gps-indicator active';
-      el.querySelector('span:last-child').textContent = `Lokasi terdeteksi: ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}`;
-    }
-  }).catch(() => {
-    const el = document.getElementById('aduanGps');
-    if (el) el.querySelector('span:last-child').textContent = 'Lokasi tidak terdeteksi';
-  });
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -121,6 +110,7 @@ export function renderAduan() {
     </div>
   `;
   initPortalNav();
+  initGPSIndicator('aduanGps', p => { gpsData = p; });
 
   // Photo upload handling
   const uploadArea = document.getElementById('photoUploadArea');

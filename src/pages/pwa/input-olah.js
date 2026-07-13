@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { TREATMENT_METHODS, SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { getCurrentUser } from '../../utils/helpers.js';
-import { getCurrentPosition } from '../../utils/gps.js';
+import { initGPSIndicator } from '../../utils/gps.js';
 import { addWasteRecord, getAllLocations, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
@@ -21,12 +21,6 @@ export async function renderInputOlah() {
   const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
   let gpsData = null;
   let photoPicker = null;
-
-  getCurrentPosition(false).then(pos => {
-    gpsData = pos;
-    const el = document.getElementById('gpsStatus');
-    if (el) { el.className = 'gps-indicator active'; el.querySelector('span:last-child').textContent = `GPS: ${pos.latitude.toFixed(6)}, ${pos.longitude.toFixed(6)}`; }
-  }).catch(() => {});
 
   renderPWALayout('Olah Sampah', `
     <div class="pwa-form page-enter">
@@ -165,6 +159,9 @@ export async function renderInputOlah() {
       .accum-preview { margin-top:var(--space-3); padding:var(--space-3); border-radius:var(--radius-md); background:rgba(16,185,129,0.1); font-size:var(--font-sm); color:var(--primary-700, #047857); text-align:center; font-weight:600; }
     </style>
   `);
+
+  // Init GPS Indicator
+  initGPSIndicator('gpsStatus', pos => { gpsData = pos; });
 
   // Init photo picker
   photoPicker = initPhotoPicker('olah');

@@ -1,7 +1,7 @@
 // SIMPAH - Input Residu
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
-import { getCurrentPosition } from '../../utils/gps.js';
+import { initGPSIndicator } from '../../utils/gps.js';
 import { addWasteRecord, getAllLocations, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
@@ -20,7 +20,6 @@ export async function renderInputResidu() {
   const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
   let gpsData = null;
   let photoPicker = null;
-  getCurrentPosition(false).then(p => { gpsData = p; const el = document.getElementById('gpsStatus'); if(el){el.className='gps-indicator active'; el.querySelector('span:last-child').textContent=`GPS: ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}`;} }).catch(()=>{});
 
   renderPWALayout('Residu', `
     <div class="pwa-form page-enter">
@@ -126,6 +125,9 @@ export async function renderInputResidu() {
       }
     </style>
   `);
+
+  // Init GPS Indicator
+  initGPSIndicator('gpsStatus', pos => { gpsData = pos; });
 
   // Init photo picker
   photoPicker = initPhotoPicker('residu');

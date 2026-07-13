@@ -1,7 +1,7 @@
 // SIMPAH - Input Sampah Campur (Mixed Waste → TPA)
 import { icons } from '../../components/icons.js';
 import { getCurrentUser } from '../../utils/helpers.js';
-import { getCurrentPosition } from '../../utils/gps.js';
+import { initGPSIndicator } from '../../utils/gps.js';
 import { addWasteRecord, getAllLocations, getAllFleet, getAllMou, getAllMasterWilayah } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
@@ -24,9 +24,6 @@ export async function renderInputSampah() {
   let gpsData = null;
   let mouValid = true; // Track MoU validation state
   let photoPicker = null;
-
-  // Try to get GPS immediately
-  captureGPS();
 
   renderPWALayout('Sampah Campur', `
     <div class="pwa-form page-enter">
@@ -181,6 +178,9 @@ export async function renderInputSampah() {
       .accum-preview { margin-top:var(--space-3); padding:var(--space-3); border-radius:var(--radius-md); background:rgba(16,185,129,0.1); font-size:var(--font-sm); color:var(--primary-700, #047857); text-align:center; font-weight:600; }
     </style>
   `);
+
+  // Init GPS Indicator
+  initGPSIndicator('gpsStatus', pos => { gpsData = pos; });
 
   // Init photo picker
   photoPicker = initPhotoPicker('sampah');
@@ -485,23 +485,4 @@ export async function renderInputSampah() {
       submitBtn.disabled = false;
     }
   });
-
-  async function captureGPS() {
-    try {
-      const pos = await getCurrentPosition(false);
-      gpsData = pos;
-      const statusEl = document.getElementById('gpsStatus');
-      const textEl = document.getElementById('gpsText');
-      if (statusEl && textEl) {
-        statusEl.className = 'gps-indicator active';
-        textEl.textContent = `GPS: ${pos.latitude.toFixed(6)}, ${pos.longitude.toFixed(6)}`;
-      }
-    } catch (e) {
-      const statusEl = document.getElementById('gpsStatus');
-      const textEl = document.getElementById('gpsText');
-      if (statusEl && textEl) {
-        textEl.textContent = 'GPS tidak tersedia - lokasi manual';
-      }
-    }
-  }
 }

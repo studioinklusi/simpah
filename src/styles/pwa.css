@@ -325,9 +325,16 @@
   color: var(--accent-600);
   border: 1px solid rgba(245,158,11,0.2);
 }
+.gps-indicator.error {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger-600);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
 .gps-indicator svg {
   width: 16px;
   height: 16px;
+}
+.gps-indicator.pending svg {
   animation: pulse 2s infinite;
 }
 
@@ -521,3 +528,67 @@
 [data-theme="dark"] .pwa-greeting-moto {
   color: #34d399;
 }
+
+/* Location Map Modal */
+.map-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: var(--space-4);
+  backdrop-filter: blur(4px);
+}
+.map-modal-content {
+  background: var(--bg-primary, #fff);
+  border-radius: var(--radius-xl, 12px);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+.map-modal-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.map-modal-header h3 {
+  margin: 0;
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.map-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.map-modal-body {
+  padding: var(--space-4);
+}
+.map-modal-hint {
+  margin-top: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  text-align: center;
+}
+.map-modal-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
