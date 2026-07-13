@@ -5,6 +5,7 @@ import { getAllWasteRecords, updateWasteRecordStatus, getAllMasterWilayah } from
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
+import { showModal } from '../../components/modal.js';
 
 import { canValidate } from '../../utils/permissions.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
@@ -297,10 +298,59 @@ function renderView() {
       const target = e.target.closest('button');
       const id = target.dataset.id;
       const isBatch = target.dataset.isBatch === 'true';
-      const notes = prompt('Alasan penolakan data (Fraud/Duplikat/dll):');
-      if (notes !== null) {
-        handleAction(id, 'rejected', notes, isBatch);
-      }
+
+      const modalObj = showModal({
+        title: 'Tolak Laporan Sampah',
+        content: `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 8px; display: block; color: var(--text-primary);">Alasan Penolakan Data (Fraud/Duplikat/dll):</label>
+            <input type="text" id="rejectReasonInput" class="form-input" placeholder="Masukkan alasan penolakan..." style="width: 100%;" />
+          </div>
+        `,
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary',
+            handler: () => {}
+          },
+          {
+            label: 'Tolak Data',
+            variant: 'btn-danger',
+            closeOnClick: false,
+            handler: () => {
+              const input = document.getElementById('rejectReasonInput');
+              const reason = input ? input.value.trim() : '';
+              if (!reason) {
+                showToast('Alasan penolakan harus diisi!', 'warning');
+                if (input) input.focus();
+                return;
+              }
+              modalObj.close();
+              handleAction(id, 'rejected', reason, isBatch);
+            }
+          }
+        ]
+      });
+
+      // Focus the input and add Enter submit handler
+      setTimeout(() => {
+        const input = document.getElementById('rejectReasonInput');
+        if (input) {
+          input.focus();
+          input.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Enter') {
+              const reason = input.value.trim();
+              if (!reason) {
+                showToast('Alasan penolakan harus diisi!', 'warning');
+                input.focus();
+                return;
+              }
+              modalObj.close();
+              handleAction(id, 'rejected', reason, isBatch);
+            }
+          });
+        }
+      }, 50);
     });
   });
 
@@ -308,28 +358,56 @@ function renderView() {
   const approveAllBtn = document.getElementById('approveAllBtn');
   if (approveAllBtn) {
     approveAllBtn.addEventListener('click', async () => {
-      if (confirm(`Apakah Anda yakin ingin menyetujui ${pendingRecords.length} kelompok/data sekaligus? Tindakan ini akan mengesahkan data ke sistem SIPSN.`)) {
-        approveAllBtn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
-        approveAllBtn.disabled = true;
-        try {
-          const user = getCurrentUser();
-          const promises = [];
-          for (const item of pendingRecords) {
-            for (const r of item.records) {
-              promises.push(updateWasteRecordStatus(r.id, 'approved', '', user.id));
+      const modalObj = showModal({
+        title: 'Setujui Semua Data',
+        content: `
+          <div style="display: flex; gap: var(--space-4); align-items: flex-start; padding-top: var(--space-2)">
+            <div style="background: rgba(16, 185, 129, 0.1); color: var(--primary-500); padding: var(--space-3); border-radius: var(--radius-lg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: 600; font-size: 15px; color: var(--text-primary);">Apakah Anda yakin ingin menyetujui semua data?</p>
+              <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">Tindakan ini akan menyetujui <strong>${pendingRecords.length}</strong> kelompok/data sekaligus dan mengesahkannya ke sistem SIPSN.</p>
+            </div>
+          </div>
+        `,
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary',
+            handler: () => {}
+          },
+          {
+            label: 'Ya, Setujui',
+            variant: 'btn-primary',
+            handler: async () => {
+              approveAllBtn.innerHTML = '<div class="spinner" style="margin:0 auto"></div>';
+              approveAllBtn.disabled = true;
+              try {
+                const user = getCurrentUser();
+                const promises = [];
+                for (const item of pendingRecords) {
+                  for (const r of item.records) {
+                    promises.push(updateWasteRecordStatus(r.id, 'approved', '', user.id));
+                  }
+                }
+                await Promise.all(promises);
+                showToast(`Semua data pahlawan lingkungan berhasil disetujui!`, 'success');
+                pendingRecords = [];
+                const countEl = document.getElementById('statPending');
+                if (countEl) countEl.innerText = 0;
+                renderValidasi();
+              } catch (e) {
+                showToast('Gagal menyetujui data massal', 'error');
+                renderValidasi();
+              }
             }
           }
-          await Promise.all(promises);
-          showToast(`Semua data pahlawan lingkungan berhasil disetujui!`, 'success');
-          pendingRecords = [];
-          const countEl = document.getElementById('statPending');
-          if (countEl) countEl.innerText = 0;
-          renderValidasi();
-        } catch (e) {
-          showToast('Gagal menyetujui data massal', 'error');
-          renderValidasi();
-        }
-      }
+        ]
+      });
     });
   }
 }
