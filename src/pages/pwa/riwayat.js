@@ -13,10 +13,18 @@ export async function renderRiwayat() {
   const records = await getAllWasteRecords();
   const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const typeFilter = { masuk: true, pilah: true, residu: true };
+  let activeFilter = 'all';
+  let searchQuery = '';
+  let itemsToShow = 15;
 
   renderPWALayout('Riwayat', `
     <div class="page-enter">
+      <!-- Search Bar -->
+      <div class="riwayat-search-wrapper" style="position:relative; margin-bottom:var(--space-4);">
+        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); display:flex; align-items:center;">${icons.search}</span>
+        <input type="text" id="riwayatSearchInput" class="form-input" placeholder="Cari lokasi, kategori, atau berat..." style="padding-left:36px; padding-top:10px; padding-bottom:10px; width:100%; border:1px solid var(--border-color); border-radius:var(--radius-full); font-size:var(--font-sm); background:var(--bg-secondary); color:var(--text-primary);" />
+      </div>
+
       <div class="tabs" style="margin-bottom:var(--space-4)">
         <button class="tab active" data-filter="all">Semua</button>
         <button class="tab" data-filter="masuk">Masuk</button>
@@ -26,21 +34,68 @@ export async function renderRiwayat() {
       </div>
 
       <div class="record-list" id="recordList">
-        ${renderRecords(sorted)}
+        <!-- Rendered via updateList() -->
       </div>
     </div>
   `, 'riwayat');
+
+  const updateList = () => {
+    let filtered = activeFilter === 'all' ? sorted : sorted.filter(r => r.type === activeFilter);
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(r => 
+        (r.category_sipsn && r.category_sipsn.toLowerCase().includes(q)) ||
+        (r.location_name && r.location_name.toLowerCase().includes(q)) ||
+        (getTypeLabel(r.type) && getTypeLabel(r.type).toLowerCase().includes(q)) ||
+        (r.weight_kg && String(r.weight_kg).includes(q))
+      );
+    }
+    
+    const paginated = filtered.slice(0, itemsToShow);
+    const recordList = document.getElementById('recordList');
+    if (recordList) {
+      recordList.innerHTML = renderRecords(paginated);
+      
+      if (filtered.length > itemsToShow) {
+        const loadMoreDiv = document.createElement('div');
+        loadMoreDiv.style.textAlign = 'center';
+        loadMoreDiv.style.margin = 'var(--space-5) 0';
+        loadMoreDiv.innerHTML = `
+          <button class="btn btn-ghost btn-sm" id="loadMoreBtn" style="font-weight:600; padding:8px 16px; border:1px solid var(--border-color); border-radius:var(--radius-md);">
+            Muat Lebih Banyak (${filtered.length - itemsToShow} tersisa)
+          </button>
+        `;
+        recordList.appendChild(loadMoreDiv);
+        
+        document.getElementById('loadMoreBtn')?.addEventListener('click', () => {
+          itemsToShow += 15;
+          updateList();
+        });
+      }
+    }
+  };
 
   // Filter tabs
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      const filter = tab.dataset.filter;
-      const filtered = filter === 'all' ? sorted : sorted.filter(r => r.type === filter);
-      document.getElementById('recordList').innerHTML = renderRecords(filtered);
+      activeFilter = tab.dataset.filter;
+      itemsToShow = 15;
+      updateList();
     });
   });
+
+  // Search input binding
+  document.getElementById('riwayatSearchInput')?.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    itemsToShow = 15;
+    updateList();
+  });
+
+  // Initial load
+  updateList();
 }
 
 function renderRecords(records) {
