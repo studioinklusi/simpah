@@ -61,6 +61,35 @@ function renderRankingView() {
         </div>
       </div>
 
+      <!-- Controls -->
+      <div class="report-controls" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-4); flex-wrap:wrap;">
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:200px">
+          <label class="form-label" style="font-size:11px">Cari Wilayah</label>
+          <input type="text" id="searchInput" class="form-input" placeholder="Cari nama kecamatan..." style="width:100%" />
+        </div>
+        <div class="form-group" style="margin-bottom:0;width:160px">
+          <label class="form-label" style="font-size:11px">Filter Status</label>
+          <select id="statusFilter" class="form-select" style="width:100%">
+            <option value="all">Semua Status</option>
+            <option value="prioritas">Prioritas (Skor < 45)</option>
+            <option value="perhatian">Perhatian (Skor 45-69)</option>
+            <option value="baik">Baik (Skor >= 70)</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;width:220px">
+          <label class="form-label" style="font-size:11px">Urutkan</label>
+          <select id="sortBy" class="form-select" style="width:100%">
+            <option value="skor-asc">Skor Terendah (Prioritas)</option>
+            <option value="skor-desc">Skor Tertinggi</option>
+            <option value="name-asc">Nama Wilayah (A-Z)</option>
+            <option value="penduduk-desc">Penduduk Terbanyak</option>
+            <option value="penanganan-asc">% Penanganan Terendah</option>
+            <option value="pengurangan-asc">% Pengurangan Terendah</option>
+            <option value="residu-desc">Residu ke TPA Tertinggi</option>
+          </select>
+        </div>
+      </div>
+
       <!-- Ranking Table -->
       <div class="table-container">
         <table class="table" id="rankingTable">
@@ -77,54 +106,8 @@ function renderRankingView() {
               <th style="width:100px">Status</th>
             </tr>
           </thead>
-          <tbody>
-            ${villageProfiles.map((v, i) => {
-              const status = getScoreStatus(v.skor);
-              const penangananColor = v.has_population_data ? (v.pct_penanganan < 30 ? '#ef4444' : v.pct_penanganan < 60 ? '#f59e0b' : '#10b981') : 'var(--text-muted)';
-              const penguranganColor = v.pct_pengurangan < 10 ? '#ef4444' : v.pct_pengurangan < 25 ? '#f59e0b' : '#10b981';
-              return `
-              <tr class="ranking-row" data-wilayah="${v.wilayah}" style="cursor:pointer">
-                <td style="text-align:center">
-                  <span class="rank-badge ${i < 3 ? 'rank-top' : ''}">${i + 1}</span>
-                </td>
-                <td>
-                  <strong>${v.wilayah}</strong>
-                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
-                    ${v.recommendations.filter(r => r.urgency === 'kritis').length} isu kritis
-                  </div>
-                </td>
-                <td style="font-size:var(--font-xs)">
-                  ${v.has_population_data
-                    ? `<strong>${(v.jumlah_penduduk / 1000).toFixed(1)}rb</strong><div style="color:var(--text-muted)">${(v.jumlah_kk / 1000).toFixed(1)}rb KK</div>`
-                    : '<span style="color:var(--text-muted)">—</span>'
-                  }
-                </td>
-                <td>
-                  <div class="score-bar-container">
-                    <div class="score-bar" style="width:${v.skor}%;background:${status.color}"></div>
-                  </div>
-                  <span style="font-size:12px;font-weight:700;color:${status.color}">${v.skor}/100</span>
-                </td>
-                <td>
-                  <span style="font-weight:600;color:${penangananColor}">${v.has_population_data ? v.pct_penanganan.toFixed(1) + '%' : '—'}</span>
-                </td>
-                <td>
-                  <span style="font-weight:600;color:${penguranganColor}">${v.pct_pengurangan.toFixed(1)}%</span>
-                </td>
-                <td>
-                  <span style="font-weight:600;color:${v.residu_rate > 60 ? '#ef4444' : v.residu_rate > 40 ? '#f59e0b' : '#10b981'}">${v.residu_rate.toFixed(1)}%</span>
-                </td>
-                <td style="font-size:12px">
-                  ${v.tps3r_count > 0 ? `<span class="badge badge-success" style="margin:1px">${icons.recycle} ${v.tps3r_count}</span>` : ''}
-                  ${v.tps_count > 0 ? `<span class="badge badge-info" style="margin:1px">${icons.mapPin} ${v.tps_count}</span>` : ''}
-                  ${v.bank_sampah_count > 0 ? `<span class="badge badge-neutral" style="margin:1px">${icons.landmark} ${v.bank_sampah_count}</span>` : ''}
-                  ${v.total_infrastruktur === 0 ? '<span class="badge badge-danger">Tidak ada</span>' : ''}
-                </td>
-                <td>
-                  <span class="status-pill" style="background:${status.bg};color:${status.color}">${status.label}</span>
-                </td>
-              </tr>`;
-            }).join('')}
+          <tbody id="rankingBody">
+            <!-- Rendered dynamically -->
           </tbody>
         </table>
       </div>
@@ -134,14 +117,119 @@ function renderRankingView() {
     </div>
   `, 'intervensi');
 
-  // Bind row clicks
-  document.querySelectorAll('.ranking-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const wilayah = row.dataset.wilayah;
-      selectedVillage = villageProfiles.find(v => v.wilayah === wilayah);
-      if (selectedVillage) renderProfilView();
+  const updateTable = () => {
+    const search = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+    const status = document.getElementById('statusFilter')?.value || 'all';
+    const sort = document.getElementById('sortBy')?.value || 'skor-asc';
+
+    // 1. Filter
+    let filtered = villageProfiles.filter(v => {
+      const matchesSearch = v.wilayah.toLowerCase().includes(search);
+      
+      let matchesStatus = true;
+      if (status === 'prioritas') matchesStatus = v.skor < 45;
+      else if (status === 'perhatian') matchesStatus = v.skor >= 45 && v.skor < 70;
+      else if (status === 'baik') matchesStatus = v.skor >= 70;
+
+      return matchesSearch && matchesStatus;
     });
+
+    // 2. Sort
+    filtered.sort((a, b) => {
+      if (sort === 'skor-asc') return a.skor - b.skor;
+      if (sort === 'skor-desc') return b.skor - a.skor;
+      if (sort === 'name-asc') return a.wilayah.localeCompare(b.wilayah);
+      if (sort === 'penduduk-desc') return (b.jumlah_penduduk || 0) - (a.jumlah_penduduk || 0);
+      if (sort === 'penanganan-asc') return (a.pct_penanganan || 0) - (b.pct_penanganan || 0);
+      if (sort === 'pengurangan-asc') return (a.pct_pengurangan || 0) - (b.pct_pengurangan || 0);
+      if (sort === 'residu-desc') return (b.residu_rate || 0) - (a.residu_rate || 0);
+      return 0;
+    });
+
+    // 3. Render rows
+    const tbody = document.getElementById('rankingBody');
+    if (!tbody) return;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:var(--space-8);color:var(--text-muted)">Tidak ada wilayah yang cocok dengan filter</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(v => {
+      const statusObj = getScoreStatus(v.skor);
+      const penangananColor = v.has_population_data ? (v.pct_penanganan < 30 ? '#ef4444' : v.pct_penanganan < 60 ? '#f59e0b' : '#10b981') : 'var(--text-muted)';
+      const penguranganColor = v.pct_pengurangan < 10 ? '#ef4444' : v.pct_pengurangan < 25 ? '#f59e0b' : '#10b981';
+      
+      // Original rank is based on original sorted score ascending (position in original villageProfiles array)
+      const originalRank = villageProfiles.findIndex(x => x.wilayah === v.wilayah) + 1;
+
+      return `
+      <tr class="ranking-row" data-wilayah="${v.wilayah}" style="cursor:pointer">
+        <td style="text-align:center">
+          <span class="rank-badge ${originalRank <= 3 ? 'rank-top' : ''}">${originalRank}</span>
+        </td>
+        <td>
+          <strong>${v.wilayah}</strong>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+            ${v.recommendations.filter(r => r.urgency === 'kritis').length} isu kritis
+          </div>
+        </td>
+        <td style="font-size:var(--font-xs)">
+          ${v.has_population_data
+            ? `<strong>${(v.jumlah_penduduk / 1000).toFixed(1)}rb</strong><div style="color:var(--text-muted)">${(v.jumlah_kk / 1000).toFixed(1)}rb KK</div>`
+            : '<span style="color:var(--text-muted)">—</span>'
+          }
+        </td>
+        <td>
+          <div class="score-bar-container">
+            <div class="score-bar" style="width:${v.skor}%;background:${statusObj.color}"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:${statusObj.color}">${v.skor}/100</span>
+        </td>
+        <td>
+          <span style="font-weight:600;color:${penangananColor}">${v.has_population_data ? v.pct_penanganan.toFixed(1) + '%' : '—'}</span>
+        </td>
+        <td>
+          <span style="font-weight:600;color:${penguranganColor}">${v.pct_pengurangan.toFixed(1)}%</span>
+        </td>
+        <td>
+          <span style="font-weight:600;color:${v.residu_rate > 60 ? '#ef4444' : v.residu_rate > 40 ? '#f59e0b' : '#10b981'}">${v.residu_rate.toFixed(1)}%</span>
+        </td>
+        <td style="font-size:12px">
+          ${v.tps3r_count > 0 ? `<span class="badge badge-success" style="margin:1px">${icons.recycle} ${v.tps3r_count}</span>` : ''}
+          ${v.tps_count > 0 ? `<span class="badge badge-info" style="margin:1px">${icons.mapPin} ${v.tps_count}</span>` : ''}
+          ${v.bank_sampah_count > 0 ? `<span class="badge badge-neutral" style="margin:1px">${icons.landmark} ${v.bank_sampah_count}</span>` : ''}
+          ${v.total_infrastruktur === 0 ? '<span class="badge badge-danger">Tidak ada</span>' : ''}
+        </td>
+        <td>
+          <span class="status-pill" style="background:${statusObj.bg};color:${statusObj.color}">${statusObj.label}</span>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Re-bind row clicks
+    tbody.querySelectorAll('.ranking-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const wilayah = row.dataset.wilayah;
+        selectedVillage = villageProfiles.find(v => v.wilayah === wilayah);
+        if (selectedVillage) renderProfilView();
+      });
+    });
+  };
+
+  // Bind controls
+  const searchInput = document.getElementById('searchInput');
+  const statusFilter = document.getElementById('statusFilter');
+  const sortBy = document.getElementById('sortBy');
+
+  ['input', 'change'].forEach(evtType => {
+    searchInput?.addEventListener(evtType, updateTable);
   });
+  statusFilter?.addEventListener('change', updateTable);
+  sortBy?.addEventListener('change', updateTable);
+
+  // Initial table render
+  updateTable();
 }
 
 // ===========================
