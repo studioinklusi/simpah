@@ -36,11 +36,13 @@ async function loadPortalCSS() {
 }
 
 // ── Background initialization (non-blocking) ──────────────────────────────
-let _dbReady = null; // Promise that resolves when DB is initialized & seeded
+let _dbReadyResolve;
+const _dbReady = new Promise((resolve) => {
+  _dbReadyResolve = resolve;
+});
 
-function initBackgroundServices() {
-  // Initialize DB, seed, and sync in background
-  _dbReady = (async () => {
+function initDatabaseServices() {
+  (async () => {
     try {
       const { initDB } = await import('./db/schema.js');
       await initDB();
@@ -50,9 +52,13 @@ function initBackgroundServices() {
       initSync();
     } catch (err) {
       console.warn('Background DB init warning:', err);
+    } finally {
+      _dbReadyResolve();
     }
   })();
+}
 
+function initBackgroundServices() {
   // Initialize auth in background
   (async () => {
     try {
@@ -270,6 +276,15 @@ function bootstrap() {
 
     // Phase 2: Background initialization (non-blocking)
     initBackgroundServices();
+
+    // Phase 3: Defer database & heavy sync services until browser is idle / loaded
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => initDatabaseServices());
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(initDatabaseServices, 1000);
+      });
+    }
 
   } catch (error) {
     console.error('Bootstrap failed:', error);
