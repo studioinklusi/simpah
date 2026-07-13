@@ -5,6 +5,7 @@ import { setState, getState } from '../utils/helpers.js';
 
 // ── Internal State ──────────────────────────────────────────────────────────
 let _profile = null;
+let _activeProfilePromise = null;
 let _authReady = false;
 let _authReadyResolve = null;
 const _authReadyPromise = new Promise((resolve) => { _authReadyResolve = resolve; });
@@ -388,55 +389,128 @@ export class AuthError extends Error {
 // ── Internal Helpers ────────────────────────────────────────────────────────
 
 async function _loadProfile(userId, forceRefresh = false) {
-  // Check cache first (unless force refresh)
+  // 1. Check in-memory cache first
   if (_profile && _profile.id === userId && !forceRefresh) {
     return _profile;
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error || !data) {
-      console.warn('[Auth] Profile load failed:', error);
-      _profile = null;
-    } else if (data.is_active === false) {
-      console.warn('[Auth] User is deactivated, logging out');
-      _profile = null;
-      sessionStorage.removeItem('simpah_user');
-      await supabase.auth.signOut();
-      throw new Error('Akun Anda telah dinonaktifkan oleh administrator.');
-    } else {
-      // Fetch RBAC Permissions
-      try {
-        const { data: permData, error: permError } = await supabase
-          .from('role_permissions')
-          .select('module_id')
-          .eq('role_code', data.role);
-          
-        if (!permError && permData) {
-          data.permissions = permData.map(p => p.module_id);
-        } else {
-          data.permissions = [];
+  // 2. Check sessionStorage cache first for instant load
+  if (!forceRefresh) {
+    try {
+      const cached = sessionStorage.getItem('simpah_user');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.id === userId) {
+          _profile = parsed;
+          setState('user', parsed);
+          // Trigger a background refresh to sync with server
+          _refreshProfileInBackground(userId);
+          return _profile;
         }
-      } catch (err) {
-        data.permissions = [];
       }
-
-      _profile = data;
-      // Sync with legacy helpers state
-      sessionStorage.setItem('simpah_user', JSON.stringify(data));
-      setState('user', data);
+    } catch (e) {
+      console.warn('[Auth] Failed to parse cached profile:', e);
     }
-  } catch (err) {
-    console.error('[Auth] Profile fetch error:', err);
-    _profile = null;
   }
 
-  return _profile;
+  // Deduplicate concurrent profile fetches
+  if (_activeProfilePromise) {
+    return _activeProfilePromise;
+  }
+
+  _activeProfilePromise = (async () => {
+    try {
+      // Use Promise.race to set a 5-second timeout on profile fetch
+      const profilePromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+
+      const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
+
+      if (error || !data) {
+        console.warn('[Auth] Profile load failed:', error);
+        if (!_profile) _profile = null;
+      } else if (data.is_active === false) {
+        console.warn('[Auth] User is deactivated, logging out');
+        _profile = null;
+        sessionStorage.removeItem('simpah_user');
+        await supabase.auth.signOut();
+        throw new Error('Akun Anda telah dinonaktifkan oleh administrator.');
+      } else {
+        // Fetch RBAC Permissions
+        try {
+          const permPromise = supabase
+            .from('role_permissions')
+            .select('module_id')
+            .eq('role_code', data.role);
+
+          const { data: permData, error: permError } = await Promise.race([
+            permPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Perms fetch timeout')), 3000))
+          ]);
+            
+          if (!permError && permData) {
+            data.permissions = permData.map(p => p.module_id);
+          } else {
+            data.permissions = [];
+          }
+        } catch (err) {
+          console.warn('[Auth] Gagal load permissions, fallback kosong:', err);
+          data.permissions = [];
+        }
+
+        _profile = data;
+        sessionStorage.setItem('simpah_user', JSON.stringify(data));
+        setState('user', data);
+      }
+    } catch (err) {
+      console.error('[Auth] Profile fetch error:', err);
+      if (!_profile) _profile = null;
+    } finally {
+      _activeProfilePromise = null;
+    }
+    return _profile;
+  })();
+
+  return _activeProfilePromise;
+}
+
+function _refreshProfileInBackground(userId) {
+  setTimeout(async () => {
+    try {
+      const profilePromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      const { data, error } = await Promise.race([
+        profilePromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Background fetch timeout')), 5000))
+      ]);
+      if (!error && data && data.is_active !== false) {
+        try {
+          const { data: permData } = await supabase
+            .from('role_permissions')
+            .select('module_id')
+            .eq('role_code', data.role);
+          data.permissions = permData ? permData.map(p => p.module_id) : [];
+        } catch (e) {
+          data.permissions = _profile?.permissions || [];
+        }
+        _profile = data;
+        sessionStorage.setItem('simpah_user', JSON.stringify(data));
+        setState('user', data);
+      }
+    } catch (err) {
+      console.warn('[Auth] Background profile refresh failed:', err);
+    }
+  }, 100);
 }
 
 function _clearSession() {

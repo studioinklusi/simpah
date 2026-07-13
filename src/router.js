@@ -38,7 +38,11 @@ export function startRouter(defaultRoute = '/login') {
     // Public routes (/login, /portal/*) are always accessible.
     if (!isPublicRoute(hash)) {
       if (!isAuthReady()) {
-        await waitForAuth();
+        // Safety timeout of 5 seconds to prevent routing from hanging forever
+        await Promise.race([
+          waitForAuth(),
+          new Promise((resolve) => setTimeout(resolve, 5000))
+        ]);
       }
       const user = getAuthProfile();
       if (!user) {
