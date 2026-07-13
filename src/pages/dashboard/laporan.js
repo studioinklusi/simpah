@@ -66,13 +66,12 @@ export async function renderLaporan() {
             </tr>
           </thead>
           <tbody id="reportBody">
-            ${renderReportRows(sorted.slice(0, 50))}
+            <!-- Rendered dynamically -->
           </tbody>
         </table>
       </div>
-      <div style="text-align:center;padding:var(--space-4);color:var(--text-muted);font-size:var(--font-sm)">
-        Menampilkan ${Math.min(50, sorted.length)} dari ${sorted.length} data
-      </div>
+      <div id="reportInfo" style="text-align:center;padding:var(--space-4) var(--space-4) 0;color:var(--text-muted);font-size:var(--font-sm)"></div>
+      <div id="reportPagination" style="display:flex; justify-content:center; align-items:center; gap:var(--space-2); margin-top:var(--space-4); margin-bottom:var(--space-6);"></div>
     </div>
   `, 'laporan');
 
@@ -96,14 +95,125 @@ export async function renderLaporan() {
     showToast('Data format SIPSN berhasil di-export!', 'success');
   });
 
+  let currentPage = 1;
+  const itemsPerPage = 50;
+
+  const updateTable = () => {
+    const filtered = getFilteredRecords(sorted);
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const isMobile = window.innerWidth <= 768;
+    const limit = isMobile ? (currentPage * itemsPerPage) : itemsPerPage;
+    const startIndex = isMobile ? 0 : (currentPage - 1) * itemsPerPage;
+    const endIndex = isMobile ? limit : (currentPage * itemsPerPage);
+    
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    const tbody = document.getElementById('reportBody');
+    if (tbody) {
+      tbody.innerHTML = renderReportRows(paginatedItems, startIndex);
+    }
+
+    const infoEl = document.getElementById('reportInfo');
+    if (infoEl) {
+      infoEl.textContent = `Menampilkan ${Math.min(endIndex, totalItems)} dari ${totalItems} data`;
+    }
+
+    const paginationContainer = document.getElementById('reportPagination');
+    if (paginationContainer) {
+      if (totalItems <= itemsPerPage) {
+        paginationContainer.innerHTML = '';
+        return;
+      }
+
+      if (isMobile) {
+        if (totalItems > limit) {
+          paginationContainer.innerHTML = `
+            <button class="btn btn-ghost btn-sm" id="loadMoreReportsBtn" style="font-weight:600; padding:8px 16px; margin:12px 0; border:1px solid var(--border-color); border-radius:var(--radius-md);">
+              Muat Lebih Banyak (${totalItems - limit} data tersisa)
+            </button>
+          `;
+          document.getElementById('loadMoreReportsBtn')?.addEventListener('click', () => {
+            currentPage++;
+            updateTable();
+          });
+        } else {
+          paginationContainer.innerHTML = '';
+        }
+      } else {
+        let html = '';
+        // Prev button
+        html += `
+          <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+            ${icons.chevronLeft || '◀'}
+          </button>
+        `;
+        
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+          startPage = Math.max(1, endPage - 4);
+        }
+        
+        if (startPage > 1) {
+          html += `
+            <button class="btn btn-sm btn-ghost pagination-btn" data-page="1" style="min-width:32px;">1</button>
+            ${startPage > 2 ? '<span style="color:var(--text-muted); padding:0 4px;">...</span>' : ''}
+          `;
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+          const isActive = i === currentPage;
+          html += `
+            <button class="btn btn-sm pagination-btn ${isActive ? 'btn-primary' : 'btn-ghost'}" data-page="${i}" style="min-width:32px; height:32px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-md); font-weight:${isActive ? '700' : '500'};">
+              ${i}
+            </button>
+          `;
+        }
+        
+        if (endPage < totalPages) {
+          html += `
+            ${endPage < totalPages - 1 ? '<span style="color:var(--text-muted); padding:0 4px;">...</span>' : ''}
+            <button class="btn btn-sm btn-ghost pagination-btn" data-page="${totalPages}" style="min-width:32px;">${totalPages}</button>
+          `;
+        }
+        
+        // Next button
+        html += `
+          <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+            ${icons.chevronRight || '▶'}
+          </button>
+        `;
+        
+        paginationContainer.innerHTML = html;
+        
+        paginationContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.disabled) return;
+            currentPage = parseInt(btn.dataset.page);
+            updateTable();
+            document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth' });
+          });
+        });
+      }
+    }
+  };
+
   // Filter change
   const filterInputs = ['periodInput', 'typeFilter'];
   filterInputs.forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
-      const filtered = getFilteredRecords(sorted);
-      document.getElementById('reportBody').innerHTML = renderReportRows(filtered.slice(0, 50));
+      currentPage = 1;
+      updateTable();
     });
   });
+
+  // Initial render
+  updateTable();
 }
 
 function getFilteredRecords(records) {
@@ -124,13 +234,13 @@ function getFilteredRecords(records) {
   return filtered;
 }
 
-function renderReportRows(records) {
+function renderReportRows(records, startIndex = 0) {
   if (records.length === 0) {
-    return '<tr><td colspan="8" style="text-align:center;padding:var(--space-8);color:var(--text-muted)">Tidak ada data untuk filter ini</td></tr>';
+    return '<tr><td colspan="9" style="text-align:center;padding:var(--space-8);color:var(--text-muted)">Tidak ada data untuk filter ini</td></tr>';
   }
   return records.map((r, i) => `
     <tr>
-      <td>${i + 1}</td>
+      <td>${startIndex + i + 1}</td>
       <td>${formatDate(r.created_at)}</td>
       <td><span class="badge ${r.is_incidental ? 'badge-warning' : r.type === 'masuk' ? 'badge-success' : r.type === 'campur' ? 'badge-warning' : r.type === 'pilah' ? 'badge-info' : r.type === 'olah' ? 'badge-primary' : 'badge-danger'}">${getTypeLabel(r)}</span></td>
       <td>${r.category_sipsn || '-'}</td>
