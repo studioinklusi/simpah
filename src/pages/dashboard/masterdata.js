@@ -15,6 +15,7 @@ import {
   getAllInvitationCodes, addInvitationCode, updateInvitationCode, deleteInvitationCode,
   getAllMasterWilayah, updateMasterWilayah, updatePopulationBatch} from '../../db/store.js';
 import { wireSearchableSelect } from '../../utils/searchable-select.js';
+import { showModal } from '../../components/modal.js';
 export async function renderMasterData() {
   const user = getCurrentUser();
   if (!user || !hasPermission(user, 'MANAGE_MASTER_DATA')) {
@@ -1103,6 +1104,7 @@ export async function renderMasterData() {
     const roleColors = { warga: 'green', petugas: 'amber', eksekutif: 'blue', admin: 'purple' };
     const roleLabels = {};
     USER_ROLES.forEach(r => { roleLabels[r.id] = r.label; });
+
     container.innerHTML = `
       <div class="md-toolbar">
         <div style="display:flex;align-items:center;gap:var(--space-3)">
@@ -1110,6 +1112,29 @@ export async function renderMasterData() {
           <span class="md-count">${users.length} akun</span>
         </div>
         <button class="btn btn-primary btn-sm" id="addUserBtn">${icons.plus} Tambah Pengguna</button>
+      </div>
+
+      <!-- Controls -->
+      <div class="report-controls" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-4); flex-wrap:wrap;">
+        <div class="form-group" style="margin-bottom:0;flex:1;min-width:200px">
+          <label class="form-label" style="font-size:11px">Cari Pengguna</label>
+          <input type="text" id="userSearchInput" class="form-input" placeholder="Cari nama, username, atau email..." style="width:100%" />
+        </div>
+        <div class="form-group" style="margin-bottom:0;width:180px">
+          <label class="form-label" style="font-size:11px">Filter Role</label>
+          <select id="userRoleFilter" class="form-select" style="width:100%">
+            <option value="all">Semua Role</option>
+            ${USER_ROLES.map(r => `<option value="${r.id}">${r.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;width:140px">
+          <label class="form-label" style="font-size:11px">Filter Status</label>
+          <select id="userStatusFilter" class="form-select" style="width:100%">
+            <option value="all">Semua Status</option>
+            <option value="active">Aktif</option>
+            <option value="inactive">Nonaktif</option>
+          </select>
+        </div>
       </div>
 
       <!-- Bulk Action Bar for Users -->
@@ -1141,45 +1166,26 @@ export async function renderMasterData() {
             </tr>
           </thead>
           <tbody>
-            ${users.length === 0 ? '<tr><td colspan="8" class="md-empty">Belum ada data pengguna</td></tr>' :
-              users.map(u => `<tr>
-                <td style="text-align:center; vertical-align:middle">
-                  ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
-                </td>
-                <td><strong>${u.full_name || u.name || ''}</strong></td>
-                <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
-                <td><span style="font-size:var(--font-sm);color:var(--text-secondary)">${u.email || (u.username.includes('@') ? u.username : `${u.username}@simpah.dev`)}</span></td>
-                <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
-                <td>${u.wilayah || '-'}</td>
-                <td>
-                  ${u.is_active !== false 
-                    ? `<span class="md-badge" style="background:#d1fae5; color:#065f46">Aktif</span>` 
-                    : `<span class="md-badge" style="background:#fee2e2; color:#991b1b">Nonaktif</span>`}
-                </td>
-                <td><div class="md-actions">
-                  <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
-                  ${u.role !== 'admin' ? (
-                    u.is_active !== false
-                      ? `<button class="md-btn-icon danger" title="Nonaktifkan Akun" data-toggle-user="${u.id}" data-active="true" style="color:#dc2626">${icons.xCircle}</button>`
-                      : `<button class="md-btn-icon" title="Aktifkan Akun" data-toggle-user="${u.id}" data-active="false" style="color:#059669">${icons.checkCircle}</button>`
-                  ) : ''}
-                </div></td>
-              </tr>`).join('')}
+            <!-- Rendered dynamically -->
           </tbody>
         </table>
       </div>
+      <div id="usersInfo" style="text-align:center;padding:var(--space-4) var(--space-4) 0;color:var(--text-muted);font-size:var(--font-sm)"></div>
+      <div id="usersPagination" style="display:flex; justify-content:center; align-items:center; gap:var(--space-2); margin-top:var(--space-4); margin-bottom:var(--space-6);"></div>
     `;
 
-    // Bulk selection logic for Users
     let selectedIds = [];
     const selectAllCb = document.getElementById('selectAllUsers');
-    const rowCheckboxes = container.querySelectorAll('.user-select-checkbox');
     const bulkBar = document.getElementById('usersBulkActionBar');
     const selectedCountEl = document.getElementById('usersSelectedCount');
     const btnCancelBulk = document.getElementById('btnCancelUsersBulkSelect');
     const btnDeactivateBulk = document.getElementById('btnDeactivateUsersBulkSelected');
 
-    function updateBulkBar() {
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    function updateBulkBar(currentCheckboxes) {
+      const cbs = currentCheckboxes || container.querySelectorAll('.user-select-checkbox');
       if (selectedIds.length > 0) {
         if (bulkBar) bulkBar.style.display = 'flex';
         if (selectedCountEl) selectedCountEl.textContent = selectedIds.length;
@@ -1187,82 +1193,308 @@ export async function renderMasterData() {
         if (bulkBar) bulkBar.style.display = 'none';
       }
       if (selectAllCb) {
-        selectAllCb.checked = selectedIds.length === rowCheckboxes.length && rowCheckboxes.length > 0;
-        selectAllCb.indeterminate = selectedIds.length > 0 && selectedIds.length < rowCheckboxes.length;
+        selectAllCb.checked = cbs.length > 0 && selectedIds.length >= cbs.length && Array.from(cbs).every(cb => selectedIds.includes(cb.dataset.id));
+        selectAllCb.indeterminate = selectedIds.length > 0 && selectedIds.length < cbs.length;
       }
     }
 
+    const updateTable = () => {
+      const search = document.getElementById('userSearchInput')?.value.toLowerCase().trim() || '';
+      const role = document.getElementById('userRoleFilter')?.value || 'all';
+      const status = document.getElementById('userStatusFilter')?.value || 'all';
+
+      // 1. Filter
+      const filtered = users.filter(u => {
+        const fullName = (u.full_name || u.name || '').toLowerCase();
+        const username = (u.username || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const matchesSearch = fullName.includes(search) || username.includes(search) || email.includes(search);
+
+        const matchesRole = (role === 'all' || u.role === role);
+
+        let matchesStatus = true;
+        if (status === 'active') matchesStatus = u.is_active !== false;
+        else if (status === 'inactive') matchesStatus = u.is_active === false;
+
+        return matchesSearch && matchesRole && matchesStatus;
+      });
+
+      // 2. Paginate
+      const totalItems = filtered.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      const isMobile = window.innerWidth <= 768;
+      const limit = isMobile ? (currentPage * itemsPerPage) : itemsPerPage;
+      const startIndex = isMobile ? 0 : (currentPage - 1) * itemsPerPage;
+      const endIndex = isMobile ? limit : (currentPage * itemsPerPage);
+      
+      const paginatedItems = filtered.slice(startIndex, endIndex);
+
+      // Update count badge in toolbar
+      const countEl = container.querySelector('.md-count');
+      if (countEl) {
+        countEl.textContent = `${totalItems} akun`;
+      }
+
+      // Render table rows
+      const tbody = container.querySelector('tbody');
+      if (!tbody) return;
+
+      if (paginatedItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="md-empty">Tidak ada data pengguna yang cocok</td></tr>';
+        const infoEl = document.getElementById('usersInfo');
+        if (infoEl) infoEl.textContent = '';
+        const paginationContainer = document.getElementById('usersPagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = paginatedItems.map(u => `
+        <tr>
+          <td style="text-align:center; vertical-align:middle">
+            ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
+          </td>
+          <td><strong>${u.full_name || u.name || ''}</strong></td>
+          <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
+          <td><span style="font-size:var(--font-sm);color:var(--text-secondary)">${u.email || (u.username.includes('@') ? u.username : `${u.username}@simpah.dev`)}</span></td>
+          <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
+          <td>${u.wilayah || '-'}</td>
+          <td>
+            ${u.is_active !== false 
+              ? `<span class="md-badge" style="background:#d1fae5; color:#065f46">Aktif</span>` 
+              : `<span class="md-badge" style="background:#fee2e2; color:#991b1b">Nonaktif</span>`}
+          </td>
+          <td><div class="md-actions">
+            <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
+            ${u.role !== 'admin' ? (
+              u.is_active !== false
+                ? `<button class="md-btn-icon danger" title="Nonaktifkan Akun" data-toggle-user="${u.id}" data-active="true" style="color:#dc2626">${icons.xCircle}</button>`
+                : `<button class="md-btn-icon" title="Aktifkan Akun" data-toggle-user="${u.id}" data-active="false" style="color:#059669">${icons.checkCircle}</button>`
+            ) : ''}
+          </div></td>
+        </tr>
+      `).join('');
+
+      // Wire up row checkboxes
+      const rowCheckboxes = container.querySelectorAll('.user-select-checkbox');
+      rowCheckboxes.forEach(cb => {
+        cb.checked = selectedIds.includes(cb.dataset.id);
+        cb.addEventListener('change', () => {
+          const id = cb.dataset.id;
+          if (cb.checked) {
+            if (!selectedIds.includes(id)) selectedIds.push(id);
+          } else {
+            selectedIds = selectedIds.filter(x => x !== id);
+          }
+          updateBulkBar(rowCheckboxes);
+        });
+      });
+
+      updateBulkBar(rowCheckboxes);
+
+      // Re-bind actions (Edit & Toggle)
+      container.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
+        const u = users.find(x => x.id === btn.dataset.editUser);
+        if (u) openUserForm(u, masterWilayah);
+      }));
+      container.querySelectorAll('[data-toggle-user]').forEach(btn => btn.addEventListener('click', async () => {
+        const userId = btn.dataset.toggleUser;
+        const isActive = btn.dataset.active === 'true';
+        const actionText = isActive ? 'menonaktifkan' : 'mengaktifkan';
+        
+        showModal({
+          title: isActive ? 'Nonaktifkan Pengguna' : 'Aktifkan Pengguna',
+          content: `
+            <div style="display: flex; gap: var(--space-4); align-items: flex-start; padding-top: var(--space-2)">
+              <div style="background: ${isActive ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'}; color: ${isActive ? 'var(--danger-500)' : 'var(--primary-500)'}; padding: var(--space-3); border-radius: var(--radius-lg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                ${isActive ? icons.xCircle : icons.checkCircle}
+              </div>
+              <div>
+                <p style="margin: 0; font-weight: 600; font-size: 15px; color: var(--text-primary);">Apakah Anda yakin ingin ${actionText} pengguna ini?</p>
+                <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">Pengguna yang nonaktif tidak akan dapat mengakses aplikasi.</p>
+              </div>
+            </div>
+          `,
+          actions: [
+            {
+              label: 'Batal',
+              variant: 'btn-secondary',
+              handler: () => {}
+            },
+            {
+              label: isActive ? 'Nonaktifkan' : 'Aktifkan',
+              variant: isActive ? 'btn-danger' : 'btn-primary',
+              handler: async () => {
+                try {
+                  await updateUser(userId, { is_active: !isActive });
+                  showToast(`Akun berhasil ${isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
+                  loadTabContent('users');
+                } catch (err) {
+                  showToast(`Gagal: ${err.message}`, 'error');
+                }
+              }
+            }
+          ]
+        });
+      }));
+
+      // Render Pagination Info
+      const infoEl = document.getElementById('usersInfo');
+      if (infoEl) {
+        infoEl.textContent = `Menampilkan ${Math.min(endIndex, totalItems)} dari ${totalItems} pengguna`;
+      }
+
+      // Render Pagination Controls
+      const paginationContainer = document.getElementById('usersPagination');
+      if (paginationContainer) {
+        if (totalItems <= itemsPerPage) {
+          paginationContainer.innerHTML = '';
+          return;
+        }
+
+        if (isMobile) {
+          if (totalItems > limit) {
+            paginationContainer.innerHTML = `
+              <button class="btn btn-ghost btn-sm" id="loadMoreUsersBtn" style="font-weight:600; padding:8px 16px; margin:12px 0; border:1px solid var(--border-color); border-radius:var(--radius-md);">
+                Muat Lebih Banyak (${totalItems - limit} pengguna tersisa)
+              </button>
+            `;
+            document.getElementById('loadMoreUsersBtn')?.addEventListener('click', () => {
+              currentPage++;
+              updateTable();
+            });
+          } else {
+            paginationContainer.innerHTML = '';
+          }
+        } else {
+          let html = `
+            <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+              ${icons.chevronLeft || '◀'}
+            </button>
+          `;
+          for (let p = 1; p <= totalPages; p++) {
+            html += `
+              <button class="btn ${p === currentPage ? 'btn-primary' : 'btn-ghost'} btn-sm pagination-btn" data-page="${p}" style="padding:4px 8px; min-width:32px;">
+                ${p}
+              </button>
+            `;
+          }
+          html += `
+            <button class="btn btn-ghost btn-sm pagination-btn" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''} style="padding:4px 8px; min-width:32px;">
+              ${icons.chevronRight || '▶'}
+            </button>
+          `;
+          paginationContainer.innerHTML = html;
+
+          paginationContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              if (btn.disabled) return;
+              currentPage = parseInt(btn.dataset.page);
+              updateTable();
+            });
+          });
+        }
+      }
+    };
+
     selectAllCb?.addEventListener('change', () => {
       const isChecked = selectAllCb.checked;
-      selectedIds = [];
-      rowCheckboxes.forEach(cb => {
-        cb.checked = isChecked;
-        if (isChecked) selectedIds.push(cb.dataset.id);
-      });
-      updateBulkBar();
-    });
-
-    rowCheckboxes.forEach(cb => {
-      cb.addEventListener('change', () => {
-        const id = cb.dataset.id;
-        if (cb.checked) {
-          if (!selectedIds.includes(id)) selectedIds.push(id);
-        } else {
-          selectedIds = selectedIds.filter(x => x !== id);
-        }
-        updateBulkBar();
-      });
+      const cbs = container.querySelectorAll('.user-select-checkbox');
+      if (isChecked) {
+        cbs.forEach(cb => {
+          cb.checked = true;
+          if (!selectedIds.includes(cb.dataset.id)) selectedIds.push(cb.dataset.id);
+        });
+      } else {
+        cbs.forEach(cb => {
+          cb.checked = false;
+          selectedIds = selectedIds.filter(x => x !== cb.dataset.id);
+        });
+      }
+      updateBulkBar(cbs);
     });
 
     btnCancelBulk?.addEventListener('click', () => {
       selectedIds = [];
-      rowCheckboxes.forEach(cb => cb.checked = false);
+      const cbs = container.querySelectorAll('.user-select-checkbox');
+      cbs.forEach(cb => cb.checked = false);
       if (selectAllCb) selectAllCb.checked = false;
-      updateBulkBar();
+      updateBulkBar(cbs);
     });
 
     btnDeactivateBulk?.addEventListener('click', async () => {
       if (selectedIds.length === 0) return;
-      if (confirm(`Apakah Anda yakin ingin menonaktifkan ${selectedIds.length} pengguna terpilih? Pengguna yang dinonaktifkan tidak akan bisa login.`)) {
-        if (btnDeactivateBulk) {
-          btnDeactivateBulk.disabled = true;
-          btnDeactivateBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menonaktifkan...';
-        }
-        try {
-          await deactivateUsersBatch(selectedIds);
-          showToast(`${selectedIds.length} pengguna berhasil dinonaktifkan`, 'success');
-          loadTabContent('users');
-        } catch (err) {
-          showToast('Gagal menonaktifkan: ' + err.message, 'error');
-          if (btnDeactivateBulk) {
-            btnDeactivateBulk.disabled = false;
-            btnDeactivateBulk.innerHTML = `${icons.xCircle} Nonaktifkan Terpilih`;
+      showModal({
+        title: 'Nonaktifkan Pengguna Terpilih',
+        content: `
+          <div style="display: flex; gap: var(--space-4); align-items: flex-start; padding-top: var(--space-2)">
+            <div style="background: rgba(239, 68, 68, 0.1); color: var(--danger-500); padding: var(--space-3); border-radius: var(--radius-lg); flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+              ${icons.xCircle}
+            </div>
+            <div>
+              <p style="margin: 0; font-weight: 600; font-size: 15px; color: var(--text-primary);">Apakah Anda yakin ingin menonaktifkan ${selectedIds.length} pengguna?</p>
+              <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;">Pengguna yang dinonaktifkan tidak akan bisa login ke dalam aplikasi.</p>
+            </div>
+          </div>
+        `,
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary',
+            handler: () => {}
+          },
+          {
+            label: 'Nonaktifkan',
+            variant: 'btn-danger',
+            handler: async () => {
+              if (btnDeactivateBulk) {
+                btnDeactivateBulk.disabled = true;
+                btnDeactivateBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menonaktifkan...';
+              }
+              try {
+                await deactivateUsersBatch(selectedIds);
+                showToast(`${selectedIds.length} pengguna berhasil dinonaktifkan`, 'success');
+                loadTabContent('users');
+              } catch (err) {
+                showToast('Gagal menonaktifkan: ' + err.message, 'error');
+                if (btnDeactivateBulk) {
+                  btnDeactivateBulk.disabled = false;
+                  btnDeactivateBulk.innerHTML = `${icons.xCircle} Nonaktifkan Terpilih`;
+                }
+              }
+            }
           }
-        }
-      }
+        ]
+      });
     });
 
     document.getElementById('addUserBtn')?.addEventListener('click', () => openUserForm(null, masterWilayah));
-    container.querySelectorAll('[data-edit-user]').forEach(btn => btn.addEventListener('click', () => {
-      const u = users.find(x => x.id === btn.dataset.editUser);
-      if (u) openUserForm(u, masterWilayah);
-    }));
-    container.querySelectorAll('[data-toggle-user]').forEach(btn => btn.addEventListener('click', async () => {
-      const userId = btn.dataset.toggleUser;
-      const isActive = btn.dataset.active === 'true';
-      const actionText = isActive ? 'menonaktifkan' : 'mengaktifkan';
-      
-      if (confirm(`Yakin ingin ${actionText} akun pengguna ini? Pengguna yang nonaktif tidak dapat mengakses aplikasi.`)) {
-        try {
-          await updateUser(userId, { is_active: !isActive });
-          showToast(`Akun berhasil ${isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
-          loadTabContent('users');
-        } catch (err) {
-          showToast(`Gagal: ${err.message}`, 'error');
-          console.error('[MasterData] Toggle user status error:', err);
-        }
-      }
-    }));
+
+    // Bind controls
+    const searchInput = document.getElementById('userSearchInput');
+    const roleFilter = document.getElementById('userRoleFilter');
+    const statusFilter = document.getElementById('userStatusFilter');
+
+    ['input', 'change'].forEach(evtType => {
+      searchInput?.addEventListener(evtType, () => {
+        currentPage = 1;
+        updateTable();
+      });
+    });
+    roleFilter?.addEventListener('change', () => {
+      currentPage = 1;
+      updateTable();
+    });
+    statusFilter?.addEventListener('change', () => {
+      currentPage = 1;
+      updateTable();
+    });
+
+    // Initial render
+    updateTable();
   }
 
   function openUserForm(existing = null, masterWilayah = []) {
