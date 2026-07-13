@@ -18,7 +18,7 @@ export function renderPWALayout(title, content, activeTab = 'home') {
     const backButtonHTML = title !== 'Beranda' ? `
       <div style="margin-bottom: var(--space-4);">
         <button class="btn btn-ghost btn-sm" onclick="history.back()" style="display:inline-flex; align-items:center; gap:var(--space-1); font-weight:600; padding: var(--space-2) var(--space-3);">
-          \${icons.chevronLeft} Kembali
+          ${icons.chevronLeft} Kembali
         </button>
       </div>
     ` : '';
