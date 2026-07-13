@@ -94,7 +94,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           </div>
           <div class="sidebar-section">
             <div class="sidebar-section-title">Operasional</div>
-            <a href="#/pwa/home" class="sidebar-link ${isActiveRoute('/pwa/') ? 'active' : ''}">
+            <a href="#/pwa/home" class="sidebar-link ${isActiveRoute('/pwa') ? 'active' : ''}">
               ${icons.activity} <span>Input Lapangan</span>
             </a>
           </div>
