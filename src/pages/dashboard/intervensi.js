@@ -155,18 +155,20 @@ function renderRankingView() {
       return;
     }
 
-    tbody.innerHTML = filtered.map(v => {
+    tbody.innerHTML = filtered.map((v, i) => {
       const statusObj = getScoreStatus(v.skor);
       const penangananColor = v.has_population_data ? (v.pct_penanganan < 30 ? '#ef4444' : v.pct_penanganan < 60 ? '#f59e0b' : '#10b981') : 'var(--text-muted)';
       const penguranganColor = v.pct_pengurangan < 10 ? '#ef4444' : v.pct_pengurangan < 25 ? '#f59e0b' : '#10b981';
       
-      // Original rank is based on original sorted score ascending (position in original villageProfiles array)
+      // Display rank follows current sorted order (sequential 1, 2, 3...)
+      const displayRank = i + 1;
+      // Original score rank used only to determine rank-top badge (marks true priority regions)
       const originalRank = villageProfiles.findIndex(x => x.wilayah === v.wilayah) + 1;
 
       return `
       <tr class="ranking-row" data-wilayah="${v.wilayah}" style="cursor:pointer">
         <td style="text-align:center">
-          <span class="rank-badge ${originalRank <= 3 ? 'rank-top' : ''}">${originalRank}</span>
+          <span class="rank-badge ${originalRank <= 3 ? 'rank-top' : ''}">${displayRank}</span>
         </td>
         <td>
           <strong>${v.wilayah}</strong>
