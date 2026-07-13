@@ -411,11 +411,11 @@
 }
 
 .floating-card .login-footer a {
-  color: #059669;
+  color: #0d7c3d;
 }
 
 .floating-card .login-footer a:hover {
-  color: #047857;
+  color: #065f46;
 }
 
 /* Error banner for light theme */
@@ -478,7 +478,7 @@
 }
 
 .auth-navbar-left .logo-dot {
-  color: #059669;
+  color: #0d7c3d;
 }
 
 .auth-navbar-right {
@@ -512,9 +512,9 @@
 }
 
 .auth-navbar-right .nav-btn:hover {
-  background: #059669;
+  background: #0d7c3d;
   color: #ffffff;
-  border-color: #059669;
+  border-color: #0d7c3d;
 }
 
 /* Redefine split container for light theme content centering */
@@ -552,8 +552,8 @@
 }
 
 .reference-left-panel h2 span.accent-text {
-  color: #059669;
-  background: linear-gradient(to right, #059669, #10b981);
+  color: #0d7c3d;
+  background: linear-gradient(to right, #0d7c3d, #10b981);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -637,7 +637,7 @@
   padding: var(--space-2) var(--space-4);
   font-size: var(--font-xs);
   font-weight: 700;
-  color: #059669;
+  color: #0d7c3d;
   z-index: 3;
   display: flex;
   align-items: center;
@@ -761,7 +761,7 @@
 }
 
 .password-criteria-item.met {
-  color: #059669;
+  color: #0d7c3d;
 }
 
 .password-criteria-item.met svg {
@@ -774,8 +774,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  background: #059669;
-  border: 1px solid #059669;
+  background: #0d7c3d;
+  border: 1px solid #0d7c3d;
   color: #ffffff;
   font-weight: 600;
   font-size: var(--font-sm);
@@ -784,15 +784,15 @@
   width: 100%;
   transition: all 0.2s ease;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.15);
+  box-shadow: 0 6px 16px rgba(13, 124, 61, 0.15);
   margin-top: var(--space-4);
 }
 
 .reference-btn-primary:hover {
-  background: #047857;
-  border-color: #047857;
+  background: #065f46;
+  border-color: #065f46;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(4, 120, 87, 0.25);
+  box-shadow: 0 8px 20px rgba(6, 95, 70, 0.25);
 }
 
 .reference-btn-primary:active {
@@ -815,7 +815,7 @@
 }
 
 .reference-card .login-footer a {
-  color: #059669;
+  color: #0d7c3d;
   text-decoration: none;
   font-weight: 700;
   transition: color 0.2s ease;
@@ -823,7 +823,7 @@
 
 .reference-card .login-footer a:hover {
   text-decoration: underline !important;
-  color: #047857;
+  color: #065f46;
 }
 
 /* Error Banner for Reference */
@@ -873,22 +873,22 @@
 }
 
 .reference-card .demo-account svg {
-  color: #059669 !important;
+  color: #0d7c3d !important;
   width: 14px !important;
   height: 14px !important;
 }
 
 .reference-card .demo-account:hover {
-  border-color: #10b981 !important;
+  border-color: #0d7c3d !important;
   background: #ecfdf5 !important;
-  color: #059669 !important;
+  color: #0d7c3d !important;
 }
 
 .reference-card .demo-account.selected {
-  border-color: #059669 !important;
+  border-color: #0d7c3d !important;
   background: #ecfdf5 !important;
-  color: #059669 !important;
-  box-shadow: 0 0 0 1px #059669 !important;
+  color: #0d7c3d !important;
+  box-shadow: 0 0 0 1px #0d7c3d !important;
 }
 
 
@@ -903,7 +903,7 @@
   z-index: 10;
   background: #ffffff;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
-  color: #9ca3af;
+  color: #4b5563;
   font-size: 0.75rem;
 }
 
@@ -981,13 +981,13 @@
 
 .forgot-password-link {
   font-size: var(--font-xs);
-  color: #059669;
+  color: #0d7c3d;
   font-weight: 600;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .forgot-password-link:hover {
-  color: #047857;
+  color: #065f46;
   text-decoration: underline;
 }
