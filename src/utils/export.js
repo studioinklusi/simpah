@@ -12,7 +12,7 @@ export function exportToCSV(records, filename = 'simpah-export') {
   const rows = records.map((r, i) => [
     i + 1,
     formatDate(r.created_at),
-    r.is_incidental ? 'Insidental' : r.type === 'masuk' ? 'Sampah Masuk' : r.type === 'campur' ? 'Sampah Campur' : r.type === 'pilah' ? 'Sampah Terpilah' : r.type === 'olah' ? 'Olah Sampah' : 'Residu',
+    r.is_incidental ? 'Insidental' : (r.type === 'masuk' || r.type === 'campur') ? 'Sampah Campur' : r.type === 'pilah' ? 'Sampah Terpilah' : r.type === 'olah' ? 'Olah Sampah' : 'Residu',
     getCategoryName(r.category_sipsn),
     r.category_sipsn || '',
     r.weight_kg || 0,
@@ -49,7 +49,7 @@ export function exportToSIPSN(records, period = '') {
       byCategory[r.category_sipsn] += weightTon;
     }
     if (r.type === 'pilah' || r.type === 'olah') totalManaged += weightTon;
-    if (r.type === 'residu' || r.type === 'campur') totalResidu += weightTon;
+    if (r.type === 'residu' || r.type === 'campur' || r.type === 'masuk') totalResidu += weightTon;
   });
 
   const totalVolume = Object.values(byCategory).reduce((s, v) => s + v, 0);
@@ -74,7 +74,7 @@ export async function exportToExcel(records, filename = 'simpah-report') {
     const data = records.map((r, i) => ({
       'No': i + 1,
       'Tanggal': formatDate(r.created_at),
-      'Jenis': r.is_incidental ? 'Insidental' : r.type === 'masuk' ? 'Sampah Masuk' : r.type === 'campur' ? 'Sampah Campur' : r.type === 'pilah' ? 'Sampah Terpilah' : r.type === 'olah' ? 'Olah Sampah' : 'Residu',
+      'Jenis': r.is_incidental ? 'Insidental' : (r.type === 'masuk' || r.type === 'campur') ? 'Sampah Campur' : r.type === 'pilah' ? 'Sampah Terpilah' : r.type === 'olah' ? 'Olah Sampah' : 'Residu',
       'Kategori': getCategoryName(r.category_sipsn),
       'Kode': r.category_sipsn || '',
       'Berat (kg)': r.weight_kg || 0,

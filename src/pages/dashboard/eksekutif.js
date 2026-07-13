@@ -622,7 +622,7 @@ async function renderValidationSummary() {
     .slice(0, 3);
 
   const fmtDate = (d) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-  const typeLabel = (t) => t === 'masuk' ? 'Masuk' : t === 'campur' ? 'Campur' : t === 'pilah' ? 'Pilah' : t === 'olah' ? 'Olah' : t === 'residu' ? 'Residu' : t || '-';
+  const typeLabel = (t) => (t === 'masuk' || t === 'campur') ? 'Campur' : t === 'pilah' ? 'Pilah' : t === 'olah' ? 'Olah' : t === 'residu' ? 'Residu' : t || '-';
 
   container.innerHTML = `
     <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-4)">

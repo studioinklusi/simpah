@@ -27,9 +27,9 @@ export async function renderRiwayat() {
 
       <div class="tabs" style="margin-bottom:var(--space-4)">
         <button class="tab active" data-filter="all">Semua</button>
-        <button class="tab" data-filter="masuk">Masuk</button>
         <button class="tab" data-filter="campur">Campur</button>
         <button class="tab" data-filter="pilah">Terpilah</button>
+        <button class="tab" data-filter="olah">Olah</button>
         <button class="tab" data-filter="residu">Residu</button>
       </div>
 
@@ -40,7 +40,11 @@ export async function renderRiwayat() {
   `, 'riwayat');
 
   const updateList = () => {
-    let filtered = activeFilter === 'all' ? sorted : sorted.filter(r => r.type === activeFilter);
+    let filtered = activeFilter === 'all' 
+      ? sorted 
+      : activeFilter === 'campur'
+        ? sorted.filter(r => r.type === 'campur' || r.type === 'masuk')
+        : sorted.filter(r => r.type === activeFilter);
     
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -139,9 +143,9 @@ function renderRecords(records) {
   return html;
 }
 
-function getTypeLabel(t) { return {masuk:'Sampah Masuk',campur:'Sampah Campur',pilah:'Terpilah',olah:'Olah Sampah',residu:'Residu'}[t]||t; }
-function getTypeEmoji(t) { return {masuk:icons.download,campur:icons.box,pilah:icons.layers,olah:icons.activity,residu:icons.trash}[t]||icons.box; }
-function getTypeBg(t) { return {masuk:'rgba(16,185,129,0.12)',campur:'rgba(245,158,11,0.12)',pilah:'rgba(59,130,246,0.12)',olah:'rgba(245,158,11,0.12)',residu:'rgba(239,68,68,0.12)'}[t]; }
+function getTypeLabel(t) { return {masuk:'Sampah Campur',campur:'Sampah Campur',pilah:'Terpilah',olah:'Olah Sampah',residu:'Residu'}[t]||t; }
+function getTypeEmoji(t) { return {masuk:icons.box,campur:icons.box,pilah:icons.layers,olah:icons.activity,residu:icons.trash}[t]||icons.box; }
+function getTypeBg(t) { return {masuk:'rgba(245,158,11,0.12)',campur:'rgba(245,158,11,0.12)',pilah:'rgba(59,130,246,0.12)',olah:'rgba(245,158,11,0.12)',residu:'rgba(239,68,68,0.12)'}[t]; }
 
 function getVerificationBadge(r) {
   if (!r.synced) {

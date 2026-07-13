@@ -250,8 +250,8 @@ function renderView() {
                         ${r.lat ? `<div style="font-size:10px;color:var(--primary-500)">${icons.mapPin} ${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}</div>` : ''}
                       </td>
                       <td>
-                        <span class="badge ${r.type==='masuk'?'badge-success':r.type==='pilah'?'badge-primary':r.type==='campur'?'badge-warning':'badge-danger'}">
-                          ${r.type === 'campur' ? 'CAMPUR' : r.type.toUpperCase()}
+                        <span class="badge ${(r.type==='masuk' || r.type==='campur') ? 'badge-warning' : r.type==='pilah' ? 'badge-primary' : r.type==='olah' ? 'badge-info' : 'badge-danger'}">
+                          ${(r.type === 'campur' || r.type === 'masuk') ? 'CAMPUR' : r.type.toUpperCase()}
                         </span>
                         <div style="font-size:11px;margin-top:4px">${escapeHTML(getCatName(r.category_sipsn))}</div>
                         ${r.notes ? `<div style="font-size:10px;color:var(--text-muted);font-style:italic;margin-top:2px">"${escapeHTML(r.notes)}"</div>` : ''}

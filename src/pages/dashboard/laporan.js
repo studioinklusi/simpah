@@ -268,6 +268,8 @@ function getFilteredRecords(records) {
   if (type) {
     if (type === 'insidental') {
       filtered = filtered.filter(r => r.is_incidental);
+    } else if (type === 'campur') {
+      filtered = filtered.filter(r => (r.type === 'campur' || r.type === 'masuk') && !r.is_incidental);
     } else {
       filtered = filtered.filter(r => r.type === type && !r.is_incidental);
     }
@@ -292,7 +294,7 @@ function renderReportRows(records, startIndex = 0) {
     <tr>
       <td>${startIndex + i + 1}</td>
       <td>${formatDate(r.created_at)}</td>
-      <td><span class="badge ${r.is_incidental ? 'badge-warning' : r.type === 'masuk' ? 'badge-success' : r.type === 'campur' ? 'badge-warning' : r.type === 'pilah' ? 'badge-info' : r.type === 'olah' ? 'badge-primary' : 'badge-danger'}">${getTypeLabel(r)}</span></td>
+      <td><span class="badge ${r.is_incidental ? 'badge-warning' : (r.type === 'masuk' || r.type === 'campur') ? 'badge-warning' : r.type === 'pilah' ? 'badge-info' : r.type === 'olah' ? 'badge-primary' : 'badge-danger'}">${getTypeLabel(r)}</span></td>
       <td>${r.category_sipsn || '-'}</td>
       <td style="font-weight:600">${formatWeight(r.weight_kg)}</td>
       <td>${r.location_name || '-'}</td>
@@ -321,5 +323,5 @@ function renderReportRows(records, startIndex = 0) {
 function getTypeLabel(r) { 
   if (r && r.is_incidental) return 'Insidental';
   const t = typeof r === 'string' ? r : r.type;
-  return {masuk:'Masuk',campur:'Campur',pilah:'Terpilah',olah:'Olah',residu:'Residu'}[t]||t; 
+  return {masuk:'Campur',campur:'Campur',pilah:'Terpilah',olah:'Olah',residu:'Residu'}[t]||t; 
 }
