@@ -397,25 +397,39 @@ export async function renderMasterData() {
       updateBulkBar();
     });
 
-    btnDeleteBulk?.addEventListener('click', async () => {
+    btnDeleteBulk?.addEventListener('click', () => {
       if (selectedIds.length === 0) return;
-      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} lokasi terpilih? Tindakan ini tidak bisa dibatalkan.`)) {
-        if (btnDeleteBulk) {
-          btnDeleteBulk.disabled = true;
-          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
-        }
-        try {
-          await deleteLocationsBatch(selectedIds);
-          showToast(`${selectedIds.length} lokasi berhasil dihapus`, 'success');
-          loadTabContent('locations');
-        } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          if (btnDeleteBulk) {
-            btnDeleteBulk.disabled = false;
-            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+      showModal({
+        title: 'Konfirmasi Hapus Terpilih',
+        content: `<p>Apakah Anda yakin ingin menghapus ${selectedIds.length} lokasi terpilih? Tindakan ini tidak bisa dibatalkan.</p>`,
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary'
+          },
+          {
+            label: 'Ya, Hapus',
+            variant: 'btn-danger',
+            handler: async () => {
+              if (btnDeleteBulk) {
+                btnDeleteBulk.disabled = true;
+                btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+              }
+              try {
+                await deleteLocationsBatch(selectedIds);
+                showToast(`${selectedIds.length} lokasi berhasil dihapus`, 'success');
+                loadTabContent('locations');
+              } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+                if (btnDeleteBulk) {
+                  btnDeleteBulk.disabled = false;
+                  btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+                }
+              }
+            }
           }
-        }
-      }
+        ]
+      });
     });
 
     // Form buttons and action handlers
@@ -426,17 +440,31 @@ export async function renderMasterData() {
       const loc = locations.find(l => l.id === btn.dataset.editLoc);
       if (loc) openLocationForm(loc, masterWilayah);
     }));
-    container.querySelectorAll('[data-del-loc]').forEach(btn => btn.addEventListener('click', async () => {
-      if (confirm('Yakin ingin menghapus lokasi ini?')) {
-        try {
-          await deleteLocation(btn.dataset.delLoc);
-          showToast('Lokasi berhasil dihapus', 'success');
-          loadTabContent('locations');
-        } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          console.error('[MasterData] Delete location error:', err);
-        }
-      }
+    container.querySelectorAll('[data-del-loc]').forEach(btn => btn.addEventListener('click', () => {
+      showModal({
+        title: 'Konfirmasi Hapus Lokasi',
+        content: '<p>Yakin ingin menghapus lokasi ini?</p>',
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary'
+          },
+          {
+            label: 'Ya, Hapus',
+            variant: 'btn-danger',
+            handler: async () => {
+              try {
+                await deleteLocation(btn.dataset.delLoc);
+                showToast('Lokasi berhasil dihapus', 'success');
+                loadTabContent('locations');
+              } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+                console.error('[MasterData] Delete location error:', err);
+              }
+            }
+          }
+        ]
+      });
     }));
   }
 
@@ -1045,17 +1073,31 @@ export async function renderMasterData() {
       const f = fleet.find(x => x.id === btn.dataset.editFleet);
       if (f) openFleetForm(f);
     }));
-    container.querySelectorAll('[data-del-fleet]').forEach(btn => btn.addEventListener('click', async () => {
-      if (confirm('Yakin ingin menghapus kendaraan ini?')) {
-        try {
-          await deleteFleet(btn.dataset.delFleet);
-          showToast('Kendaraan berhasil dihapus', 'success');
-          loadTabContent('fleet');
-        } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          console.error('[MasterData] Delete fleet error:', err);
-        }
-      }
+    container.querySelectorAll('[data-del-fleet]').forEach(btn => btn.addEventListener('click', () => {
+      showModal({
+        title: 'Konfirmasi Hapus Kendaraan',
+        content: '<p>Yakin ingin menghapus kendaraan ini?</p>',
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary'
+          },
+          {
+            label: 'Ya, Hapus',
+            variant: 'btn-danger',
+            handler: async () => {
+              try {
+                await deleteFleet(btn.dataset.delFleet);
+                showToast('Kendaraan berhasil dihapus', 'success');
+                loadTabContent('fleet');
+              } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+                console.error('[MasterData] Delete fleet error:', err);
+              }
+            }
+          }
+        ]
+      });
     }));
   }
 
@@ -2248,25 +2290,39 @@ export async function renderMasterData() {
       updateBulkBar();
     });
 
-    btnDeleteBulk?.addEventListener('click', async () => {
+    btnDeleteBulk?.addEventListener('click', () => {
       if (selectedIds.length === 0) return;
-      if (confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} fasilitas umum terpilih?`)) {
-        if (btnDeleteBulk) {
-          btnDeleteBulk.disabled = true;
-          btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
-        }
-        try {
-          await deletePublicFacilitiesBatch(selectedIds);
-          showToast(`${selectedIds.length} fasilitas umum berhasil dihapus`, 'success');
-          loadTabContent('fasum');
-        } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-          if (btnDeleteBulk) {
-            btnDeleteBulk.disabled = false;
-            btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+      showModal({
+        title: 'Konfirmasi Hapus Terpilih',
+        content: `<p>Apakah Anda yakin ingin menghapus ${selectedIds.length} fasilitas umum terpilih?</p>`,
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary'
+          },
+          {
+            label: 'Ya, Hapus',
+            variant: 'btn-danger',
+            handler: async () => {
+              if (btnDeleteBulk) {
+                btnDeleteBulk.disabled = true;
+                btnDeleteBulk.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block;margin-right:6px;vertical-align:middle"></span> Menghapus...';
+              }
+              try {
+                await deletePublicFacilitiesBatch(selectedIds);
+                showToast(`${selectedIds.length} fasilitas umum berhasil dihapus`, 'success');
+                loadTabContent('fasum');
+              } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+                if (btnDeleteBulk) {
+                  btnDeleteBulk.disabled = false;
+                  btnDeleteBulk.innerHTML = `${icons.trash} Hapus Terpilih`;
+                }
+              }
+            }
           }
-        }
-      }
+        ]
+      });
     });
 
     document.getElementById('addFasumBtn')?.addEventListener('click', () => openFasumForm());
@@ -2276,16 +2332,30 @@ export async function renderMasterData() {
       const f = facilities.find(x => x.id === btn.dataset.editFasum);
       if (f) openFasumForm(f);
     }));
-    container.querySelectorAll('[data-del-fasum]').forEach(btn => btn.addEventListener('click', async () => {
-      if (confirm('Yakin ingin menghapus fasilitas umum ini?')) {
-        try {
-          await deletePublicFacility(btn.dataset.delFasum);
-          showToast('Fasilitas umum berhasil dihapus', 'success');
-          loadTabContent('fasum');
-        } catch (err) {
-          showToast('Gagal menghapus: ' + err.message, 'error');
-        }
-      }
+    container.querySelectorAll('[data-del-fasum]').forEach(btn => btn.addEventListener('click', () => {
+      showModal({
+        title: 'Konfirmasi Hapus Fasilitas Umum',
+        content: '<p>Yakin ingin menghapus fasilitas umum ini?</p>',
+        actions: [
+          {
+            label: 'Batal',
+            variant: 'btn-secondary'
+          },
+          {
+            label: 'Ya, Hapus',
+            variant: 'btn-danger',
+            handler: async () => {
+              try {
+                await deletePublicFacility(btn.dataset.delFasum);
+                showToast('Fasilitas umum berhasil dihapus', 'success');
+                loadTabContent('fasum');
+              } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+              }
+            }
+          }
+        ]
+      });
     }));
   }
 
@@ -2994,16 +3064,30 @@ export async function renderMasterData() {
     });
 
     container.querySelectorAll('.delete-inv-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (confirm('Yakin ingin menghapus kode undangan ini?')) {
-          try {
-            await deleteInvitationCode(btn.dataset.id);
-            showToast('Kode undangan berhasil dihapus', 'success');
-            loadTabContent('invitations');
-          } catch (err) {
-            showToast('Gagal menghapus: ' + err.message, 'error');
-          }
-        }
+      btn.addEventListener('click', () => {
+        showModal({
+          title: 'Konfirmasi Hapus Kode Undangan',
+          content: '<p>Yakin ingin menghapus kode undangan ini?</p>',
+          actions: [
+            {
+              label: 'Batal',
+              variant: 'btn-secondary'
+            },
+            {
+              label: 'Ya, Hapus',
+              variant: 'btn-danger',
+              handler: async () => {
+                try {
+                  await deleteInvitationCode(btn.dataset.id);
+                  showToast('Kode undangan berhasil dihapus', 'success');
+                  loadTabContent('invitations');
+                } catch (err) {
+                  showToast('Gagal menghapus: ' + err.message, 'error');
+                }
+              }
+            }
+          ]
+        });
       });
     });
   }
