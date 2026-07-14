@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-charts': ['chart.js'],
-          'vendor-maps': ['leaflet', 'leaflet.heat'],
+          'vendor-maps': ['leaflet'],
           'vendor-xlsx': ['xlsx'],
         }
       }

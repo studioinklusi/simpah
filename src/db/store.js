@@ -13,6 +13,33 @@ function normalizeDateStr(record) {
   };
 }
 
+function validateCoordinates(lat, lng) {
+  if (lat !== undefined && lat !== null && (isNaN(lat) || lat < -90 || lat > 90)) {
+    throw new Error('Latitude harus di antara -90 dan 90 derajat');
+  }
+  if (lng !== undefined && lng !== null && (isNaN(lng) || lng < -180 || lng > 180)) {
+    throw new Error('Longitude harus di antara -180 dan 180 derajat');
+  }
+}
+
+function translateDatabaseError(error, defaultMsg) {
+  const msg = error.message || '';
+  if (msg.includes('foreign key constraint') || msg.includes('violates foreign key')) {
+    if (msg.includes('profiles')) {
+      return 'Data tidak dapat dihapus karena masih digunakan oleh profil pengguna.';
+    }
+    if (msg.includes('waste_records')) {
+      return 'Data tidak dapat dihapus karena masih digunakan oleh data transaksi sampah.';
+    }
+    if (msg.includes('mou')) {
+      return 'Data tidak dapat dihapus karena masih terikat dengan kontrak MoU Transporter.';
+    }
+    return 'Data tidak dapat dihapus karena masih digunakan oleh data/transaksi lain di sistem.';
+  }
+  return defaultMsg + ': ' + msg;
+}
+
+
 async function getAll(storeName) {
   const db = await getDB();
   return db.getAll(storeName);
@@ -201,6 +228,7 @@ export async function getLocationsByType(type) {
 
 export async function addLocation(location) {
   if (!navigator.onLine) throw new Error('Penambahan lokasi harus dalam keadaan online');
+  validateCoordinates(location.lat, location.lng);
   
   const id = location.id || crypto.randomUUID();
   const dataToInsert = { ...location, id, created_at: new Date().toISOString() };
@@ -215,6 +243,8 @@ export async function addLocation(location) {
 export async function addLocationsBatch(locations) {
   if (!navigator.onLine) throw new Error('Penambahan lokasi secara batch harus dalam keadaan online');
   if (!Array.isArray(locations) || locations.length === 0) return [];
+  
+  locations.forEach(loc => validateCoordinates(loc.lat, loc.lng));
   
   const preparedLocations = locations.map(loc => ({
     ...loc,
@@ -238,6 +268,7 @@ export async function addLocationsBatch(locations) {
 
 export async function updateLocation(id, updates) {
   if (!navigator.onLine) throw new Error('Perubahan lokasi harus dalam keadaan online');
+  validateCoordinates(updates.lat, updates.lng);
   
   const updatedData = { ...updates, updated_at: new Date().toISOString() };
   
@@ -253,7 +284,7 @@ export async function deleteLocation(id) {
   if (!navigator.onLine) throw new Error('Penghapusan lokasi harus dalam keadaan online');
   
   // Verify item exists first
-  const { data: existing } = await supabase.from('locations').select('id').eq('id', id).single();
+  const { data: existing } = await supabase.from('locations').select('id').eq('id', id).maybeSingle();
   if (!existing) {
     // Not in Supabase (might be local-only seed data), just remove from IDB
     await deleteById('locations', id);
@@ -261,12 +292,12 @@ export async function deleteLocation(id) {
   }
   
   const { error } = await supabase.from('locations').delete().eq('id', id);
-  if (error) throw new Error('Gagal menghapus dari server: ' + error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus lokasi dari server'));
   
   // Verify deletion actually happened (RLS might silently block)
-  const { data: checkAfter } = await supabase.from('locations').select('id').eq('id', id).single();
+  const { data: checkAfter } = await supabase.from('locations').select('id').eq('id', id).maybeSingle();
   if (checkAfter) {
-    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda login sebagai Admin.');
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda memiliki hak akses Administrator.');
   }
   
   await deleteById('locations', id);
@@ -277,12 +308,12 @@ export async function deleteLocationsBatch(ids) {
   if (!Array.isArray(ids) || ids.length === 0) return;
   
   const { error } = await supabase.from('locations').delete().in('id', ids);
-  if (error) throw new Error('Gagal menghapus lokasi dari server: ' + error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus lokasi secara batch'));
   
   // Verify deletion actually happened (RLS check)
   const { data: stillPresent, error: checkError } = await supabase.from('locations').select('id').in('id', ids);
   if (!checkError && stillPresent && stillPresent.length > 0) {
-    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS) untuk beberapa lokasi. Pastikan Anda login sebagai Admin.');
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS) untuk beberapa lokasi. Pastikan Anda memiliki hak akses Administrator.');
   }
   
   const db = await getDB();
@@ -437,19 +468,19 @@ export async function deleteFleet(id) {
   if (!navigator.onLine) throw new Error('Penghapusan armada harus dalam keadaan online');
   
   // Verify item exists first
-  const { data: existing } = await supabase.from('fleet').select('id').eq('id', id).single();
+  const { data: existing } = await supabase.from('fleet').select('id').eq('id', id).maybeSingle();
   if (!existing) {
     await deleteById('fleet', id);
     return;
   }
   
   const { error } = await supabase.from('fleet').delete().eq('id', id);
-  if (error) throw new Error('Gagal menghapus dari server: ' + error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus kendaraan dari server'));
   
   // Verify deletion actually happened
-  const { data: checkAfter } = await supabase.from('fleet').select('id').eq('id', id).single();
+  const { data: checkAfter } = await supabase.from('fleet').select('id').eq('id', id).maybeSingle();
   if (checkAfter) {
-    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda login sebagai Admin.');
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda memiliki hak akses Administrator.');
   }
   
   await deleteById('fleet', id);
@@ -954,7 +985,13 @@ export async function deletePublicFacility(id) {
   if (!navigator.onLine) throw new Error('Penghapusan fasilitas umum harus dalam keadaan online');
   
   const { error } = await supabase.from('public_facilities').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus fasilitas umum'));
+  
+  // Verify deletion actually happened
+  const { data: checkAfter } = await supabase.from('public_facilities').select('id').eq('id', id).maybeSingle();
+  if (checkAfter) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda memiliki hak akses Administrator.');
+  }
 }
 
 // ========== RBAC (Supabase only) ==========
@@ -1030,7 +1067,13 @@ export async function deleteInvitationCode(id) {
     .from('invitation_codes')
     .delete()
     .eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus kode undangan'));
+  
+  // Verify deletion actually happened
+  const { data: checkAfter } = await supabase.from('invitation_codes').select('id').eq('id', id).maybeSingle();
+  if (checkAfter) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS). Pastikan Anda memiliki hak akses Administrator.');
+  }
 }
 
 export async function validateInvitationCode(code) {
@@ -1048,7 +1091,13 @@ export async function deletePublicFacilitiesBatch(ids) {
   if (!Array.isArray(ids) || ids.length === 0) return;
   
   const { error } = await supabase.from('public_facilities').delete().in('id', ids);
-  if (error) throw new Error('Gagal menghapus fasilitas umum: ' + error.message);
+  if (error) throw new Error(translateDatabaseError(error, 'Gagal menghapus fasilitas umum secara batch'));
+  
+  // Verify deletion actually happened (RLS check)
+  const { data: stillPresent, error: checkError } = await supabase.from('public_facilities').select('id').in('id', ids);
+  if (!checkError && stillPresent && stillPresent.length > 0) {
+    throw new Error('Penghapusan diblokir oleh kebijakan keamanan server (RLS) untuk beberapa fasilitas umum. Pastikan Anda memiliki hak akses Administrator.');
+  }
 }
 
 export async function addPublicFacilitiesBatch(facilities) {

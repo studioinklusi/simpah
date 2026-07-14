@@ -604,6 +604,19 @@ export async function renderMasterData() {
         servedDesaIds.unshift(selectedDesaId);
       }
 
+      const lat = parseFloat(document.getElementById('locLat').value);
+      const lng = parseFloat(document.getElementById('locLng').value);
+
+      if (isNaN(lat) || lat < -90 || lat > 90) {
+        showToast('Latitude harus berada di rentang -90 s/d 90', 'error');
+        return;
+      }
+
+      if (isNaN(lng) || lng < -180 || lng > 180) {
+        showToast('Longitude harus berada di rentang -180 s/d 180', 'error');
+        return;
+      }
+
       const data = {
         name: document.getElementById('locName').value.trim(),
         type: document.getElementById('locType').value,
@@ -611,8 +624,8 @@ export async function renderMasterData() {
         desa_id: selectedDesaId || null,
         served_desa_ids: servedDesaIds,
         address: document.getElementById('locAddress').value.trim() || null,
-        lat: parseFloat(document.getElementById('locLat').value),
-        lng: parseFloat(document.getElementById('locLng').value),
+        lat,
+        lng,
         capacity_kg: parseFloat(document.getElementById('locCapacity').value) || null
       };
 
