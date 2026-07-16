@@ -211,12 +211,12 @@ function registerAllRoutes() {
     } else {
       window.location.hash = '#/dashboard/gis';
     }
-  }, ['warga', 'petugas', 'eksekutif', 'admin']);
+  }, ['petugas', 'eksekutif', 'admin']);
   registerRoute('/dashboard/gis', async () => {
     await loadDashboardCSS();
     const { renderGIS } = await import('./pages/dashboard/gis.js');
     return renderGIS();
-  }, ['warga', 'petugas', 'eksekutif', 'admin']);
+  }, ['petugas', 'eksekutif', 'admin']);
   registerRoute('/dashboard/eksekutif', async () => {
     await loadDashboardCSS();
     const { renderEksekutif } = await import('./pages/dashboard/eksekutif.js');
