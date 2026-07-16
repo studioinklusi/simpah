@@ -44,7 +44,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
           </div>
         </div>
         <nav class="sidebar-nav">
-          ${(canViewExecutive(user) || !(user?.role === 'petugas' && user?.job_type === 'kader')) ? `
+          ${(canViewExecutive(user) || (!(user?.role === 'petugas' && user?.job_type === 'kader') && user?.role !== 'warga')) ? `
           <div class="sidebar-section">
             <div class="sidebar-section-title">Pemantauan</div>
             ${canViewExecutive(user) ? `
