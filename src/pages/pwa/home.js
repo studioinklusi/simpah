@@ -1,7 +1,7 @@
 // SIMPAH - PWA Home Page
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatWeight, formatNumber, getState, onStateChange } from '../../utils/helpers.js';
-import { getWasteStats, getAllMasterWilayah, getAllLocations } from '../../db/store.js';
+import { getWasteStats, getAllMasterWilayah, getAllLocations, getAllComplaints } from '../../db/store.js';
 import { canInputWaste, getAllowedInputTypes, hasPermission, canValidate } from '../../utils/permissions.js';
 import { renderPWALayout } from './layout.js';
 
@@ -11,11 +11,30 @@ export async function renderPWAHome() {
 
   const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
 
-  const [stats, masterWilayah, locations] = await Promise.all([
-    getWasteStats(isInputter ? user.id : null),
-    getAllMasterWilayah(),
-    getAllLocations()
-  ]);
+  let stats = null;
+  let userComplaints = [];
+  let masterWilayah = [];
+  let locations = [];
+
+  if (user.role === 'warga') {
+    const [allComplaints, mwData, locData] = await Promise.all([
+      getAllComplaints(),
+      getAllMasterWilayah(),
+      getAllLocations()
+    ]);
+    userComplaints = allComplaints.filter(c => c.reporter_user_id === user.id);
+    masterWilayah = mwData;
+    locations = locData;
+  } else {
+    const [wasteStats, mwData, locData] = await Promise.all([
+      getWasteStats(isInputter ? user.id : null),
+      getAllMasterWilayah(),
+      getAllLocations()
+    ]);
+    stats = wasteStats;
+    masterWilayah = mwData;
+    locations = locData;
+  }
 
   let authorityText = '';
   if (user.role === 'admin') {
@@ -66,6 +85,28 @@ export async function renderPWAHome() {
 
     <!-- Summary Cards -->
     <div class="pwa-summary-row page-enter stagger-1" style="animation-fill-mode:both">
+      ${user.role === 'warga' ? `
+      <div class="pwa-summary-card">
+        <div class="summary-icon" style="color:var(--primary-600)">${icons.clipboard}</div>
+        <div class="summary-value" style="color:var(--primary-600)">${userComplaints.length}</div>
+        <div class="summary-label">Total Aduan</div>
+      </div>
+      <div class="pwa-summary-card">
+        <div class="summary-icon" style="color:var(--info-500)">${icons.clock}</div>
+        <div class="summary-value" style="color:var(--info-500)">${userComplaints.filter(c => ['baru', 'diproses', 'ditindaklanjuti'].includes(c.status)).length}</div>
+        <div class="summary-label">Diproses</div>
+      </div>
+      <div class="pwa-summary-card">
+        <div class="summary-icon" style="color:#10b981">${icons.checkCircle}</div>
+        <div class="summary-value" style="color:#10b981">${userComplaints.filter(c => c.status === 'selesai').length}</div>
+        <div class="summary-label">Selesai</div>
+      </div>
+      <div class="pwa-summary-card">
+        <div class="summary-icon" style="color:#ef4444">${icons.xCircle}</div>
+        <div class="summary-value" style="color:#ef4444">${userComplaints.filter(c => c.status === 'ditolak').length}</div>
+        <div class="summary-label">Ditolak</div>
+      </div>
+      ` : `
       <div class="pwa-summary-card">
         <div class="summary-icon">${icons.trashIn}</div>
         <div class="summary-value" style="color:var(--primary-600)">${formatWeight(stats.todayWeight)}</div>
@@ -86,6 +127,7 @@ export async function renderPWAHome() {
         <div class="summary-value">${formatNumber(stats.totalRecords)}</div>
         <div class="summary-label">Total Data</div>
       </div>
+      `}
     </div>
 
     <!-- Quick Actions -->
@@ -96,7 +138,6 @@ export async function renderPWAHome() {
       ${canInputWaste(user) ? (() => {
         const allowed = getAllowedInputTypes(user);
         let buttons = '';
-        // Single "Sampah Masuk" hub button (combines campur/pilah/olah)
         if (allowed.includes('masuk') || allowed.includes('pilah') || allowed.includes('olah') || allowed.includes('campur')) buttons += `
         <a href="#/pwa/sampah-masuk" class="quick-action-btn">
           <div class="quick-action-icon green">${icons.trashIn}</div>
@@ -123,7 +164,7 @@ export async function renderPWAHome() {
       ${user?.job_type !== 'angkut' ? `
       <a href="#/dashboard/aduan" class="quick-action-btn">
         <div class="quick-action-icon teal">${icons.messageCircle}</div>
-        <span class="quick-action-label">Aduan</span>
+        <span class="quick-action-label">${user?.role === 'warga' ? 'Aduan Saya' : 'Aduan'}</span>
       </a>
       ` : ''}
       ${user?.role !== 'warga' ? `
@@ -134,7 +175,30 @@ export async function renderPWAHome() {
       ` : ''}
     </div>
 
-    ${user?.role !== 'warga' ? `
+    ${user?.role === 'warga' ? `
+    <!-- Recent Complaints -->
+    <div class="section-header">
+      <h3 style="font-size:var(--font-base);font-weight:700">Aduan Terakhir</h3>
+      <a href="#/dashboard/aduan" class="btn btn-ghost btn-sm">Lihat Semua ${icons.chevronRight}</a>
+    </div>
+    <div class="record-list page-enter stagger-3" style="animation-fill-mode:both">
+      ${userComplaints.slice(0, 5).map(c => `
+        <div class="record-item" style="cursor:pointer" onclick="window.location.hash='#/dashboard/aduan'">
+          <div class="record-icon" style="background:${getComplaintStatusBg(c.status)}">
+            ${getComplaintStatusIcon(c.status)}
+          </div>
+          <div class="record-info">
+            <div class="record-title">${c.category || 'Aduan'} - ${c.tracking_number || '-'}</div>
+            <div class="record-meta">${c.description ? (c.description.substring(0, 45) + (c.description.length > 45 ? '...' : '')) : ''} · ${timeAgo(c.created_at)}</div>
+          </div>
+          <div class="record-value" style="display:flex;flex-direction:column;align-items:flex-end">
+            ${getComplaintStatusBadge(c.status)}
+          </div>
+        </div>
+      `).join('')}
+      ${userComplaints.length === 0 ? '<div class="empty-state"><p>Belum ada aduan</p></div>' : ''}
+    </div>
+    ` : `
     <!-- Recent Records -->
     <div class="section-header">
       <h3 style="font-size:var(--font-base);font-weight:700">Catatan Terakhir</h3>
@@ -158,7 +222,7 @@ export async function renderPWAHome() {
       `).join('')}
       ${stats.records.length === 0 ? '<div class="empty-state"><p>Belum ada catatan</p></div>' : ''}
     </div>
-    ` : ''}
+    `}
   `, 'home');
 
   // Update sync status listener
@@ -219,4 +283,38 @@ function getMotivationalGreeting() {
     "Semangat berlaga pahlawan lingkungan! 🦸‍♂️"
   ];
   return greetings[Math.floor(Math.random() * greetings.length)];
+}
+
+function getComplaintStatusBg(status) {
+  const bgs = {
+    baru: 'rgba(59,130,246,0.12)',
+    diproses: 'rgba(245,158,11,0.12)',
+    ditindaklanjuti: 'rgba(139,92,246,0.12)',
+    selesai: 'rgba(16,185,129,0.12)',
+    ditolak: 'rgba(239,68,68,0.12)'
+  };
+  return bgs[status] || 'rgba(107,114,128,0.12)';
+}
+
+function getComplaintStatusIcon(status) {
+  const config = {
+    baru: icons.download,
+    diproses: icons.clock,
+    ditindaklanjuti: icons.tool,
+    selesai: icons.checkCircle,
+    ditolak: icons.xCircle
+  };
+  return config[status] || icons.box;
+}
+
+function getComplaintStatusBadge(status) {
+  const config = {
+    baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+    diproses: { label: 'Diproses', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+    ditindaklanjuti: { label: 'Ditindaklanjuti', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+    selesai: { label: 'Selesai', color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+    ditolak: { label: 'Ditolak', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' }
+  };
+  const cfg = config[status] || { label: status, color: '#6b7280', bg: 'rgba(107,114,128,0.1)' };
+  return `<span class="badge" style="background:${cfg.bg};color:${cfg.color};font-size:11px;margin-top:4px">${cfg.label}</span>`;
 }

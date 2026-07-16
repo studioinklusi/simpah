@@ -51,7 +51,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <a href="#/dashboard/eksekutif" class="sidebar-link ${isActiveRoute('/dashboard/eksekutif') ? 'active' : ''}">
               ${icons.chart} <span>Ringkasan Eksekutif</span>
             </a>` : ''}
-            ${!(user?.role === 'petugas' && user?.job_type === 'kader') ? `
+            ${!(user?.role === 'petugas' && user?.job_type === 'kader') && user?.role !== 'warga' ? `
             <a href="#/dashboard/gis" class="sidebar-link ${isActiveRoute('/dashboard/gis') ? 'active' : ''}">
               ${icons.map} <span>Peta GIS</span>
             </a>` : ''}
@@ -92,12 +92,14 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
               ${icons.messageCircle} <span>Aduan Warga</span>
             </a>
           </div>
+          ${user?.role !== 'warga' ? `
           <div class="sidebar-section">
             <div class="sidebar-section-title">Operasional</div>
             <a href="#/pwa/home" class="sidebar-link ${isActiveRoute('/pwa') ? 'active' : ''}">
               ${icons.activity} <span>Input Lapangan</span>
             </a>
           </div>
+          ` : ''}
         </nav>
         ${getSidebarInstallBanner()}
         <div class="sidebar-footer">
