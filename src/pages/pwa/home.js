@@ -92,19 +92,19 @@ export async function renderPWAHome() {
         <div class="summary-label">Total Aduan</div>
       </div>
       <div class="pwa-summary-card">
-        <div class="summary-icon" style="color:var(--info-500)">${icons.clock}</div>
-        <div class="summary-value" style="color:var(--info-500)">${userComplaints.filter(c => ['baru', 'diproses', 'ditindaklanjuti'].includes(c.status)).length}</div>
+        <div class="summary-icon" style="color:#3b82f6">${icons.download}</div>
+        <div class="summary-value" style="color:#3b82f6">${userComplaints.filter(c => c.status === 'baru').length}</div>
+        <div class="summary-label">Baru</div>
+      </div>
+      <div class="pwa-summary-card">
+        <div class="summary-icon" style="color:#f59e0b">${icons.clock}</div>
+        <div class="summary-value" style="color:#f59e0b">${userComplaints.filter(c => ['diproses', 'ditindaklanjuti'].includes(c.status)).length}</div>
         <div class="summary-label">Diproses</div>
       </div>
       <div class="pwa-summary-card">
         <div class="summary-icon" style="color:#10b981">${icons.checkCircle}</div>
         <div class="summary-value" style="color:#10b981">${userComplaints.filter(c => c.status === 'selesai').length}</div>
         <div class="summary-label">Selesai</div>
-      </div>
-      <div class="pwa-summary-card">
-        <div class="summary-icon" style="color:#ef4444">${icons.xCircle}</div>
-        <div class="summary-value" style="color:#ef4444">${userComplaints.filter(c => c.status === 'ditolak').length}</div>
-        <div class="summary-label">Ditolak</div>
       </div>
       ` : `
       <div class="pwa-summary-card">
