@@ -25,9 +25,9 @@ export function exportToCSV(records, filename = 'simpah-export') {
     r.fleet_plate || '',
     cleanNotes(r.notes),
     r.synced ? 'Ya' : 'Belum',
-    r.is_accumulation ? 'Ya' : 'Tidak',
+    r.batch_id ? 'Ya' : 'Tidak',
     r.batch_days || r.accumulation_days || '',
-    r.accumulation_total_kg || '',
+    r.accumulation_total_kg || (r.batch_id && r.batch_days ? parseFloat((r.weight_kg * r.batch_days).toFixed(1)) : ''),
     r.batch_id || '',
     r.batch_start_date || '',
     r.batch_end_date || ''
@@ -91,9 +91,9 @@ export async function exportToExcel(records, filename = 'simpah-report') {
       'Lng': r.lng || '',
       'Petugas': r.user_name || '',
       'Catatan': cleanNotes(r.notes),
-      'Akumulasi': r.is_accumulation ? 'Ya' : 'Tidak',
+      'Akumulasi': r.batch_id ? 'Ya' : 'Tidak',
       'Hari Akumulasi': r.batch_days || r.accumulation_days || '',
-      'Berat Total Akumulasi (kg)': r.accumulation_total_kg || '',
+      'Berat Total Akumulasi (kg)': r.accumulation_total_kg || (r.batch_id && r.batch_days ? parseFloat((r.weight_kg * r.batch_days).toFixed(1)) : ''),
       'Batch ID': r.batch_id || '',
       'Periode Mulai': r.batch_start_date || '',
       'Periode Selesai': r.batch_end_date || ''
