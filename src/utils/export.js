@@ -6,7 +6,9 @@ export function exportToCSV(records, filename = 'simpah-export') {
   const headers = [
     'No', 'Tanggal', 'Jenis', 'Kategori SIPSN', 'Kode Kategori',
     'Berat (kg)', 'Lokasi', 'Latitude', 'Longitude',
-    'Petugas', 'Kendaraan', 'Catatan', 'Synced'
+    'Petugas', 'Kendaraan', 'Catatan', 'Synced',
+    'Akumulasi', 'Hari Akumulasi', 'Berat Total Akumulasi (kg)',
+    'Batch ID', 'Periode Mulai', 'Periode Selesai'
   ];
 
   const rows = records.map((r, i) => [
@@ -21,8 +23,14 @@ export function exportToCSV(records, filename = 'simpah-export') {
     r.lng || '',
     r.user_name || '',
     r.fleet_plate || '',
-    r.notes || '',
-    r.synced ? 'Ya' : 'Belum'
+    cleanNotes(r.notes),
+    r.synced ? 'Ya' : 'Belum',
+    r.is_accumulation ? 'Ya' : 'Tidak',
+    r.batch_days || r.accumulation_days || '',
+    r.accumulation_total_kg || '',
+    r.batch_id || '',
+    r.batch_start_date || '',
+    r.batch_end_date || ''
   ]);
 
   const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
@@ -82,7 +90,13 @@ export async function exportToExcel(records, filename = 'simpah-report') {
       'Lat': r.lat || '',
       'Lng': r.lng || '',
       'Petugas': r.user_name || '',
-      'Catatan': r.notes || ''
+      'Catatan': cleanNotes(r.notes),
+      'Akumulasi': r.is_accumulation ? 'Ya' : 'Tidak',
+      'Hari Akumulasi': r.batch_days || r.accumulation_days || '',
+      'Berat Total Akumulasi (kg)': r.accumulation_total_kg || '',
+      'Batch ID': r.batch_id || '',
+      'Periode Mulai': r.batch_start_date || '',
+      'Periode Selesai': r.batch_end_date || ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
@@ -119,6 +133,12 @@ function createSIPSNSummary(records) {
 function getCategoryName(code) {
   const cat = SIPSN_CATEGORIES.find(c => c.code === code);
   return cat ? cat.name : '-';
+}
+
+// Remove internal accumulation markers from notes since info is now in dedicated columns
+function cleanNotes(notes) {
+  if (!notes) return '';
+  return notes.replace(/\s*\[Akumulasi hari ke-\d+\/\d+\]\s*/g, '').trim();
 }
 
 function downloadFile(content, filename, mimeType) {
