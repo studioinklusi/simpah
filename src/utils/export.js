@@ -31,16 +31,16 @@ export function exportToCSV(records, filename = 'simpah-export') {
 
 export function exportToSIPSN(records, period = '') {
   // Format specifically for SIPSN upload template
+  // MIX is excluded from per-category SIPSN columns (not a standard SIPSN category)
+  const sipsn9 = SIPSN_CATEGORIES.filter(c => !c.isMixed);
   const headers = [
     'Nama Kabupaten/Kota', 'Tahun', 'Bulan',
-    'Sisa Makanan (ton)', 'Kayu/Ranting (ton)', 'Kertas/Karton (ton)',
-    'Plastik (ton)', 'Logam (ton)', 'Kain/Tekstil (ton)',
-    'Karet/Kulit (ton)', 'Kaca (ton)', 'Lainnya (ton)',
+    ...sipsn9.map(c => `${c.name} (ton)`),
     'Total Volume (ton)', 'Terkelola (ton)', 'Residu (ton)'
   ];
 
   const byCategory = {};
-  SIPSN_CATEGORIES.forEach(c => { byCategory[c.code] = 0; });
+  sipsn9.forEach(c => { byCategory[c.code] = 0; });
   
   let totalManaged = 0, totalResidu = 0;
   records.forEach(r => {
@@ -58,7 +58,7 @@ export function exportToSIPSN(records, period = '') {
     'Kabupaten Banjarnegara',
     period ? period.split('-')[0] : new Date().getFullYear(),
     period ? parseInt(period.split('-')[1]) : new Date().getMonth() + 1,
-    ...SIPSN_CATEGORIES.map(c => byCategory[c.code].toFixed(3)),
+    ...sipsn9.map(c => byCategory[c.code].toFixed(3)),
     totalVolume.toFixed(3),
     totalManaged.toFixed(3),
     totalResidu.toFixed(3)

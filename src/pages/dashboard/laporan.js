@@ -1,7 +1,7 @@
 // SIMPAH - Laporan & Export
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatDate, formatWeight } from '../../utils/helpers.js';
-import { getAllWasteRecords } from '../../db/store.js';
+import { getAllWasteRecords, getAllLocations } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -13,10 +13,14 @@ export async function renderLaporan() {
   const user = getCurrentUser();
   if (!user || !hasPermission(user, 'EXPORT_REPORTS')) { window.location.hash = '#/dashboard/gis'; return; }
 
-  const records = await getAllWasteRecords();
+  const [records, masterLocations] = await Promise.all([
+    getAllWasteRecords(),
+    getAllLocations()
+  ]);
   const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  const locations = [...new Set(sorted.map(r => r.location_name).filter(Boolean))].sort();
+  // Use master locations (active only) — deleted locations won't appear
+  const locations = masterLocations.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   const users = [...new Set(sorted.map(r => r.user_name).filter(Boolean))].sort();
 
 
@@ -58,7 +62,7 @@ export async function renderLaporan() {
           <label class="form-label" style="font-size:11px">Lokasi</label>
           <select id="locationFilter" class="form-select">
             <option value="">Semua Lokasi</option>
-            ${locations.map(loc => `<option value="${escapeHTML(loc)}">${escapeHTML(loc)}</option>`).join('')}
+            ${locations.map(loc => `<option value="${escapeHTML(loc.id)}">${escapeHTML(loc.name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
@@ -275,7 +279,7 @@ function getFilteredRecords(records) {
     }
   }
   if (location) {
-    filtered = filtered.filter(r => r.location_name === location);
+    filtered = filtered.filter(r => r.location_id === location);
   }
   if (user) {
     filtered = filtered.filter(r => r.user_name === user);

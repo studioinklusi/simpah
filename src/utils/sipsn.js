@@ -3,6 +3,7 @@
 import { icons } from '../components/icons.js';
 
 export const SIPSN_CATEGORIES = [
+  { code: 'MIX', name: 'Campuran', icon: icons.layers, color: '#d97706', isMixed: true },
   { code: 'SM', name: 'Sisa Makanan', icon: icons.box, color: '#92400e' },
   { code: 'KR', name: 'Kayu / Ranting', icon: icons.box, color: '#78350f' },
   { code: 'KK', name: 'Kertas / Karton', icon: icons.file, color: '#1e40af' },

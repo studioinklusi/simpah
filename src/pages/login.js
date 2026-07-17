@@ -168,23 +168,8 @@ export function renderLogin() {
             <div class="login-demo" style="margin-top: var(--space-6); border-top: 1px solid #e5e7eb; padding-top: var(--space-4)">
               <p style="font-size: var(--font-xs); color: #6b7280; font-weight: 600; margin-bottom: var(--space-3); text-align: left">Demo Akun (Klik untuk mengisi cepat):</p>
               <div class="demo-accounts">
-                <button class="demo-account" data-user="warga1@simpah.dev" data-pass="warga123" style="grid-column: 1 / -1">
-                  <span>${icons.user}</span> Warga (Demo Warga)
-                </button>
-                <button class="demo-account" data-user="petugas1@simpah.dev" data-pass="petugas123">
-                  <span>${icons.truck}</span> P. Angkut
-                </button>
-                <button class="demo-account" data-user="koordinator1@simpah.dev" data-pass="koordinator123">
-                  <span>${icons.checkCircle}</span> Koordinator
-                </button>
-                <button class="demo-account" data-user="operator1@simpah.dev" data-pass="operator123">
-                  <span>${icons.clipboard}</span> Ops TPS
-                </button>
                 <button class="demo-account" data-user="kader1@simpah.dev" data-pass="kader123">
                   <span>${icons.home}</span> Kader
-                </button>
-                <button class="demo-account" data-user="eksekutif1@simpah.dev" data-pass="eksekutif123">
-                  <span>${icons.chart}</span> Eksekutif
                 </button>
                 <button class="demo-account" data-user="admin1@simpah.dev" data-pass="admin123">
                   <span>${icons.shield}</span> Admin
@@ -314,6 +299,28 @@ export function renderLogin() {
     errorBanner.style.display = 'none';
     errorText.textContent = '';
   }
+
+  // Autofill if requested in URL parameter (e.g. ?autofill=admin or #/login?autofill=admin)
+  setTimeout(() => {
+    try {
+      const hashParts = window.location.hash.split('?');
+      const queryString = hashParts.length > 1 ? hashParts[1] : window.location.search.slice(1);
+      const urlParams = new URLSearchParams(queryString);
+      const autofill = urlParams.get('autofill');
+      
+      if (autofill === 'admin') {
+        usernameInput.value = 'admin1@simpah.dev';
+        passwordInput.value = 'admin123';
+        loginBtn.focus();
+      } else if (autofill === 'kader') {
+        usernameInput.value = 'kader1@simpah.dev';
+        passwordInput.value = 'kader123';
+        loginBtn.focus();
+      }
+    } catch (e) {
+      console.warn('[Login] Autofill error:', e);
+    }
+  }, 100);
 
   // Bind PWA install buttons
   bindInstallButtons();

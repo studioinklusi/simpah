@@ -128,7 +128,7 @@ export async function renderInputSampah() {
           <label class="form-label">Dicatat di Fasilitas (Opsional)</label>
           <select id="locationSelect" class="form-select form-input-lg">
             <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
+            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
           </select>
         </div>
 
@@ -430,7 +430,7 @@ export async function renderInputSampah() {
       lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
       lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
       location_id: (locationEl && locationEl.value) ? locationEl.value : null,
-      location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+      location_name: (locationEl && locationEl.value) ? (selectedOption.dataset.name || selectedOption.text) : '',
       desa_id: desaId,
       fleet_id: (fleetEl && fleetEl.value) ? fleetEl.value : null,
       fleet_plate: (fleetEl && fleetEl.value) ? selectedFleet.dataset.plate : '',

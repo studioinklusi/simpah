@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panduan Interaktif SIMPAH - Penjelasan sederhana mengenai alur pengelolaan sampah digital di Kabupaten Banjarnegara untuk masyarakat awam.">
+  <title>Panduan Interaktif SIMPAH — Pahami Alur Sampah Digital Kita</title>
+  
+  <!-- Modern Premium Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* Harmonies of Emerald & Mint */
+      --primary: #0D7C3D;
+      --primary-light: #22C55E;
+      --primary-glow: rgba(13, 124, 61, 0.15);
+      --secondary: #10B981;
+      --dark-slate: #0F172A;
+      --text-main: #1E293B;
+      --text-sub: #64748B;
+      --bg-base: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-color: rgba(226, 232, 240, 0.8);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --shadow-soft: 0 10px 30px -10px rgba(13, 124, 61, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+      --shadow-hover: 0 20px 40px -15px rgba(13, 124, 61, 0.15), 0 1px 10px rgba(0, 0, 0, 0.05);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      color: var(--dark-slate);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Navbar */
+    header {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 1rem 0;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
+    }
+
+    .nav-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(13, 124, 61, 0.3);
+    }
+
+    .logo-text h1 {
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 99px;
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      background: var(--primary-glow);
+      color: var(--primary);
+    }
+
+    .btn-primary-nav {
+      background: var(--primary);
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(13, 124, 61, 0.2);
+    }
+
+    .btn-primary-nav:hover {
+      background: var(--primary-light) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 5rem 0 4rem;
+      text-align: center;
+      position: relative;
+      background: radial-gradient(ellipse 50% 50% at 50% -20%, rgba(34, 197, 94, 0.15), transparent);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary-glow);
+      color: var(--primary);
+      padding: 0.5rem 1.25rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(13, 124, 61, 0.15);
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .hero-badge span.dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--primary-light);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+
+    .hero h2 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      line-height: 1.15;
+      max-width: 800px;
+      margin: 0 auto 1.5rem;
+      letter-spacing: -1px;
+      animation: fadeInUp 1s ease;
+    }
+
+    .hero h2 span {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.lead {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-sub);
+      max-width: 650px;
+      margin: 0 auto 2.5rem;
+      animation: fadeInUp 1.2s ease;
+    }
+
+    /* Section Styles */
+    .section-padding {
+      padding: 6rem 0;
+    }
+
+    .section-title-wrapper {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .section-title-wrapper .badge {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 2px;
+      margin-bottom: 0.75rem;
+      display: inline-block;
+    }
+
+    .section-title-wrapper h3 {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      letter-spacing: -0.5px;
+      margin-bottom: 1rem;
+    }
+
+    .section-title-wrapper p {
+      color: var(--text-sub);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Cards & Grids */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow-soft);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(13, 124, 61, 0.15);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, var(--primary), var(--secondary));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      background: var(--primary-glow);
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover .card-icon {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .card-icon svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: var(--transition);
+    }
+
+    .card:hover .card-icon svg {
+      stroke: #ffffff;
+    }
+
+    .card h4 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .card p {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+    }
+
+    /* Alur Kerja Section (Flow Timeline) */
+    .flow-diagram-bg {
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .flow-steps::before {
+      content: '';
+      position: absolute;
+      top: 2rem;
+      bottom: 2rem;
+      left: 2rem;
+      width: 4px;
+      background: linear-gradient(to bottom, var(--primary-light), var(--primary), var(--secondary));
+      border-radius: 99px;
+    }
+
+    .flow-step-item {
+      display: flex;
+      gap: 2.5rem;
+      position: relative;
+      align-items: flex-start;
+    }
+
+    .flow-step-number {
+      background: var(--primary);
+      color: white;
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(13, 124, 61, 0.25);
+      border: 4px solid #ffffff;
+      z-index: 2;
+    }
+
+    .flow-step-item:nth-child(2) .flow-step-number {
+      background: var(--primary-light);
+    }
+
+    .flow-step-item:nth-child(3) .flow-step-number {
+      background: var(--secondary);
+    }
+
+    .flow-step-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      flex-grow: 1;
+      box-shadow: var(--shadow-soft);
+      transition: var(--transition);
+    }
+
+    .flow-step-card:hover {
+      background: #ffffff;
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .flow-step-card h4 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .flow-step-card p {
+      color: var(--text-sub);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .flow-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .flow-pill {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 0.35rem 0.85rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Simulator Interaktif Section */
+    .simulator-bg {
+      background: linear-gradient(135deg, #1E293B, #0F172A);
+      color: white;
+    }
+
+    .simulator-bg h2, .simulator-bg h3, .simulator-bg h4 {
+      color: white;
+    }
+
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    /* Phone Mockup */
+    .phone-container {
+      display: flex;
+      justify-content: center;
+      position: relative;
+    }
+
+    .phone-mockup {
+      width: 320px;
+      height: 640px;
+      background: #000000;
+      border-radius: 44px;
+      border: 12px solid #2B2F3A;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Notch & Speaker */
+    .phone-mockup::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 25px;
+      background: #2B2F3A;
+      border-bottom-left-radius: 18px;
+      border-bottom-right-radius: 18px;
+      z-index: 10;
+    }
+
+    .phone-screen {
+      flex-grow: 1;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 2.25rem 1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      font-size: 0.8rem;
+    }
+
+    .phone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      padding-bottom: 0.5rem;
+    }
+
+    .phone-header .brand {
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .phone-header .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary-light);
+    }
+
+    .status-indicator.offline {
+      background: var(--accent-orange, #f59e0b);
+      animation: pulse-orange 1.5s infinite;
+    }
+
+    @keyframes pulse-orange {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .phone-content-body {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: var(--transition);
+      opacity: 1;
+    }
+
+    .phone-footer-nav {
+      margin-top: auto;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding-top: 0.5rem;
+      display: flex;
+      justify-content: space-around;
+      font-size: 0.7rem;
+      color: var(--text-sub);
+    }
+
+    .phone-footer-nav span.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Simulator Controls */
+    .simulator-control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .control-step-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      cursor: pointer;
+      text-align: left;
+      transition: var(--transition);
+      width: 100%;
+      color: inherit;
+    }
+
+    .control-step-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(34, 197, 94, 0.3);
+      transform: translateX(5px);
+    }
+
+    .control-step-btn.active {
+      background: rgba(13, 124, 61, 0.15);
+      border-color: var(--primary-light);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+    }
+
+    .control-step-btn .btn-num {
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .control-step-btn.active .btn-num {
+      background: var(--primary-light);
+      color: white;
+    }
+
+    .control-step-btn h4 {
+      font-size: 1.05rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .control-step-btn p {
+      color: #94A3B8;
+      font-size: 0.85rem;
+    }
+
+    /* Screen States Style */
+    .screen-input-mock {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mock-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mock-input-group label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .mock-input-group select, .mock-input-group input {
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      background: white;
+      color: #1e293b;
+    }
+
+    .mock-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 5px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .mock-btn:hover {
+      background: var(--primary-light);
+    }
+
+    .mock-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .badge-approved {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .sync-animation-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      height: 200px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(13, 124, 61, 0.1);
+      border-left-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .map-mock {
+      background: #e2e8f0;
+      height: 180px;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
+    }
+
+    .map-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(#cbd5e1 1px, transparent 1px), linear-gradient(90deg, #cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.5;
+    }
+
+    .map-pin {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--primary);
+      border: 2px solid white;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .map-pin::after {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(13, 124, 61, 0.2);
+      animation: pulse-ring 1.5s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* Roles Section */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .role-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      box-shadow: var(--shadow-soft);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .role-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .role-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .role-avatar {
+      font-size: 2rem;
+      width: 50px;
+      height: 50px;
+      background: var(--bg-base);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .role-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .role-badge {
+      background: var(--primary-glow);
+      color: var(--primary);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .role-desc {
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      margin-bottom: 1.25rem;
+      flex-grow: 1;
+    }
+
+    .role-tasks {
+      list-style: none;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 1rem;
+    }
+
+    .role-tasks li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .role-tasks li::before {
+      content: '✓';
+      color: var(--primary-light);
+      font-weight: bold;
+    }
+
+    /* FAQ Section */
+    .faq-layout {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .faq-search-wrapper {
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+
+    .faq-search-input {
+      width: 100%;
+      padding: 1.25rem 1.5rem 1.25rem 3.5rem;
+      border-radius: 99px;
+      border: 2px solid var(--border-color);
+      background: white;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text-main);
+      box-shadow: var(--shadow-soft);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .faq-search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 10px 25px -10px rgba(13, 124, 61, 0.15);
+    }
+
+    .faq-search-icon {
+      position: absolute;
+      left: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--text-sub);
+      stroke-width: 2.5;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .faq-item {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .faq-item:hover {
+      border-color: rgba(13, 124, 61, 0.15);
+    }
+
+    .faq-question {
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.05rem;
+      user-select: none;
+      transition: var(--transition);
+    }
+
+    .faq-question:hover {
+      color: var(--primary);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+      background: var(--bg-base);
+    }
+
+    .faq-answer-inner {
+      padding: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .faq-chevron {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--text-sub);
+      stroke-width: 2.5;
+      transition: transform 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+      max-height: 1000px;
+      transition: max-height 0.5s cubic-bezier(1, 0, 1, 0);
+    }
+
+    .faq-item.open .faq-chevron {
+      transform: rotate(180deg);
+      stroke: var(--primary);
+    }
+
+    .faq-item.hidden {
+      display: none;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-sub);
+      display: none;
+    }
+
+    /* Akun Demo Section */
+    .demo-accounts {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      box-shadow: var(--shadow-soft);
+      margin-top: 4rem;
+    }
+
+    .demo-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .demo-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .demo-card:hover {
+      border-color: var(--primary-light);
+      background: white;
+      transform: translateY(-2px);
+    }
+
+    .demo-role {
+      font-weight: 700;
+      color: var(--dark-slate);
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .demo-details {
+      color: var(--text-sub);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .demo-details code {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #c7254e;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--dark-slate);
+      color: #94A3B8;
+      padding: 4rem 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.9rem;
+    }
+
+    .footer-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+    }
+
+    .footer-info {
+      max-width: 450px;
+    }
+
+    .footer-info h4 {
+      color: white;
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .footer-info p {
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-copy {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding-top: 2rem;
+      margin-top: 3rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+      50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 968px) {
+      .simulator-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+      .phone-container {
+        order: 2;
+      }
+      .simulator-control-panel {
+        order: 1;
+      }
+      .footer-flex {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links a:not(.btn-primary-nav) {
+        display: none; /* Sembunyikan link biasa di HP/Tablet */
+      }
+      .logo-text p {
+        display: none; /* Sembunyikan teks bawah logo agar tidak bertumpuk */
+      }
+      .logo-text h1 {
+        font-size: 1.15rem;
+      }
+      .section-padding {
+        padding: 3.5rem 0;
+      }
+      .hero {
+        padding: 4rem 0 2.5rem;
+      }
+      .flow-steps::before {
+        left: 1.5rem;
+      }
+      .flow-step-item {
+        gap: 1.25rem;
+      }
+      .flow-step-number {
+        width: 3rem;
+        height: 3rem;
+        font-size: 1.15rem;
+        border-width: 3px;
+      }
+      .flow-step-card {
+        padding: 1.25rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .phone-mockup {
+        width: 270px;
+        height: 540px;
+        border-width: 8px;
+        border-radius: 32px;
+      }
+      .phone-mockup::after {
+        width: 100px;
+        height: 18px;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+      .phone-screen {
+        padding-top: 1.75rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+      }
+      .sync-animation-box {
+        height: 160px;
+      }
+      .map-mock {
+        height: 140px;
+      }
+      .simulator-grid {
+        gap: 2rem;
+      }
+      .control-step-btn {
+        padding: 0.85rem;
+        gap: 0.85rem;
+      }
+      .control-step-btn h4 {
+        font-size: 0.95rem;
+      }
+      .control-step-btn p {
+        font-size: 0.75rem;
+      }
+      .control-step-btn .btn-num {
+        width: 26px;
+        height: 26px;
+        font-size: 0.8rem;
+      }
+      .faq-search-input {
+        padding: 0.9rem 1rem 0.9rem 2.8rem;
+        font-size: 0.9rem;
+      }
+      .faq-search-icon {
+        left: 1.1rem;
+        width: 16px;
+        height: 16px;
+      }
+      .faq-question {
+        padding: 1.15rem;
+        font-size: 0.95rem;
+      }
+      .faq-answer-inner {
+        padding: 1.15rem;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header / Navbar -->
+  <header>
+    <div class="container nav-flex">
+      <a href="index.html" class="logo-container">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 20 2 20 2s-1.7 5.5-3.8 10.7A7 7 0 0 1 11 20z" fill="rgba(255,255,255,0.2)" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>SIMPAH</h1>
+          <p>Sistem Monitoring Sampah Kabupaten</p>
+        </div>
+      </a>
+      <div class="nav-links">
+        <a href="#tentang">Tentang</a>
+        <a href="#alur">Alur Kerja</a>
+        <a href="#simulator">Simulator</a>
+        <a href="#pengguna">Pengguna</a>
+        <a href="#faq">Tanya Jawab</a>
+        <a href="https://www.simpah.id/" class="btn-primary-nav">Buka Aplikasi</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Panduan Orang Awam
+      </div>
+      <h2>Bagaimana <span>SIMPAH</span> Membantu Mengatasi Masalah Sampah Kita?</h2>
+      <p class="lead">Cara modern, sederhana, dan transparan untuk melacak sampah dari lingkungan tempat tinggal Anda hingga Tempat Pembuangan Akhir (TPA).</p>
+    </div>
+  </section>
+
+  <!-- Bagian 1: Tentang Aplikasi -->
+  <section id="tentang" class="section-padding" style="background:#ffffff; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <div class="section-title-wrapper">
+        <span class="badge">Apa Itu SIMPAH</span>
+        <h3>Digitalisasi Pengelolaan Lingkungan Kita</h3>
+        <p>SIMPAH adalah jembatan digital yang menghubungkan pencatatan sampah di desa-desa dengan Dinas Lingkungan Hidup, demi mewujudkan lingkungan yang bersih dan bebas sampah liar.</p>
+      </div>
+
+      <div class="grid-3">
+        <!-- Benefit 1 -->
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24"><path d="M18.8 2.6A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 9.4-6.8M8 12l3 3 5-5"/></svg>
+          </div>
+          <h4>Pencatatan Offline-First</h4>
+          <p>Petugas di lapangan tetap bisa menginput data sampah meskipun sedang tidak ada sinyal internet atau paket data habis. Data akan tersimpan di HP dan otomatis dikirim saat sinyal aktif kembali.</p>
+        </div>
+
+        <!-- Benefit 2 -->
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+          </div>
+          <h4>Pemetaan GPS (GIS)</h4>
+          <p>Semua fasilitas seperti Tempat Pembuangan Sementara (TPS), TPS3R, Bank Sampah, hingga TPA dipetakan secara akurat. Pemerintah dapat memantau penumpukan sampah geospasial secara langsung.</p>
+        </div>
+
+        <!-- Benefit 3 -->
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+          </div>
+          <h4>Laporan Resmi SIPSN</h4>
+          <p>Membantu dinas mengekspor data yang sudah bersih dengan format yang pas dengan standar Kementerian Lingkungan Hidup (SIPSN) tanpa perlu menyusun laporan manual dari awal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bagian 2: Alur Kerja (Timeline) -->
+  <section id="alur" class="section-padding flow-diagram-bg">
+    <div class="container">
+      <div class="section-title-wrapper">
+        <span class="badge">Perjalanan Data</span>
+        <h3>Bagaimana Data Sampah Mengalir?</h3>
+        <p>Alur sederhana perjalanan data dari saat timbangan dicatat di desa hingga menjadi grafik keputusan di kantor Dinas.</p>
+      </div>
+
+      <div class="flow-steps">
+        <!-- Langkah 1 -->
+        <div class="flow-step-item">
+          <div class="flow-step-number">1</div>
+          <div class="flow-step-card">
+            <h4>🌿 Petugas Mencatat di Lapangan</h4>
+            <p>Petugas/kader di desa menimbang sampah yang masuk ke TPS3R. Mereka mencatat beratnya di HP sesuai kategori (misal: plastik, sisa makanan, kertas).</p>
+            <div class="flow-pill-list">
+              <span class="flow-pill">Timbang Sampah</span>
+              <span class="flow-pill">Pilah & Olah</span>
+              <span class="flow-pill">Simpan di HP (Bisa Offline)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Langkah 2 -->
+        <div class="flow-step-item">
+          <div class="flow-step-number">2</div>
+          <div class="flow-step-card">
+            <h4>🔄 Data Dikirim & Diperiksa (Validasi)</h4>
+            <p>Saat HP terhubung ke internet, data dikirim ke database. Koordinator lapangan akan memeriksa kebenaran data tersebut (apakah beratnya masuk akal) untuk menghindari salah catat/data palsu.</p>
+            <div class="flow-pill-list">
+              <span class="flow-pill">Sinkronisasi Otomatis</span>
+              <span class="flow-pill">Persetujuan Koordinator</span>
+              <span class="flow-pill">Bebas Manipulasi Data</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Langkah 3 -->
+        <div class="flow-step-item">
+          <div class="flow-step-number">3</div>
+          <div class="flow-step-card">
+            <h4>📊 Tampilan Dashboard & Keputusan Dinas</h4>
+            <p>Data yang telah disetujui akan langsung masuk ke peta interaktif dan grafik analitik. Dinas Lingkungan Hidup dapat mengambil kebijakan intervensi untuk desa yang timbunan sampahnya tinggi.</p>
+            <div class="flow-pill-list">
+              <span class="flow-pill">Peta Heatmap Produksi</span>
+              <span class="flow-pill">Grafik Volume Sampah</span>
+              <span class="flow-pill">Intervensi Masalah Desa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bagian 3: Simulator Interaktif -->
+  <section id="simulator" class="section-padding simulator-bg">
+    <div class="container">
+      <div class="section-title-wrapper">
+        <span class="badge" style="color:var(--primary-light)">Coba Sekarang</span>
+        <h3>Simulator Interaktif Cara Kerja SIMPAH</h3>
+        <p style="color:#94A3B8">Klik tombol di sebelah kanan untuk melihat simulasi apa yang terjadi pada aplikasi di layar HP petugas lapangan.</p>
+      </div>
+
+      <div class="simulator-grid">
+        <!-- Phone Simulator Mockup -->
+        <div class="phone-container">
+          <div class="phone-mockup">
+            <div class="phone-screen" id="sim-screen">
+              <!-- Header Handphone -->
+              <div class="phone-header">
+                <span class="brand">🍃 SIMPAH Mobile</span>
+                <div class="status">
+                  <span class="status-indicator" id="sim-network-dot"></span>
+                  <span id="sim-network-text" style="font-size:0.65rem; font-weight:700">Online</span>
+                </div>
+              </div>
+
+              <!-- Main Dynamic Screen Content -->
+              <div class="phone-content-body" id="sim-screen-body">
+                <!-- Loaded dynamically by JavaScript -->
+              </div>
+
+              <!-- Footer Handphone -->
+              <div class="phone-footer-nav">
+                <span class="active">📝 Input</span>
+                <span>📋 Riwayat</span>
+                <span>👤 Profil</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="simulator-control-panel">
+          <!-- Step Control 1 -->
+          <button class="control-step-btn active" onclick="activateSimStep(1)" id="btn-step-1">
+            <div class="btn-num">1</div>
+            <div>
+              <h4>Kader Mencatat Sampah</h4>
+              <p>Menginput berat sampah masuk ke dalam sistem PWA secara harian.</p>
+            </div>
+          </button>
+
+          <!-- Step Control 2 -->
+          <button class="control-step-btn" onclick="activateSimStep(2)" id="btn-step-2">
+            <div class="btn-num">2</div>
+            <div>
+              <h4>Simulasi Tanpa Internet (Offline)</h4>
+              <p>Mencatat saat mati lampu atau di daerah pelosok. Data aman di HP.</p>
+            </div>
+          </button>
+
+          <!-- Step Control 3 -->
+          <button class="control-step-btn" onclick="activateSimStep(3)" id="btn-step-3">
+            <div class="btn-num">3</div>
+            <div>
+              <h4>Sinyal Pulih & Sinkronisasi</h4>
+              <p>Aplikasi mendeteksi internet dan mengirim data otomatis ke server.</p>
+            </div>
+          </button>
+
+          <!-- Step Control 4 -->
+          <button class="control-step-btn" onclick="activateSimStep(4)" id="btn-step-4">
+            <div class="btn-num">4</div>
+            <div>
+              <h4>Persetujuan Validasi Dinas</h4>
+              <p>Koordinator memvalidasi data agar resmi diakui dalam laporan daerah.</p>
+            </div>
+          </button>
+
+          <!-- Step Control 5 -->
+          <button class="control-step-btn" onclick="activateSimStep(5)" id="btn-step-5">
+            <div class="btn-num">5</div>
+            <div>
+              <h4>Visualisasi Peta Dashboard</h4>
+              <p>Data sampah terverifikasi muncul di peta monitoring kabupaten.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bagian 4: Siapa Penggunanya? -->
+  <section id="pengguna" class="section-padding" style="background:#ffffff; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <div class="section-title-wrapper">
+        <span class="badge">Aktor Utama</span>
+        <h3>Siapa Saja yang Menggunakan SIMPAH?</h3>
+        <p>Aplikasi ini memiliki pembagian peran yang jelas untuk memudahkan kolaborasi seluruh elemen masyarakat dan pemerintah.</p>
+      </div>
+
+      <div class="roles-grid">
+        <!-- Kader Lingkungan -->
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-avatar">🌿</div>
+            <div>
+              <h4 class="role-title">Kader Lingkungan</h4>
+              <span class="role-badge">Petugas</span>
+            </div>
+          </div>
+          <p class="role-desc">Warga desa yang ditunjuk mengelola TPS3R atau Bank Sampah setempat.</p>
+          <ul class="role-tasks">
+            <li>Menimbang berat sampah desa</li>
+            <li>Mencatat hasil komposting</li>
+            <li>Menggunakan HP untuk input</li>
+          </ul>
+        </div>
+
+        <!-- Petugas Armada -->
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-avatar">🚛</div>
+            <div>
+              <h4 class="role-title">Petugas Truk</h4>
+              <span class="role-badge">Transporter</span>
+            </div>
+          </div>
+          <p class="role-desc">Supir atau kernet truk pengangkut sisa sampah (residu) ke TPA.</p>
+          <ul class="role-tasks">
+            <li>Mencatat nomor plat armada</li>
+            <li>Melaporkan berat residu TPA</li>
+            <li>Menjamin sampah terangkut</li>
+          </ul>
+        </div>
+
+        <!-- Koordinator Lapangan -->
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-avatar">📋</div>
+            <div>
+              <h4 class="role-title">Koordinator Kecamatan</h4>
+              <span class="role-badge">Verifikator</span>
+            </div>
+          </div>
+          <p class="role-desc">Pengawas lapangan yang bertanggung jawab di tingkat kecamatan.</p>
+          <ul class="role-tasks">
+            <li>Memvalidasi data harian desa</li>
+            <li>Menolak data jika ada ketidakwajaran</li>
+            <li>Mengevaluasi kinerja TPS3R</li>
+          </ul>
+        </div>
+
+        <!-- Dinas Lingkungan Hidup (DLH) -->
+        <div class="role-card">
+          <div class="role-header">
+            <div class="role-avatar">🏢</div>
+            <div>
+              <h4 class="role-title">Dinas Lingkungan Hidup</h4>
+              <span class="role-badge">Eksekutif / Admin</span>
+            </div>
+          </div>
+          <p class="role-desc">Pemerintah daerah selaku pengambil kebijakan pengelolaan sampah kabupaten.</p>
+          <ul class="role-tasks">
+            <li>Melihat peta persebaran timbulan</li>
+            <li>Mengekspor data ke SIPSN KLHK</li>
+            <li>Memberikan dana bantuan wilayah</li>
+          </ul>
+        </div>
+
+        <!-- Warga Umum -->
+        <div class="role-card" style="grid-column: span 1; border-color: rgba(16, 185, 129, 0.2);">
+          <div class="role-header">
+            <div class="role-avatar">🌐</div>
+            <div>
+              <h4 class="role-title">Masyarakat Umum</h4>
+              <span class="role-badge" style="background:rgba(16, 185, 129, 0.1); color:var(--secondary)">Publik</span>
+            </div>
+          </div>
+          <p class="role-desc">Warga Kabupaten Banjarnegara yang peduli kebersihan daerahnya.</p>
+          <ul class="role-tasks">
+            <li>Melaporkan tumpukan sampah liar</li>
+            <li>Melacak tindak lanjut laporan</li>
+            <li>Membaca panduan edukasi 3R</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bagian 5: Tanya Jawab (FAQ) -->
+  <section id="faq" class="section-padding">
+    <div class="container">
+      <div class="section-title-wrapper">
+        <span class="badge">Pertanyaan Umum</span>
+        <h3>Ada Pertanyaan tentang SIMPAH?</h3>
+        <p>Berikut jawaban atas kekhawatiran dan rasa penasaran yang sering diajukan masyarakat awam.</p>
+      </div>
+
+      <div class="faq-layout">
+        <!-- Search Bar -->
+        <div class="faq-search-wrapper">
+          <svg class="faq-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="faq-search" class="faq-search-input" placeholder="Ketik kata kunci untuk mencari pertanyaan... (contoh: internet, warga, kuota)" onkeyup="filterFAQ()">
+        </div>
+
+        <!-- Accordions -->
+        <div class="faq-list" id="faq-list-container">
+          <!-- FAQ 1 -->
+          <div class="faq-item" data-keywords="internet kuota offline sinyal hilang">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              <span>Bagaimana jika HP petugas lapangan tidak ada sinyal internet?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-inner">
+                Jangan khawatir! Aplikasi SIMPAH dirancang dengan teknologi <strong>Offline-First (PWA)</strong>. Petugas tetap bisa membuka formulir, mencatat timbangan, dan menekan tombol simpan. Data akan disimpan dengan aman di memori lokal HP (IndexedDB). Begitu mendeteksi adanya sinyal internet, aplikasi akan mengirimkan data tersebut secara otomatis ke server pusat tanpa perlu diinput ulang.
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 2 -->
+          <div class="faq-item" data-keywords="warga lapor aduan daftar akun register">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              <span>Apakah warga harus mendaftar akun untuk melaporkan tumpukan sampah liar?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-inner">
+                <strong>Tidak perlu!</strong> Kami ingin mempermudah warga untuk melapor. Warga cukup masuk ke menu aduan publik di situs SIMPAH, mengisi lokasi tumpukan sampah (bisa menggunakan GPS otomatis HP), melampirkan foto bukti, dan mengirimkannya. Setelah melapor, warga akan mendapatkan <strong>nomor resi unik</strong> untuk mengecek perkembangan aduan mereka kapan saja.
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 3 -->
+          <div class="faq-item" data-keywords="validasi dinas data palsu bohong salah input">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              <span>Mengapa data sampah harus divalidasi oleh Koordinator/Dinas?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-inner">
+                Hal ini dilakukan untuk menjaga <strong>kejujuran dan kebersihan data (Anti-Fraud)</strong>. Terkadang, petugas di lapangan bisa salah mengetik angka timbangan (misal mengetik 1000 kg padahal aslinya 10 kg). Koordinator akan memantau kewajaran data tersebut sebelum disetujui. Hanya data yang berstatus "Disetujui" (Approved) yang akan masuk to grafik resmi daerah.
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 4 -->
+          <div class="faq-item" data-keywords="sipsn kementerian lhk jakarta laporan pemerintah">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+              <span>Apa hubungannya SIMPAH dengan program SIPSN Kementerian LHK?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="faq-answer">
+              <div class="faq-answer-inner">
+                Setiap tahunnya, Pemerintah Daerah wajib melaporkan data sampah daerah ke <strong>Sistem Informasi Pengelolaan Sampah Nasional (SIPSN)</strong> milik Kementerian LHK. Sebelumnya, pengumpulan data ini memakan waktu bulanan karena direkap manual di kertas. Dengan SIMPAH, data yang diinput kader lapangan secara otomatis diformat dan disesuaikan sehingga Dinas cukup mengekspornya sekali klik menjadi format Excel/CSV yang siap diunggah langsung ke web kementerian.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="no-faq-results" class="no-results">
+          <p>Maaf, kami tidak menemukan pertanyaan dengan kata kunci tersebut. Coba cari dengan kata kunci lain.</p>
+        </div>
+      </div>
+
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-flex">
+      <div class="footer-info">
+        <h4>SIMPAH</h4>
+        <p>Sistem Informasi Monitoring Pengelolaan Sampah Kabupaten Banjarnegara. Platform digital untuk transparansi data timbulan sampah, laju daur ulang, dan monitoring pelaporan sampah terpadu.</p>
+        <p style="font-size: 0.8rem;">Dinas Perumahan, Kawasan Permukiman dan Lingkungan Hidup (DPPKPLH)</p>
+      </div>
+      <div>
+        <h4 style="color:white; font-size:1.1rem; margin-bottom:1rem">Pintasan Cepat</h4>
+        <ul style="list-style:none; display:flex; flex-direction:column; gap:0.5rem">
+          <li><a href="#tentang" style="color:#94A3B8; text-decoration:none">Tentang SIMPAH</a></li>
+          <li><a href="#alur" style="color:#94A3B8; text-decoration:none">Alur Sampah</a></li>
+          <li><a href="#simulator" style="color:#94A3B8; text-decoration:none">Simulasi Aplikasi</a></li>
+          <li><a href="#pengguna" style="color:#94A3B8; text-decoration:none">Hak Akses Pengguna</a></li>
+          <li><a href="https://www.simpah.id/" style="color:var(--primary-light); text-decoration:none; font-weight:700">Masuk Aplikasi Utama →</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-copy">
+      <span>&copy; 2026 SIMPAH - Kabupaten Banjarnegara. Hak Cipta Dilindungi.</span>
+      <span>Dibuat untuk mempermudah tata kelola lingkungan yang berkelanjutan.</span>
+    </div>
+  </footer>
+
+  <!-- Simulator & Interactive Logic Script -->
+  <script>
+    // FAQ Accordion Toggle
+    function toggleFAQ(element) {
+      const parent = element.parentElement;
+      const isOpen = parent.classList.contains('open');
+      
+      // Close all FAQs first
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('open');
+      });
+      
+      // Toggle current
+      if (!isOpen) {
+        parent.classList.add('open');
+      }
+    }
+
+    // FAQ Search Filter
+    function filterFAQ() {
+      const query = document.getElementById('faq-search').value.toLowerCase();
+      const items = document.querySelectorAll('.faq-item');
+      let foundCount = 0;
+      
+      items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        const keywords = item.getAttribute('data-keywords').toLowerCase();
+        
+        if (text.includes(query) || keywords.includes(query)) {
+          item.classList.remove('hidden');
+          foundCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+      
+      const noResults = document.getElementById('no-faq-results');
+      if (foundCount === 0) {
+        noResults.style.display = 'block';
+      } else {
+        noResults.style.display = 'none';
+      }
+    }
+
+    // Simulator State Manager
+    const simScreenBody = document.getElementById('sim-screen-body');
+    const networkDot = document.getElementById('sim-network-dot');
+    const networkText = document.getElementById('sim-network-text');
+
+    const simStates = {
+      1: {
+        network: { online: true, text: 'Online' },
+        html: `
+          <div class="screen-input-mock">
+            <span class="mock-badge badge-pending">FORM TIMBANGAN</span>
+            <div style="font-weight:700; margin-bottom: 5px; font-size:0.85rem">Catat Sampah Masuk</div>
+            <div class="mock-input-group">
+              <label>Lokasi TPS3R</label>
+              <select><option>TPS3R Banjarnegara Bersih</option></select>
+            </div>
+            <div class="mock-input-group" style="margin-top:4px">
+              <label>Kategori Sampah (SIPSN)</label>
+              <select>
+                <option>Sisa Makanan (Organik)</option>
+                <option>Plastik (Anorganik)</option>
+              </select>
+            </div>
+            <div class="mock-input-group" style="margin-top:4px">
+              <label>Berat Sampah (kg)</label>
+              <input type="number" value="120" style="font-weight:bold; color:var(--primary)">
+            </div>
+            <button class="mock-btn" onclick="triggerSimAction(2)">Simpan Data (120 kg)</button>
+          </div>
+        `
+      },
+      2: {
+        network: { online: false, text: 'Offline (Tanpa Sinyal)' },
+        html: `
+          <div style="display:flex; flex-direction:column; gap: 8px; text-align:center; padding: 10px 0;">
+            <div style="font-size:2.5rem">📡🚫</div>
+            <div style="font-weight:700; color:#d97706; font-size:0.85rem">Koneksi Internet Putus!</div>
+            <p style="font-size:0.75rem; color:#64748b">SIMPAH mendeteksi Anda sedang offline. Namun data timbangan Anda tetap tersimpan aman.</p>
+            <div style="background:#fef3c7; border: 1px solid #fde68a; padding: 8px; border-radius: 6px; font-size:0.7rem; color:#b45309; text-align:left; margin-top:5px">
+              <strong>Tersimpan di Memori HP:</strong><br>
+              • Sampah: Sisa Makanan<br>
+              • Berat: 120 kg<br>
+              • Status: Menunggu Sinyal (Pending)
+            </div>
+          </div>
+        `
+      },
+      3: {
+        network: { online: true, text: 'Online' },
+        html: `
+          <div class="sync-animation-box">
+            <div class="spinner"></div>
+            <div style="text-align:center">
+              <div style="font-weight:700; color:var(--primary)">Sinyal Kembali Aktif!</div>
+              <p style="font-size:0.7rem; color:#64748b; margin-top:2px">Mengunggah data dari memori HP ke Server Supabase...</p>
+            </div>
+            <div style="font-size:0.7rem; font-family:monospace; background:#e2e8f0; padding:4px 8px; border-radius:4px">
+              Sync: ID_09217 => SUCCESS
+            </div>
+          </div>
+        `
+      },
+      4: {
+        network: { online: true, text: 'Online' },
+        html: `
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div class="mock-badge badge-pending" style="background:#dbeafe; color:#1e40af">PANEL KOORDINATOR</div>
+            <div style="font-weight:700; font-size:0.85rem">Persetujuan Timbangan</div>
+            <div style="background:white; border:1px solid #e2e8f0; padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:4px">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#64748b">
+                <span>Pengirim: Kader_Budi</span>
+                <span>Kec: Banjarnegara</span>
+              </div>
+              <div style="font-weight:700; font-size:0.8rem">120 kg — Sisa Makanan</div>
+              <div style="font-size:0.65rem; color:#64748b">Lokasi: TPS3R Banjarnegara Bersih</div>
+              <div style="display:flex; gap:6px; margin-top:8px">
+                <button class="mock-btn" style="flex:1; background:var(--primary); margin:0;" onclick="triggerSimAction(5)">✓ Setujui</button>
+                <button class="mock-btn" style="flex:1; background:#ef4444; margin:0;">✗ Tolak</button>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      5: {
+        network: { online: true, text: 'Online' },
+        html: `
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="mock-badge badge-approved" style="background:#dcfce7; color:#15803d">DASHBOARD DINAS</div>
+            <div style="font-weight:700; font-size:0.85rem">Peta Timbulan Real-Time</div>
+            <div class="map-mock">
+              <div class="map-grid-bg"></div>
+              <div class="map-pin"></div>
+              <div style="position:absolute; bottom:6px; left:6px; background:rgba(255,255,255,0.9); padding:4px 8px; border-radius:4px; font-size:0.6rem; font-weight:700; border:1px solid #cbd5e1">
+                🟢 TPS3R Banjarnegara: 120 kg
+              </div>
+            </div>
+            <div style="font-size:0.7rem; color:#64748b; text-align:center; margin-top:2px">
+              Data resmi disahkan! Laju daur ulang & volume harian SIPSN langsung terupdate otomatis.
+            </div>
+          </div>
+        `
+      }
+    };
+
+    function activateSimStep(stepNum) {
+      // Update active button classes
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`btn-step-${i}`);
+        if (i === stepNum) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+
+      // Load state values
+      const state = simStates[stepNum];
+      
+      // Update network indicator
+      if (state.network.online) {
+        networkDot.className = 'status-indicator';
+        networkText.innerText = 'Online';
+        networkText.style.color = 'var(--primary)';
+      } else {
+        networkDot.className = 'status-indicator offline';
+        networkText.innerText = state.network.text;
+        networkText.style.color = '#d97706';
+      }
+
+      // Transition simulation screen
+      simScreenBody.style.opacity = 0;
+      setTimeout(() => {
+        simScreenBody.innerHTML = state.html;
+        simScreenBody.style.opacity = 1;
+      }, 150);
+    }
+
+    function triggerSimAction(nextStep) {
+      activateSimStep(nextStep);
+    }
+
+    // Initialize Simulator at Step 1
+    document.addEventListener("DOMContentLoaded", () => {
+      activateSimStep(1);
+    });
+  </script>
+</body>
+</html>

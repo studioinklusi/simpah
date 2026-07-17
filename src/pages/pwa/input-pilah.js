@@ -60,7 +60,7 @@ export async function renderInputPilah() {
           <label class="form-label">Dicatat di Fasilitas (Opsional)</label>
           <select id="locationSelect" class="form-select">
             <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
+            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
           </select>
         </div>
 
@@ -77,7 +77,7 @@ export async function renderInputPilah() {
         <div class="form-group">
           <label class="form-label">Input Berat per Kategori (kg)</label>
           <div class="pilah-categories" id="pilahCategories">
-            ${SIPSN_CATEGORIES.map(cat => `
+            ${SIPSN_CATEGORIES.filter(c => !c.isMixed).map(cat => `
               <div class="pilah-card">
                 <div class="pilah-card-header">
                   <span class="pilah-icon" style="color:${cat.color}">${cat.icon}</span>
@@ -213,7 +213,7 @@ export async function renderInputPilah() {
     }
     const filteredLocs = locations.filter(l => (l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type));
     locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
-      filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
+      filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
     locGroup.style.display = 'block';
   };
 
@@ -389,7 +389,7 @@ export async function renderInputPilah() {
           lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
           lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
           location_id: (locationEl && locationEl.value) ? locationEl.value : null,
-          location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+          location_name: (locationEl && locationEl.value) ? (selectedOption.dataset.name || selectedOption.text) : '',
           desa_id: desaId,
           notes: document.getElementById('notesInput').value.trim(),
           photos: photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })),
@@ -441,7 +441,7 @@ export async function renderInputPilah() {
           lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
           lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
           location_id: (locationEl && locationEl.value) ? locationEl.value : null,
-          location_name: (locationEl && locationEl.value) ? selectedOption.text : '',
+          location_name: (locationEl && locationEl.value) ? (selectedOption.dataset.name || selectedOption.text) : '',
           desa_id: desaId,
           photos: !pilahRecordId ? photos.map(p => ({ dataUrl: p.dataUrl, name: p.name })) : [],
           photo_count: !pilahRecordId ? photos.length : 0,

@@ -70,7 +70,7 @@ export async function renderInputResidu() {
           <label class="form-label">Lokasi TPS3R / Bank Sampah (Opsional)</label>
           <select id="locationSelect" class="form-select">
             <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('') : ''}
+            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name}</option>`).join('') : ''}
           </select>
         </div>
 
@@ -154,7 +154,7 @@ export async function renderInputResidu() {
     }
     const filteredLocs = locations.filter(l => (l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId))) && ['tps3r', 'bank_sampah'].includes(l.type));
     locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
-      filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name}</option>`).join('');
+      filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name}</option>`).join('');
     locGroup.style.display = 'block';
   };
 
@@ -251,7 +251,7 @@ export async function renderInputResidu() {
         lat: gpsData?.latitude || (selectedOption?.dataset?.lat ? parseFloat(selectedOption.dataset.lat) : null),
         lng: gpsData?.longitude || (selectedOption?.dataset?.lng ? parseFloat(selectedOption.dataset.lng) : null),
         location_id: (locEl && locEl.value) ? locEl.value : null,
-        location_name: (locEl && locEl.value) ? selectedOption.text : '',
+        location_name: (locEl && locEl.value) ? (selectedOption.dataset.name || selectedOption.text) : '',
         desa_id: desaId,
         destination: document.getElementById('destinationSelect').value,
         notes: document.getElementById('notesInput').value.trim(),
