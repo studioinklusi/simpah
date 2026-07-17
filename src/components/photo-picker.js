@@ -1,6 +1,7 @@
 // SIMPAH - Photo Picker Component
 // Handles camera capture & gallery upload, compresses to JPEG base64
 import { icons } from './icons.js';
+import { showToast } from './toast.js';
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB raw
 const TARGET_WIDTH  = 1024;              // max output width
@@ -79,9 +80,11 @@ export function initPhotoPicker(id, { onUpdate } = {}) {
   async function handleFiles(fileList) {
     for (const file of Array.from(fileList)) {
       if (photos.length >= maxPhotos) break;
-      if (!file.type.startsWith('image/')) continue;
+      if (!file.type.startsWith('image/')) {
+        showToast('Format file tidak didukung. Harap unggah gambar (PNG, JPG, WEBP)', 'warning');
+        continue;
+      }
       if (file.size > MAX_SIZE_BYTES) {
-        const { showToast } = await import('../components/toast.js');
         showToast(`${file.name} terlalu besar (maks 5 MB)`, 'warning');
         continue;
       }
