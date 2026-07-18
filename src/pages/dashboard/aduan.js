@@ -17,6 +17,15 @@ const STATUS_CONFIG = {
   ditolak: { label: 'Ditolak', color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: icons.xCircle }
 };
 
+// Valid status transitions (state machine) — status hanya bisa maju, tidak mundur
+const VALID_TRANSITIONS = {
+  baru: ['diproses', 'ditolak'],
+  diproses: ['ditindaklanjuti', 'ditolak'],
+  ditindaklanjuti: ['selesai', 'ditolak'],
+  selesai: [],      // terminal — tidak bisa diubah lagi
+  ditolak: []       // terminal — tidak bisa diubah lagi
+};
+
 export async function renderAduanManagement() {
   const user = getCurrentUser();
   if (!user) {
@@ -413,17 +422,27 @@ export async function renderAduanManagement() {
 
       ${canManage ? `
       <div class="am-action-section">
-        <h4>Ubah Status</h4>
-        <div class="am-action-btns">
-          ${Object.entries(STATUS_CONFIG).map(([key, s]) => `
-            <button class="am-action-btn ${c.status === key ? 'primary' : ''}" data-status="${key}" style="display:inline-flex;align-items:center;gap:4px;">${s.icon} ${s.label}</button>
-          `).join('')}
-        </div>
-        <div class="form-group" style="margin-top:var(--space-3)">
-          <label class="form-label" style="font-size:var(--font-xs)">Tanggapan / Catatan Tindak Lanjut</label>
-          <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${escapeHTML(c.response) || ''}</textarea>
-        </div>
-        <button class="btn btn-primary btn-block" id="saveStatusBtn" style="margin-top:var(--space-3);display:flex;align-items:center;justify-content:center;gap:8px;">${icons.checkCircle} Simpan Perubahan</button>
+        ${(VALID_TRANSITIONS[c.status] || []).length === 0 ? `
+          <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);background:${cfg.bg};border-radius:var(--radius-lg);border:1px solid ${cfg.color}30">
+            <span style="font-size:20px">${cfg.icon}</span>
+            <div>
+              <strong style="font-size:var(--font-sm);color:${cfg.color}">Status Final: ${cfg.label}</strong>
+              <p style="font-size:var(--font-xs);color:var(--text-muted);margin:2px 0 0">Aduan ini sudah berstatus final dan tidak dapat diubah lagi.</p>
+            </div>
+          </div>
+        ` : `
+          <h4>Ubah Status</h4>
+          <div class="am-action-btns">
+            ${(VALID_TRANSITIONS[c.status] || []).map(key => `
+              <button class="am-action-btn" data-status="${key}" style="display:inline-flex;align-items:center;gap:4px;">${STATUS_CONFIG[key].icon} ${STATUS_CONFIG[key].label}</button>
+            `).join('')}
+          </div>
+          <div class="form-group" style="margin-top:var(--space-3)">
+            <label class="form-label" style="font-size:var(--font-xs)">Tanggapan / Catatan Tindak Lanjut</label>
+            <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${escapeHTML(c.response) || ''}</textarea>
+          </div>
+          <button class="btn btn-primary btn-block" id="saveStatusBtn" style="margin-top:var(--space-3);display:flex;align-items:center;justify-content:center;gap:8px;">${icons.checkCircle} Simpan Perubahan</button>
+        `}
       </div>
       ` : ''}
     `;
@@ -440,6 +459,12 @@ export async function renderAduanManagement() {
 
     document.getElementById('saveStatusBtn')?.addEventListener('click', async () => {
       const response = document.getElementById('responseInput')?.value.trim();
+      // Validate: prevent invalid status transitions
+      const validNext = VALID_TRANSITIONS[c.status] || [];
+      if (selectedStatus !== c.status && !validNext.includes(selectedStatus)) {
+        showToast('Perubahan status tidak diizinkan dari status saat ini', 'error');
+        return;
+      }
       try {
         await updateComplaint(c.id, { status: selectedStatus, response: response || c.response });
         allComplaints = canViewAll
