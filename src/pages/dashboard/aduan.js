@@ -418,7 +418,7 @@ export async function renderAduanManagement() {
         : ''
       }
 
-      ${c.response ? `<div class="am-desc-box" style="border-left:3px solid var(--primary-500)"><strong><span style="display:inline-flex;align-items:center;gap:4px;vertical-align:-4px">${icons.messageCircle}</span> Tanggapan Dinas:</strong><br/>${escapeHTML(c.response)}</div>` : ''}
+      ${c.response_text ? `<div class="am-desc-box" style="border-left:3px solid var(--primary-500)"><strong><span style="display:inline-flex;align-items:center;gap:4px;vertical-align:-4px">${icons.messageCircle}</span> Tanggapan Dinas:</strong><br/>${escapeHTML(c.response_text)}</div>` : ''}
 
       ${canManage ? `
       <div class="am-action-section">
@@ -439,7 +439,7 @@ export async function renderAduanManagement() {
           </div>
           <div class="form-group" style="margin-top:var(--space-3)">
             <label class="form-label" style="font-size:var(--font-xs)">Tanggapan / Catatan Tindak Lanjut</label>
-            <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${escapeHTML(c.response) || ''}</textarea>
+            <textarea id="responseInput" class="form-textarea" rows="3" placeholder="Tuliskan tanggapan atau penjelasan untuk masyarakat...">${escapeHTML(c.response_text) || ''}</textarea>
           </div>
           <button class="btn btn-primary btn-block" id="saveStatusBtn" style="margin-top:var(--space-3);display:flex;align-items:center;justify-content:center;gap:8px;">${icons.checkCircle} Simpan Perubahan</button>
         `}
@@ -466,7 +466,12 @@ export async function renderAduanManagement() {
         return;
       }
       try {
-        await updateComplaint(c.id, { status: selectedStatus, response: response || c.response });
+        const updatePayload = { status: selectedStatus, response_text: response || c.response_text };
+        if (response) {
+          updatePayload.responded_at = new Date().toISOString();
+          updatePayload.responded_by = user.id;
+        }
+        await updateComplaint(c.id, updatePayload);
         allComplaints = canViewAll
           ? await getAllComplaints()
           : await getComplaintsByUser(user.id);

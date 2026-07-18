@@ -171,10 +171,10 @@ export function renderCekAduan() {
 
           <div class="track-desc">${escapeHTML(complaint.description)}</div>
 
-          ${complaint.response ? `
+          ${complaint.response_text ? `
           <div class="track-response">
             <div class="track-response-title" style="display:flex;align-items:center;gap:4px;">${icons.messageCircle} Tanggapan Dinas</div>
-            <p>${escapeHTML(complaint.response)}</p>
+            <p>${escapeHTML(complaint.response_text)}</p>
           </div>` : ''}
         </div>
       </div>
