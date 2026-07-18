@@ -3,6 +3,7 @@ import { getDB } from './schema.js';
 import { setState, getState } from '../utils/helpers.js';
 import { supabase } from '../lib/supabase.js';
 import { uploadBase64Image } from '../lib/storage.js';
+import { showToast } from '../components/toast.js';
 
 let syncInterval = null;
 
@@ -191,6 +192,8 @@ export async function triggerSync() {
     setState('pendingSync', 0);
     setState('lastSync', new Date().toISOString());
 
+    showToast(`Sinkronisasi ${totalUnsynced} data berhasil!`, 'success', 'Sinkronisasi Selesai');
+
     setTimeout(() => {
       setState('syncStatus', 'idle');
     }, 3000);
@@ -198,6 +201,7 @@ export async function triggerSync() {
   } catch (e) {
     console.error('Sync failed:', e);
     setState('syncStatus', 'error');
+    showToast('Gagal sinkronisasi data. Akan dicoba ulang secara otomatis.', 'error', 'Sync Gagal');
     setTimeout(() => {
       setState('syncStatus', 'idle');
     }, 5000);
