@@ -41,6 +41,7 @@ export async function triggerSync() {
     const db = await getDB();
     const queues = ['waste_records', 'complaints', 'incidental_events'];
     let totalUnsynced = 0;
+    let actualSynced = 0;
     
     for (const table of queues) {
       let unsynced = [];
@@ -179,20 +180,22 @@ export async function triggerSync() {
         
         record.synced = true;
         await db.put(table, record);
+        actualSynced++;
       }
     } // End table loop
 
-    if (totalUnsynced === 0) {
+    setState('pendingSync', 0);
+
+    if (actualSynced === 0) {
+      // Tidak ada data real yang disinkronkan (hanya data demo atau memang kosong)
       setState('syncStatus', 'idle');
-      setState('pendingSync', 0);
       return;
     }
 
     setState('syncStatus', 'success');
-    setState('pendingSync', 0);
     setState('lastSync', new Date().toISOString());
 
-    showToast(`Sinkronisasi ${totalUnsynced} data berhasil!`, 'success', 'Sinkronisasi Selesai');
+    showToast(`Sinkronisasi ${actualSynced} data berhasil!`, 'success', 'Sinkronisasi Selesai');
 
     setTimeout(() => {
       setState('syncStatus', 'idle');
