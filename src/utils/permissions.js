@@ -113,7 +113,7 @@ export function getAllowedInputTypes(user) {
 
   // Admin → all types
   if (user.role === 'admin') {
-    return ['masuk', 'pilah', 'olah', 'residu', 'armada', 'insidental'];
+    return ['masuk', 'pilah', 'olah', 'armada', 'insidental'];
   }
 
   // Petugas without job_type → default to basic input only (safe fallback)
@@ -130,12 +130,12 @@ export function getAllowedInputTypes(user) {
     case 'koordinator':
       return []; // Coordinator only needs validation, no direct waste inputs
     case 'angkut':
-      return ['masuk', 'residu', 'armada'];        // Transport only
+      return ['masuk', 'armada'];        // Transport only
     case 'operator_tps':
-      return ['masuk', 'pilah', 'olah', 'residu']; // Full TPS operations
+      return ['masuk', 'pilah', 'olah']; // Full TPS operations
     case 'kader':
       return ['masuk', 'pilah', 'olah', 'insidental'];          // Basic input + sorting + processing
     default:
-      return ['masuk', 'pilah', 'olah', 'residu', 'armada', 'insidental'];
+      return ['masuk', 'pilah', 'olah', 'armada', 'insidental'];
   }
 }
