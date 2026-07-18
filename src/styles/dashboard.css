@@ -321,8 +321,8 @@
 }
 .gis-map {
   width: 100%;
-  height: calc(100vh - var(--navbar-height) - var(--space-12));
-  min-height: 500px;
+  height: calc(100vh - var(--navbar-height) - 180px);
+  min-height: 450px;
 }
 @media (max-width: 768px) {
   .gis-map {
