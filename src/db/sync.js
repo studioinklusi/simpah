@@ -35,6 +35,12 @@ export function initSync() {
 export async function triggerSync() {
   if (getState('syncStatus') === 'syncing') return;
 
+  // Jangan jalankan sync jika perangkat sedang offline
+  if (!navigator.onLine) {
+    setState('syncStatus', 'idle');
+    return;
+  }
+
   setState('syncStatus', 'syncing');
 
   try {
