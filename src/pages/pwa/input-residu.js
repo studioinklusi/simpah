@@ -260,7 +260,11 @@ export async function renderInputResidu() {
         user_id: user.id,
         user_name: user.full_name
       }, user.id);
-      showToast('Data residu berhasil disimpan!', 'success');
+      if (navigator.onLine) {
+        showToast('Data residu berhasil disimpan!', 'success');
+      } else {
+        showToast('Data disimpan secara lokal (antrean offline). Akan otomatis sinkron saat online.', 'warning', 'Offline');
+      }
       setTimeout(() => { window.location.hash = '#/pwa/home'; }, 800);
     } catch (err) {
       showToast('Gagal: ' + err.message, 'error');

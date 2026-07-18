@@ -483,7 +483,11 @@ export async function renderInputPilah() {
         }
       }
 
-      showToast('Data pemilahan berhasil disimpan!', 'success');
+      if (navigator.onLine) {
+        showToast('Data pemilahan berhasil disimpan!', 'success');
+      } else {
+        showToast('Data disimpan secara lokal (antrean offline). Akan otomatis sinkron saat online.', 'warning', 'Offline');
+      }
       setTimeout(() => { window.location.hash = '#/pwa/sampah-masuk'; }, 800);
     } catch (err) {
       console.error('Submit error in input-pilah:', err);

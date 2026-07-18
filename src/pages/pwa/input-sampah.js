@@ -477,7 +477,11 @@ export async function renderInputSampah() {
       } else {
         await addWasteRecord(record, user.id);
       }
-      showToast('Data sampah campur berhasil disimpan!', 'success', 'Tersimpan');
+      if (navigator.onLine) {
+        showToast('Data sampah campur berhasil disimpan!', 'success', 'Tersimpan');
+      } else {
+        showToast('Data disimpan secara lokal (antrean offline). Akan otomatis sinkron saat online.', 'warning', 'Offline');
+      }
       setTimeout(() => { window.location.hash = '#/pwa/sampah-masuk'; }, 800);
     } catch (err) {
       showToast('Gagal menyimpan data: ' + err.message, 'error');
