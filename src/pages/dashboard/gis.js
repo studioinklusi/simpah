@@ -27,21 +27,27 @@ export async function renderGIS() {
       </div>
       <div class="gis-container">
         <div id="gisMap" class="gis-map"></div>
-        <div class="gis-legend" id="gisLegend">
+        <div class="gis-legend collapsed" id="gisLegend">
+          <button class="gis-legend-toggle" id="legendToggle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            Legenda
+          </button>
           <h4>Legenda</h4>
+          <div class="gis-legend-body">
           ${LOCATION_TYPES.map(lt => `
             <div class="gis-legend-item">
               <span class="gis-legend-dot" style="background:${lt.color}"></span>
               <span>${lt.icon} ${lt.label}</span>
             </div>
           `).join('')}
-          <div class="gis-legend-item" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border-color)">
+          <div class="gis-legend-item" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border-color)">
             <span class="gis-legend-dot" style="background:#6366f1;border-radius:0"></span>
             <span>${icons.grid} Fasilitas Umum</span>
           </div>
-          <div class="gis-legend-item" style="margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--border-color)">
+          <div class="gis-legend-item" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border-color)">
             <span class="gis-legend-dot" style="background:linear-gradient(135deg,#fbbf24,#ef4444);"></span>
             <span>Heatmap Volume</span>
+          </div>
           </div>
         </div>
         <div class="gis-filter-panel" id="gisFilterPanel" style="display:none">
@@ -245,6 +251,13 @@ async function initMap(locations, allRecords, facilities) {
   const filterPanel = document.getElementById('gisFilterPanel');
   filterBtn?.addEventListener('click', () => {
     filterPanel.style.display = filterPanel.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Legend toggle (collapsible)
+  const legendToggle = document.getElementById('legendToggle');
+  const legendEl = document.getElementById('gisLegend');
+  legendToggle?.addEventListener('click', () => {
+    legendEl.classList.toggle('collapsed');
   });
 
   // Location type filters
