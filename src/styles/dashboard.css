@@ -476,6 +476,67 @@
   gap: var(--space-3);
 }
 
+/* --- Export Options Section --- */
+.export-options-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+.export-section-title {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+.export-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-5);
+}
+.export-option-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+.export-option-item button {
+  width: 100%;
+  justify-content: center;
+  font-weight: 600;
+  padding: var(--space-3) var(--space-4) !important;
+  font-size: var(--font-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.export-option-desc {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.export-option-item.sipsn-highlight button {
+  background: var(--primary-600) !important;
+  border-color: var(--primary-600) !important;
+  color: white !important;
+}
+.export-option-item.sipsn-highlight button:hover {
+  background: var(--primary-700) !important;
+  border-color: var(--primary-700) !important;
+}
+
+@media (max-width: 768px) {
+  .export-options-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
 /* ============================================
    Intervensi Wilayah Styles
    ============================================ */

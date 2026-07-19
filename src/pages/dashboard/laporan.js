@@ -79,10 +79,34 @@ export async function renderLaporan() {
             ${SIPSN_CATEGORIES.map(cat => `<option value="${cat.code}">${cat.name} (${cat.code})</option>`).join('')}
           </select>
         </div>
-        <div class="report-actions">
-          <button class="btn btn-secondary btn-sm" id="exportCSV">${icons.download} CSV</button>
-          <button class="btn btn-secondary btn-sm" id="exportExcel">${icons.download} Excel</button>
-          <button class="btn btn-primary btn-sm" id="exportSIPSN">${icons.download} Format SIPSN</button>
+      </div>
+
+      <!-- Export Options Card -->
+      <div class="export-options-card">
+        <h3 class="export-section-title">Pilih Format Unduhan & Pelaporan</h3>
+        <div class="export-options-grid">
+          
+          <div class="export-option-item">
+            <button class="btn btn-secondary btn-sm" id="exportExcel">
+              ${icons.download} Unduh Excel (.xlsx)
+            </button>
+            <p class="export-option-desc">Data detail transaksi terformat rapi untuk dibuka di Microsoft Excel atau Google Sheets.</p>
+          </div>
+
+          <div class="export-option-item">
+            <button class="btn btn-secondary btn-sm" id="exportCSV">
+              ${icons.download} Unduh CSV (.csv)
+            </button>
+            <p class="export-option-desc">Data transaksi dalam bentuk teks mentah (CSV). Cocok untuk integrasi dengan sistem database.</p>
+          </div>
+
+          <div class="export-option-item sipsn-highlight">
+            <button class="btn btn-primary btn-sm" id="exportSIPSN">
+              ${icons.download} Unduh Format SIPSN (.xlsx)
+            </button>
+            <p class="export-option-desc">Data rekapitulasi bulanan kumulatif. Kolom disesuaikan agar bisa langsung di-upload ke sistem SIPSN Kementerian LHK.</p>
+          </div>
+
         </div>
       </div>
 
