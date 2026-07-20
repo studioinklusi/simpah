@@ -277,7 +277,7 @@ function renderView() {
                       </td>
                       <td>
                         ${safePhoto 
-                          ? `<img src="${safePhoto}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer" onclick="window.open('${safePhoto}','_blank')">` 
+                          ? `<img src="${safePhoto}" class="val-thumbnail" data-id="${isBatch ? r.batchId : r.id}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer" title="Klik untuk memperbesar">` 
                           : '<span style="font-size:10px;color:var(--text-muted)">Tidak ada foto</span>'}
                       </td>
                       <td class="sticky-col" style="text-align:center;white-space:nowrap;">
@@ -448,6 +448,133 @@ function renderView() {
       });
     });
   }
+
+  // Bind Lightbox preview
+  document.querySelectorAll('.val-thumbnail').forEach(img => {
+    img.addEventListener('click', (e) => {
+      const id = e.target.dataset.id;
+      const group = pendingRecords.find(g => (g.isBatchGroup && g.batchId === id) || (!g.isBatchGroup && g.id === id));
+      if (group) {
+        showPhotoLightbox(group.photo_url || (group.records?.[0]?.photo_url), group);
+      }
+    });
+  });
+}
+
+function showPhotoLightbox(photoUrl, record) {
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.style = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(13, 18, 31, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.25s ease-out;
+  `;
+  
+  const content = document.createElement('div');
+  content.className = 'lightbox-content';
+  content.style = `
+    position: relative;
+    max-width: 90%;
+    max-height: 85%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  `;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  `;
+  closeBtn.style = `
+    position: absolute;
+    top: -48px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  `;
+  closeBtn.onmouseover = () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.2)'; };
+  closeBtn.onmouseout = () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.1)'; };
+  
+  const img = document.createElement('img');
+  img.src = photoUrl;
+  img.style = `
+    max-width: 100%;
+    max-height: 65vh;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255,255,255,0.1);
+    object-fit: contain;
+  `;
+  
+  const info = document.createElement('div');
+  info.style = `
+    background: rgba(28, 36, 56, 0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: var(--space-4) var(--space-5);
+    border-radius: 12px;
+    color: #fff;
+    width: 100%;
+    max-width: 480px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+  `;
+  
+  const title = record.isBatchGroup 
+    ? `Akumulasi Laporan: ${record.total_weight.toFixed(1)} kg (${record.batch_days} Hari)`
+    : `Laporan Sampah: ${record.weight_kg} kg`;
+  
+  info.innerHTML = `
+    <h4 style="margin: 0 0 8px 0; font-size: 15px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">${title}</h4>
+    <table style="width: 100%; font-size: 12px; border-collapse: collapse; text-align: left;">
+      <tr><td style="padding: 2px 0; color: #9ca3af; width: 80px;">Kader</td><td style="padding: 2px 0; color: #fff;">: ${escapeHTML(record.user_name || 'Anonim')}</td></tr>
+      <tr><td style="padding: 2px 0; color: #9ca3af;">Desa</td><td style="padding: 2px 0; color: #fff;">: ${escapeHTML(record.desa_only || '-')}</td></tr>
+      <tr><td style="padding: 2px 0; color: #9ca3af;">Lokasi</td><td style="padding: 2px 0; color: #fff;">: ${escapeHTML(record.location_name || '-')}</td></tr>
+      <tr><td style="padding: 2px 0; color: #9ca3af;">Kategori</td><td style="padding: 2px 0; color: #fff;">: ${escapeHTML(getCatName(record.category_sipsn))}</td></tr>
+      ${record.notes ? `<tr><td style="padding: 4px 0 2px 0; color: #9ca3af; vertical-align: top;">Catatan</td><td style="padding: 4px 0 2px 0; color: #e5e7eb; font-style: italic;">: "${escapeHTML(record.notes)}"</td></tr>` : ''}
+    </table>
+  `;
+  
+  content.appendChild(closeBtn);
+  content.appendChild(img);
+  content.appendChild(info);
+  overlay.appendChild(content);
+  
+  const closeLightbox = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => overlay.remove(), 200);
+  };
+  
+  closeBtn.onclick = closeLightbox;
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeLightbox();
+  };
+  
+  document.body.appendChild(overlay);
 }
 
 async function handleAction(id, action, notes = '', isBatch = false) {
