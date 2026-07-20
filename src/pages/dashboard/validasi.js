@@ -228,7 +228,7 @@ function renderView() {
                   <th>Jenis & Kategori</th>
                   <th style="text-align:right">Volume</th>
                   <th>Bukti Lampiran</th>
-                  <th style="text-align:center;width:150px">Aksi Keputusan</th>
+                  <th class="sticky-col" style="text-align:center;width:150px">Aksi Keputusan</th>
                 </tr>
               </thead>
               <tbody>
@@ -280,7 +280,7 @@ function renderView() {
                           ? `<img src="${safePhoto}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer" onclick="window.open('${safePhoto}','_blank')">` 
                           : '<span style="font-size:10px;color:var(--text-muted)">Tidak ada foto</span>'}
                       </td>
-                      <td style="text-align:center;white-space:nowrap;">
+                      <td class="sticky-col" style="text-align:center;white-space:nowrap;">
                         <button class="btn btn-sm btn-icon" style="color:#ef4444;background:rgba(239,68,68,0.1)" title="Tolak Data" data-action="reject" data-id="${isBatch ? r.batchId : r.id}" data-is-batch="${isBatch}">${icons.xCircle}</button>
                         <button class="btn btn-sm btn-icon" style="color:#10b981;background:rgba(16,185,129,0.1);margin-left:4px" title="Setujui Data" data-action="approve" data-id="${isBatch ? r.batchId : r.id}" data-is-batch="${isBatch}">${icons.checkCircle}</button>
                       </td>
@@ -293,6 +293,27 @@ function renderView() {
         </div>
       </div>
     </div>
+    
+    <style>
+      .sticky-col {
+        position: sticky !important;
+        right: 0;
+        z-index: 10;
+        box-shadow: -6px 0 10px rgba(0,0,0,0.05);
+      }
+      th.sticky-col {
+        background: var(--bg-secondary) !important;
+      }
+      td.sticky-col {
+        background: var(--bg-card) !important;
+      }
+      tr:hover td.sticky-col {
+        background: var(--gray-50) !important;
+      }
+      [data-theme="dark"] tr:hover td.sticky-col {
+        background: rgba(255,255,255,0.03) !important;
+      }
+    </style>
   `, 'validasi');
 
   // Bind actions
