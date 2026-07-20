@@ -59,7 +59,7 @@ export function hasPermission(user, permission) {
  * Check if user can input waste data (any type)
  */
 export function canInputWaste(user) {
-  return hasPermission(user, 'INPUT_WASTE_MASUK');
+  return getAllowedInputTypes(user).length > 0;
 }
 
 /**

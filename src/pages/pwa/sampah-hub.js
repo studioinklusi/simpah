@@ -12,6 +12,7 @@ export async function renderSampahHub() {
   const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
   const stats = await getWasteStats(isInputter ? user.id : null);
   const allowed = getAllowedInputTypes(user);
+  if (allowed.length === 0) { window.location.hash = '#/pwa/home'; return; }
 
   // Today's breakdown
   const todayRecords = stats.records.filter(r => r.date_str === new Date().toISOString().split('T')[0]);

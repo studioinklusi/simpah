@@ -4,6 +4,7 @@ import { confirmLogout } from '../../components/logout-modal.js';
 import { getCurrentUser, toggleTheme, getState } from '../../utils/helpers.js';
 import { isActiveRoute } from '../../router.js';
 import { renderDashboardLayout } from '../dashboard/layout.js';
+import { canInputWaste } from '../../utils/permissions.js';
 
 export function renderPWALayout(title, content, activeTab = 'home') {
   const user = getCurrentUser();
@@ -71,9 +72,11 @@ export function renderPWALayout(title, content, activeTab = 'home') {
           <span>Riwayat</span>
         </a>
         ` : ''}
+        ${(user?.role === 'warga' || canInputWaste(user)) ? `
         <a href="${['petugas', 'admin'].includes(user?.role) ? '#/pwa/sampah-masuk' : '#/dashboard/aduan'}" class="bottom-nav-add">
           ${icons.plus}
         </a>
+        ` : ''}
         ${['eksekutif', 'admin'].includes(user?.role) ? `
         <a href="${user?.role === 'eksekutif' ? '#/dashboard/eksekutif' : '#/dashboard'}" class="bottom-nav-item">
           ${icons.chart}

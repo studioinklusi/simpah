@@ -4,10 +4,14 @@ import { getCurrentUser, formatDate } from '../../utils/helpers.js';
 import { getAllFleet, addFleet, getAllMou } from '../../db/store.js';
 import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
+import { getAllowedInputTypes } from '../../utils/permissions.js';
 
 export async function renderArmada() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
+  
+  const allowed = getAllowedInputTypes(user);
+  if (!allowed.includes('armada')) { window.location.hash = '#/pwa/home'; return; }
   
   const fleet = await getAllFleet();
   const mous = await getAllMou();

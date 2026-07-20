@@ -10,10 +10,14 @@ import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 import { wireSearchableSelect } from '../../utils/searchable-select.js';
+import { getAllowedInputTypes } from '../../utils/permissions.js';
 
 export async function renderInsidental() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
+  
+  const allowed = getAllowedInputTypes(user);
+  if (!allowed.includes('insidental')) { window.location.hash = '#/pwa/home'; return; }
   
   const [events, masterWilayah] = await Promise.all([
     getAllEvents(),

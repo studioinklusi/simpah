@@ -7,10 +7,14 @@ import { showToast } from '../../components/toast.js';
 import { renderPWALayout } from './layout.js';
 import { photoPickerHTML, initPhotoPicker } from '../../components/photo-picker.js';
 import { wireSearchableSelect } from '../../utils/searchable-select.js';
+import { getAllowedInputTypes } from '../../utils/permissions.js';
 
 export async function renderInputSampah() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
+
+  const allowed = getAllowedInputTypes(user);
+  if (!allowed.includes('masuk')) { window.location.hash = '#/pwa/home'; return; }
 
   const [locations, fleet, mous, masterWilayah] = await Promise.all([
     getAllLocations(),
