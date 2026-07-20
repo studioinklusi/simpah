@@ -295,6 +295,13 @@ function renderView() {
     </div>
     
     <style>
+      #validasiTable {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+      }
+      #validasiTable th, #validasiTable td {
+        border-bottom: 1px solid var(--border-color) !important;
+      }
       .sticky-col {
         position: sticky !important;
         right: 0;
