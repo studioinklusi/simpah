@@ -65,12 +65,12 @@ export async function renderLaporan() {
   const defaultStartDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
   const defaultEndDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-  renderDashboardLayout('Laporan & Export', `
+  renderDashboardLayout('Laporan & Ekspor', `
     <div class="page-enter">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Laporan & Export Data</h2>
-          <p class="section-subtitle">Generate laporan dan export ke format SIPSN</p>
+          <h2 class="section-title">Laporan & Ekspor Data</h2>
+          <p class="section-subtitle">Buat laporan dan ekspor ke format SIPSN</p>
         </div>
       </div>
 

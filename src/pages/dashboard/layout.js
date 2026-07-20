@@ -62,7 +62,7 @@ export function renderDashboardLayout(title, content, activeMenu = '') {
             <div class="sidebar-section-title">Pengelolaan</div>
             ${isAdmin(user) ? `
             <a href="#/dashboard/laporan" class="sidebar-link ${isActiveRoute('/dashboard/laporan') ? 'active' : ''}">
-              ${icons.file} <span>Laporan & Export</span>
+              ${icons.file} <span>Laporan & Ekspor</span>
             </a>` : ''}
             ${canValidate(user) ? `
             <a href="#/dashboard/validasi" class="sidebar-link ${isActiveRoute('/dashboard/validasi') ? 'active' : ''}">
