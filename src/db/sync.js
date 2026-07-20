@@ -147,16 +147,32 @@ export async function triggerSync() {
           }
         }
         
-        const { error } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+        // Gunakan UPDATE jika record ditandai sync_action='update' (misal: validasi oleh koordinator)
+        // Ini diperlukan karena upsert memerlukan INSERT policy, sedangkan koordinator hanya punya UPDATE policy
+        let syncError;
+        if (record.sync_action === 'update') {
+          const { error: updateErr } = await supabase.from(table).update(payload).eq('id', payload.id);
+          syncError = updateErr;
+        } else {
+          const { error: upsertErr } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+          syncError = upsertErr;
+        }
         
-        if (error) {
+        if (syncError) {
           // Jika error karena kolom tidak dikenal, coba hapus kolom bermasalah dan retry
-          const colMatch = error.message?.match(/column "([^"]+)" of relation/);
+          const colMatch = syncError.message?.match(/column "([^"]+)" of relation/);
           if (colMatch) {
             const badCol = colMatch[1];
             console.warn(`[Sync] Kolom "${badCol}" tidak ada di tabel ${table}, menghapus dan mencoba ulang...`);
             delete payload[badCol];
-            const { error: retryError } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+            let retryError;
+            if (record.sync_action === 'update') {
+              const { error: re } = await supabase.from(table).update(payload).eq('id', payload.id);
+              retryError = re;
+            } else {
+              const { error: re } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+              retryError = re;
+            }
             if (retryError) {
               console.error(`[Sync] Retry gagal untuk ${table}`, record.id, retryError);
               record.sync_error = retryError.message;
@@ -164,8 +180,8 @@ export async function triggerSync() {
               continue; // Lewati record ini, lanjut ke record berikutnya
             }
           } else {
-            console.error(`[Sync] Gagal upload data ${table}`, record.id, error);
-            record.sync_error = error.message;
+            console.error(`[Sync] Gagal upload data ${table}`, record.id, syncError);
+            record.sync_error = syncError.message;
             await db.put(table, record);
             continue; // Lewati record ini, lanjut ke record berikutnya
           }
@@ -185,6 +201,7 @@ export async function triggerSync() {
         }
         
         record.synced = true;
+        delete record.sync_action;
         await db.put(table, record);
         actualSynced++;
       }

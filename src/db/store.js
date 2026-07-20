@@ -154,6 +154,7 @@ export async function updateWasteRecordStatus(id, status, notes = '', userId = '
   record.verified_at = new Date().toISOString();
   record.verified_by = userId;
   record.synced = false; // Trigger synchronization to Supabase
+  record.sync_action = 'update'; // Use UPDATE instead of UPSERT (for RLS compatibility)
   
   await put('waste_records', record);
   await createAuditEntry('waste_records', id, `status_${status}`, userId, { old: oldStatus, new: status, notes });
