@@ -1,7 +1,7 @@
 // SIMPAH - Laporan & Export
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatDate, formatWeight } from '../../utils/helpers.js';
-import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah } from '../../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah, getAllUsers } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -13,11 +13,12 @@ export async function renderLaporan() {
   const user = getCurrentUser();
   if (!user || !hasPermission(user, 'EXPORT_REPORTS')) { window.location.hash = '#/dashboard/gis'; return; }
 
-  const [wasteRecords, incidentalEvents, masterLocations, masterWilayah] = await Promise.all([
+  const [wasteRecords, incidentalEvents, masterLocations, masterWilayah, allUsers] = await Promise.all([
     getAllWasteRecords(),
     getAllEvents(),
     getAllLocations(),
-    getAllMasterWilayah()
+    getAllMasterWilayah(),
+    getAllUsers()
   ]);
 
   // Normalize incidental events to match waste records format
@@ -40,7 +41,6 @@ export async function renderLaporan() {
 
   // Use master locations (active only) — deleted locations won't appear
   const locations = masterLocations.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  const users = [...new Set(sorted.map(r => r.user_name).filter(Boolean))].sort();
 
 
   // Get default dates (first and last day of current month)
@@ -85,10 +85,13 @@ export async function renderLaporan() {
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
-          <label class="form-label" style="font-size:11px">Petugas</label>
+          <label class="form-label" style="font-size:11px">Tipe Petugas</label>
           <select id="userFilter" class="form-select">
-            <option value="">Semua Petugas</option>
-            ${users.map(u => `<option value="${escapeHTML(u)}">${escapeHTML(u)}</option>`).join('')}
+            <option value="">Semua Tipe</option>
+            <option value="kader">Kader Lingkungan</option>
+            <option value="angkut">Petugas Angkut</option>
+            <option value="operator_tps">Operator TPS3R</option>
+            <option value="admin">Administrator / Dinas</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
@@ -157,13 +160,13 @@ export async function renderLaporan() {
 
   // Export handlers
   document.getElementById('exportCSV')?.addEventListener('click', () => {
-    const filtered = getFilteredRecords(sorted);
+    const filtered = getFilteredRecords(sorted, allUsers);
     exportToCSV(filtered, 'simpah-data');
     showToast('CSV berhasil di-export!', 'success');
   });
 
   document.getElementById('exportExcel')?.addEventListener('click', async () => {
-    const filtered = getFilteredRecords(sorted);
+    const filtered = getFilteredRecords(sorted, allUsers);
     await exportToExcel(filtered, 'simpah-report');
     showToast('Excel berhasil di-export!', 'success');
   });
@@ -171,7 +174,7 @@ export async function renderLaporan() {
   document.getElementById('exportSIPSN')?.addEventListener('click', () => {
     const startDate = document.getElementById('startDateInput').value;
     const period = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-    const filtered = getFilteredRecords(sorted);
+    const filtered = getFilteredRecords(sorted, allUsers);
     exportToSIPSN(filtered, period);
     showToast('Data format SIPSN berhasil di-export!', 'success');
   });
@@ -180,7 +183,7 @@ export async function renderLaporan() {
   const itemsPerPage = 50;
 
   const updateTable = () => {
-    const filtered = getFilteredRecords(sorted);
+    const filtered = getFilteredRecords(sorted, allUsers);
     const totalItems = filtered.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     
@@ -297,13 +300,13 @@ export async function renderLaporan() {
   updateTable();
 }
 
-function getFilteredRecords(records) {
+function getFilteredRecords(records, allUsers) {
   let filtered = [...records];
   const startDate = document.getElementById('startDateInput')?.value;
   const endDate = document.getElementById('endDateInput')?.value;
   const type = document.getElementById('typeFilter')?.value;
   const location = document.getElementById('locationFilter')?.value;
-  const user = document.getElementById('userFilter')?.value;
+  const userType = document.getElementById('userFilter')?.value;
   const category = document.getElementById('categoryFilter')?.value;
 
   if (startDate) {
@@ -324,13 +327,31 @@ function getFilteredRecords(records) {
   if (location) {
     filtered = filtered.filter(r => r.location_id === location);
   }
-  if (user) {
-    filtered = filtered.filter(r => r.user_name === user);
+  if (userType) {
+    filtered = filtered.filter(r => getRecordUserType(r, allUsers) === userType);
   }
   if (category) {
     filtered = filtered.filter(r => r.category_sipsn === category);
   }
   return filtered;
+}
+
+function getRecordUserType(r, allUsers) {
+  const profile = allUsers.find(u => u.id === r.user_id || u.id === r.created_by);
+  if (profile) {
+    if (profile.role === 'admin') return 'admin';
+    if (profile.role === 'petugas') return profile.job_type || '';
+    return '';
+  }
+  
+  // Fallback based on name for seeded/legacy data
+  const name = (r.user_name || '').toLowerCase();
+  if (name.includes('admin')) return 'admin';
+  if (name.includes('kader')) return 'kader';
+  if (name.includes('angkut') || name.includes('pengangkut')) return 'angkut';
+  if (name.includes('operator')) return 'operator_tps';
+  if (name.includes('koordinator')) return 'koordinator';
+  return '';
 }
 
 function renderReportRows(records, startIndex = 0) {
