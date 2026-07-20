@@ -1,7 +1,7 @@
 // SIMPAH - Laporan & Export
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatDate, formatWeight } from '../../utils/helpers.js';
-import { getAllWasteRecords, getAllLocations } from '../../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -13,10 +13,29 @@ export async function renderLaporan() {
   const user = getCurrentUser();
   if (!user || !hasPermission(user, 'EXPORT_REPORTS')) { window.location.hash = '#/dashboard/gis'; return; }
 
-  const [records, masterLocations] = await Promise.all([
+  const [wasteRecords, incidentalEvents, masterLocations, masterWilayah] = await Promise.all([
     getAllWasteRecords(),
-    getAllLocations()
+    getAllEvents(),
+    getAllLocations(),
+    getAllMasterWilayah()
   ]);
+
+  // Normalize incidental events to match waste records format
+  const normalizedEvents = incidentalEvents.map(e => {
+    const eventDesa = e.desa_id ? masterWilayah.find(w => w.id === e.desa_id) : null;
+    const locationText = eventDesa 
+      ? `Desa ${eventDesa.desa_kelurahan}` + (e.location_name ? `, ${e.location_name}` : '') 
+      : (e.location_name || '-');
+    return {
+      ...e,
+      is_incidental: true,
+      location_name: locationText,
+      date_str: e.created_at ? e.created_at.split('T')[0] : null,
+      verification_status: 'approved'
+    };
+  });
+
+  const records = [...wasteRecords, ...normalizedEvents];
   const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   // Use master locations (active only) — deleted locations won't appear
