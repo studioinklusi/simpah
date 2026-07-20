@@ -96,10 +96,14 @@ export async function renderLaporan() {
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
-          <label class="form-label" style="font-size:11px">Lokasi</label>
+          <label class="form-label" style="font-size:11px">Jenis Lokasi</label>
           <select id="locationFilter" class="form-select">
-            <option value="">Semua Lokasi</option>
-            ${locations.map(loc => `<option value="${escapeHTML(loc.id)}">${escapeHTML(loc.name)}</option>`).join('')}
+            <option value="">Semua Jenis Lokasi</option>
+            <option value="bank_sampah">Bank Sampah</option>
+            <option value="tps3r">TPS3R</option>
+            <option value="tps">TPS</option>
+            <option value="pengepul">Pengepul</option>
+            <option value="tpa">TPA</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;min-width:120px">
@@ -178,13 +182,13 @@ export async function renderLaporan() {
 
   // Export handlers
   document.getElementById('exportCSV')?.addEventListener('click', () => {
-    const filtered = getFilteredRecords(sorted, allUsers);
+    const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
     exportToCSV(filtered, 'simpah-data');
     showToast('CSV berhasil di-export!', 'success');
   });
 
   document.getElementById('exportExcel')?.addEventListener('click', async () => {
-    const filtered = getFilteredRecords(sorted, allUsers);
+    const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
     await exportToExcel(filtered, 'simpah-report');
     showToast('Excel berhasil di-export!', 'success');
   });
@@ -192,7 +196,7 @@ export async function renderLaporan() {
   document.getElementById('exportSIPSN')?.addEventListener('click', () => {
     const startDate = document.getElementById('startDateInput').value;
     const period = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-    const filtered = getFilteredRecords(sorted, allUsers);
+    const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
     exportToSIPSN(filtered, period);
     showToast('Data format SIPSN berhasil di-export!', 'success');
   });
@@ -201,7 +205,7 @@ export async function renderLaporan() {
   const itemsPerPage = 50;
 
   const updateTable = () => {
-    const filtered = getFilteredRecords(sorted, allUsers);
+    const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
     const totalItems = filtered.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     
@@ -328,12 +332,12 @@ export async function renderLaporan() {
   };
 }
 
-function getFilteredRecords(records, allUsers) {
+function getFilteredRecords(records, allUsers, masterLocations) {
   let filtered = [...records];
   const startDate = document.getElementById('startDateInput')?.value;
   const endDate = document.getElementById('endDateInput')?.value;
   const type = document.getElementById('typeFilter')?.value;
-  const location = document.getElementById('locationFilter')?.value;
+  const locationType = document.getElementById('locationFilter')?.value;
   const userType = document.getElementById('userFilter')?.value;
   const category = document.getElementById('categoryFilter')?.value;
 
@@ -352,8 +356,12 @@ function getFilteredRecords(records, allUsers) {
       filtered = filtered.filter(r => r.type === type && !r.is_incidental);
     }
   }
-  if (location) {
-    filtered = filtered.filter(r => r.location_id === location);
+  if (locationType) {
+    filtered = filtered.filter(r => {
+      if (!r.location_id) return false;
+      const loc = masterLocations.find(l => l.id === r.location_id);
+      return loc && loc.type === locationType;
+    });
   }
   if (userType) {
     filtered = filtered.filter(r => getRecordUserType(r, allUsers) === userType);
