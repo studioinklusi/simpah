@@ -35,11 +35,15 @@ export async function initAuth() {
       case 'TOKEN_REFRESHED':
         if (session?.user) {
           await _loadProfile(session.user.id);
+          const { initRealtime } = await import('../db/realtime.js');
+          initRealtime();
         }
         break;
 
       case 'SIGNED_OUT':
         _clearSession();
+        const { cleanupRealtime } = await import('../db/realtime.js');
+        cleanupRealtime();
         // Only redirect if we're on a protected route
         if (!_isPublicRoute(window.location.hash.slice(1) || '/login')) {
           window.location.hash = '#/login';
@@ -49,6 +53,8 @@ export async function initAuth() {
       case 'USER_UPDATED':
         if (session?.user) {
           await _loadProfile(session.user.id);
+          const { initRealtime } = await import('../db/realtime.js');
+          initRealtime();
         }
         break;
 
@@ -64,6 +70,8 @@ export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       await _loadProfile(session.user.id);
+      const { initRealtime } = await import('../db/realtime.js');
+      initRealtime();
     }
   } catch (err) {
     console.warn('[Auth] Session restore failed:', err);

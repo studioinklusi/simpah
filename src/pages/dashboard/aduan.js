@@ -1,6 +1,6 @@
 // SIMPAH - Manajemen Aduan (Complaint Management with Privacy Controls)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser } from '../../utils/helpers.js';
+import { getCurrentUser, onStateChange } from '../../utils/helpers.js';
 import { getAllComplaints, getComplaintsByUser, updateComplaint, addComplaint } from '../../db/store.js';
 import { hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
@@ -644,11 +644,33 @@ export async function renderAduanManagement() {
     });
   }
 
+  async function reloadComplaints() {
+    try {
+      allComplaints = canViewAll
+        ? await getAllComplaints()
+        : await getComplaintsByUser(user.id);
+      renderStats();
+      renderList();
+    } catch (e) {
+      console.error('[Realtime] Failed to reload complaints:', e);
+    }
+  }
+
   // Bind create button handler
   document.getElementById('createNewComplaintBtn')?.addEventListener('click', openCreateComplaintModal);
 
   renderStats();
   renderList();
+
+  // Listen to realtime database changes
+  const unsubComplaints = onStateChange('complaints_updated', () => {
+    console.log('[Realtime] Complaints Page: complaints updated, reloading...');
+    reloadComplaints();
+  });
+
+  return () => {
+    unsubComplaints();
+  };
 }
 
 /**

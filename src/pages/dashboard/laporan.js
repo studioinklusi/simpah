@@ -1,6 +1,6 @@
 // SIMPAH - Laporan & Export
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, formatDate, formatWeight } from '../../utils/helpers.js';
+import { getCurrentUser, formatDate, formatWeight, onStateChange } from '../../utils/helpers.js';
 import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah, getAllUsers } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
@@ -13,7 +13,7 @@ export async function renderLaporan() {
   const user = getCurrentUser();
   if (!user || !hasPermission(user, 'EXPORT_REPORTS')) { window.location.hash = '#/dashboard/gis'; return; }
 
-  const [wasteRecords, incidentalEvents, masterLocations, masterWilayah, allUsers] = await Promise.all([
+  const [initialWaste, initialEvents, masterLocations, masterWilayah, allUsers] = await Promise.all([
     getAllWasteRecords(),
     getAllEvents(),
     getAllLocations(),
@@ -21,26 +21,44 @@ export async function renderLaporan() {
     getAllUsers()
   ]);
 
-  // Normalize incidental events to match waste records format
-  const normalizedEvents = incidentalEvents.map(e => {
-    const eventDesa = e.desa_id ? masterWilayah.find(w => w.id === e.desa_id) : null;
-    const locationText = eventDesa 
-      ? `Desa ${eventDesa.desa_kelurahan}` + (e.location_name ? `, ${e.location_name}` : '') 
-      : (e.location_name || '-');
-    return {
-      ...e,
-      is_incidental: true,
-      location_name: locationText,
-      date_str: e.created_at ? e.created_at.split('T')[0] : null,
-      verification_status: 'approved'
-    };
-  });
-
-  const records = [...wasteRecords, ...normalizedEvents];
-  const sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
   // Use master locations (active only) — deleted locations won't appear
   const locations = masterLocations.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+  let sorted = [];
+
+  function processRecords(wasteRecords, incidentalEvents) {
+    const normalizedEvents = incidentalEvents.map(e => {
+      const eventDesa = e.desa_id ? masterWilayah.find(w => w.id === e.desa_id) : null;
+      const locationText = eventDesa 
+        ? `Desa ${eventDesa.desa_kelurahan}` + (e.location_name ? `, ${e.location_name}` : '') 
+        : (e.location_name || '-');
+      return {
+        ...e,
+        is_incidental: true,
+        location_name: locationText,
+        date_str: e.created_at ? e.created_at.split('T')[0] : null,
+        verification_status: 'approved'
+      };
+    });
+
+    const records = [...wasteRecords, ...normalizedEvents];
+    sorted = records.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+
+  processRecords(initialWaste, initialEvents);
+
+  async function reloadRecords() {
+    try {
+      const [wasteRecords, incidentalEvents] = await Promise.all([
+        getAllWasteRecords(),
+        getAllEvents()
+      ]);
+      processRecords(wasteRecords, incidentalEvents);
+      updateTable();
+    } catch (e) {
+      console.error('[Realtime] Failed to reload laporan records:', e);
+    }
+  }
 
 
   // Get default dates (first and last day of current month)
@@ -298,6 +316,16 @@ export async function renderLaporan() {
 
   // Initial render
   updateTable();
+
+  // Listen to realtime database changes
+  const unsubWaste = onStateChange('waste_records_updated', () => {
+    console.log('[Realtime] Reports Page: waste_records updated, reloading...');
+    reloadRecords();
+  });
+
+  return () => {
+    unsubWaste();
+  };
 }
 
 function getFilteredRecords(records, allUsers) {

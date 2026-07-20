@@ -1,6 +1,6 @@
 // SIMPAH - Executive Dashboard
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, formatWeight, formatNumber, formatPercent, getLast30Days } from '../../utils/helpers.js';
+import { getCurrentUser, formatWeight, formatNumber, formatPercent, getLast30Days, onStateChange } from '../../utils/helpers.js';
 import { getWasteStats, getAllWasteRecords, getAllLocations, getAllMou, getAllUsers, getAllComplaints } from '../../db/store.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { renderDashboardLayout } from './layout.js';
@@ -222,6 +222,16 @@ export async function renderEksekutif() {
   // Initial load
   await loadAndRenderData();
 
+  // Listen to realtime database changes
+  const unsubWaste = onStateChange('waste_records_updated', () => {
+    console.log('[Realtime] Executive Dashboard: waste_records updated, refreshing charts/KPIs...');
+    loadAndRenderData();
+  });
+  const unsubComplaints = onStateChange('complaints_updated', () => {
+    console.log('[Realtime] Executive Dashboard: complaints updated, refreshing counts...');
+    loadAndRenderData();
+  });
+
   // Set up auto-refresh interval (5 minutes)
   const refreshInterval = setInterval(async () => {
     try {
@@ -234,6 +244,8 @@ export async function renderEksekutif() {
   // Return router cleanup callback
   return () => {
     clearInterval(refreshInterval);
+    unsubWaste();
+    unsubComplaints();
   };
 }
 

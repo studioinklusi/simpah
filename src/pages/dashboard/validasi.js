@@ -1,6 +1,6 @@
 // SIMPAH - Halaman Validasi Data (Anti-Fraud Queue)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, formatWeight, formatDate } from '../../utils/helpers.js';
+import { getCurrentUser, formatWeight, formatDate, onStateChange } from '../../utils/helpers.js';
 import { getAllWasteRecords, updateWasteRecordStatus, getAllMasterWilayah } from '../../db/store.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { showToast } from '../../components/toast.js';
@@ -26,6 +26,16 @@ export async function renderValidasi() {
 
   await loadData();
   renderView();
+
+  const unsubWaste = onStateChange('waste_records_updated', async () => {
+    console.log('[Realtime] Validation Queue: waste_records updated, refreshing queue...');
+    await loadData();
+    renderView();
+  });
+
+  return () => {
+    unsubWaste();
+  };
 }
 
 async function loadData() {
