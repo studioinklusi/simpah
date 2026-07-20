@@ -210,8 +210,8 @@ function renderView() {
       </div>
 
       <!-- Queue Table -->
-      <div class="card">
-        <div class="table-container" style="border:none">
+      <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--border-color)">
+        <div id="validasiTableContainer" style="max-height:calc(100vh - 340px); overflow:auto;">
           ${pendingRecords.length === 0 
             ? `<div style="text-align:center;padding:var(--space-8);color:var(--text-muted)">
                  <div style="font-size:2rem;margin-bottom:var(--space-3);color:var(--primary-500)">${icons.award}</div>
@@ -301,6 +301,15 @@ function renderView() {
       }
       #validasiTable th, #validasiTable td {
         border-bottom: 1px solid var(--border-color) !important;
+      }
+      #validasiTable thead th {
+        position: sticky !important;
+        top: 0;
+        z-index: 20;
+        background: var(--bg-secondary) !important;
+      }
+      #validasiTable thead th.sticky-col {
+        z-index: 30;
       }
       .sticky-col {
         position: sticky !important;
