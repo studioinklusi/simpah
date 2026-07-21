@@ -35,15 +35,23 @@ export async function initAuth() {
       case 'TOKEN_REFRESHED':
         if (session?.user) {
           await _loadProfile(session.user.id);
-          const { initRealtime } = await import('../db/realtime.js');
-          initRealtime();
+          try {
+            const { initRealtime } = await import('../db/realtime.js');
+            initRealtime();
+          } catch (err) {
+            console.warn('[Auth] Failed to load realtime module (stale chunk?):', err);
+          }
         }
         break;
 
       case 'SIGNED_OUT':
         _clearSession();
-        const { cleanupRealtime } = await import('../db/realtime.js');
-        cleanupRealtime();
+        try {
+          const { cleanupRealtime } = await import('../db/realtime.js');
+          cleanupRealtime();
+        } catch (err) {
+          console.warn('[Auth] Failed to cleanup realtime module:', err);
+        }
         // Only redirect if we're on a protected route
         if (!_isPublicRoute(window.location.hash.slice(1) || '/login')) {
           window.location.hash = '#/login';
@@ -53,8 +61,12 @@ export async function initAuth() {
       case 'USER_UPDATED':
         if (session?.user) {
           await _loadProfile(session.user.id);
-          const { initRealtime } = await import('../db/realtime.js');
-          initRealtime();
+          try {
+            const { initRealtime } = await import('../db/realtime.js');
+            initRealtime();
+          } catch (err) {
+            console.warn('[Auth] Failed to load realtime module:', err);
+          }
         }
         break;
 
@@ -70,8 +82,12 @@ export async function initAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       await _loadProfile(session.user.id);
-      const { initRealtime } = await import('../db/realtime.js');
-      initRealtime();
+      try {
+        const { initRealtime } = await import('../db/realtime.js');
+        initRealtime();
+      } catch (err) {
+        console.warn('[Auth] Failed to load realtime module on restore:', err);
+      }
     }
   } catch (err) {
     console.warn('[Auth] Session restore failed:', err);

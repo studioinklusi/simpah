@@ -4,6 +4,13 @@ import './styles/index.css';
 import './styles/auth.css';
 import './styles/components.css';
 
+// Handle dynamic import chunk loading error due to new deployment/release (Stale Asset Cache)
+window.addEventListener('vite:preloadError', (event) => {
+  console.warn('[Vite] Dynamic import chunk load error detected (new build deployed). Reloading page...');
+  event.preventDefault();
+  window.location.reload();
+});
+
 import { registerRoute, startRouter } from './router.js';
 import { initTheme, getCurrentUser } from './utils/helpers.js';
 import { initPWAInstall } from './lib/pwa.js';
