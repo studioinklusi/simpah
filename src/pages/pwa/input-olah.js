@@ -21,8 +21,13 @@ export async function renderInputOlah() {
     getAllLocations(),
     getAllMasterWilayah()
   ]);
-  const userDesa = user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null;
+  const userFacility = user.location_id ? locations.find(l => l.id === user.location_id) : null;
+  const userDesa = userFacility 
+    ? masterWilayah.find(w => w.id === userFacility.desa_id) 
+    : (user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null);
+  const isOperatorTPS = user?.role === 'petugas' && user?.job_type === 'operator_tps' && userFacility;
   const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
+  const isLockedLocation = isOperatorTPS || isKader;
   let gpsData = null;
   let photoPicker = null;
 
@@ -32,6 +37,19 @@ export async function renderInputOlah() {
         ${icons.mapPin}
         <span>Mendeteksi lokasi GPS...</span>
       </div>
+
+      ${isOperatorTPS && userFacility ? `
+        <div class="tps-facility-badge" style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-radius:var(--radius-lg); background:rgba(13,124,61,0.08); border:1px solid rgba(13,124,61,0.25); margin-bottom:var(--space-4);">
+          <div style="width:36px; height:36px; border-radius:8px; background:#0D7C3D; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+            🏭
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Lokasi Fasilitas TPS3R / Pengolahan</div>
+            <div style="font-size:var(--font-sm); font-weight:700; color:var(--primary-800, #065f46); margin-top:1px;">${userFacility.name}</div>
+            <div style="font-size:var(--font-xs); color:var(--text-secondary);">Desa ${userDesa ? userDesa.desa_kelurahan : '-'}, Kec. ${userDesa ? userDesa.kecamatan : '-'}</div>
+          </div>
+        </div>
+      ` : ''}
 
       <div class="olah-info-banner">
         <span class="olah-info-icon">${icons.refreshCw}</span>
@@ -100,8 +118,8 @@ export async function renderInputOlah() {
           <label class="form-label">Kecamatan</label>
           <div class="custom-select-container" id="kecSelectContainer">
             <div class="custom-select-wrapper">
-              <input type="text" id="kecamatanSelect" class="form-select" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
-              ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
+              <input type="text" id="kecamatanSelect" class="form-select" placeholder="Ketik/Pilih Kecamatan..." autocomplete="off" value="${userDesa ? userDesa.kecamatan : ''}" style="border: 1px solid var(--border-color);" ${isLockedLocation ? 'disabled' : ''} />
+              ${isLockedLocation ? '' : '<span class="custom-select-arrow">▼</span>'}
             </div>
             <div class="custom-select-dropdown" id="kecDropdown" style="display:none;"></div>
             <div id="kecFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Kecamatan tidak ditemukan</div>
@@ -112,8 +130,8 @@ export async function renderInputOlah() {
           <label class="form-label">Desa / Kelurahan</label>
           <div class="custom-select-container" id="desaSelectContainer">
             <div class="custom-select-wrapper">
-              <input type="text" id="desaSelectInput" class="form-select" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" ${isKader ? 'disabled' : ''} />
-              ${isKader ? '' : '<span class="custom-select-arrow">▼</span>'}
+              <input type="text" id="desaSelectInput" class="form-select" placeholder="Ketik/Pilih Desa..." autocomplete="off" value="${userDesa ? userDesa.desa_kelurahan : ''}" style="border: 1px solid var(--border-color);" ${isLockedLocation ? 'disabled' : ''} />
+              ${isLockedLocation ? '' : '<span class="custom-select-arrow">▼</span>'}
             </div>
             <div class="custom-select-dropdown" id="desaDropdown" style="display:none;"></div>
             <input type="hidden" id="desaSelect" value="${userDesa ? userDesa.id : ''}" />
@@ -121,11 +139,15 @@ export async function renderInputOlah() {
           </div>
         </div>
 
-        <div class="form-group" id="locationGroup" style="display:${userDesa ? 'block' : 'none'}">
-          <label class="form-label">Dicatat di Fasilitas (Opsional)</label>
-          <select id="locationSelect" class="form-select">
-            <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-            ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
+        <div class="form-group" id="locationGroup" style="display:${(userDesa || isOperatorTPS) ? 'block' : 'none'}">
+          <label class="form-label">${isOperatorTPS ? 'Fasilitas Terdaftar' : 'Dicatat di Fasilitas (Opsional)'}</label>
+          <select id="locationSelect" class="form-select" ${isOperatorTPS ? 'disabled' : ''}>
+            ${isOperatorTPS && userFacility ? `
+              <option value="${userFacility.id}" data-lat="${userFacility.lat || 0}" data-lng="${userFacility.lng || 0}" data-name="${userFacility.name}" selected>${userFacility.name} (${(userFacility.type || 'tps3r').toUpperCase()})</option>
+            ` : `
+              <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
+              ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
+            `}
           </select>
         </div>
 
@@ -183,6 +205,12 @@ export async function renderInputOlah() {
   let selectKecInstance, selectDesaInstance;
 
   const updateLocationDropdown = (selectedDesaId) => {
+    if (isOperatorTPS && userFacility) {
+      locSelect.innerHTML = `<option value="${userFacility.id}" data-lat="${userFacility.lat || 0}" data-lng="${userFacility.lng || 0}" data-name="${userFacility.name}" selected>${userFacility.name} (${(userFacility.type || 'tps3r').toUpperCase()})</option>`;
+      locSelect.disabled = true;
+      locGroup.style.display = 'block';
+      return;
+    }
     if (!selectedDesaId) {
       locGroup.style.display = 'none';
       locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
