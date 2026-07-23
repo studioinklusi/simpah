@@ -164,8 +164,14 @@ export async function triggerSync() {
           const { error: updateErr } = await supabase.from(table).update(payload).eq('id', payload.id);
           syncError = updateErr;
         } else {
-          const { error: upsertErr } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
-          syncError = upsertErr;
+          // Coba insert terlebih dahulu (karena upsert memerlukan UPDATE policy di Supabase RLS, sedangkan user non-admin hanya punya INSERT policy)
+          const { error: insertErr } = await supabase.from(table).insert(payload);
+          if (insertErr && (insertErr.code === '23505' || insertErr.message?.includes('duplicate key') || insertErr.message?.includes('already exists'))) {
+            const { error: upsertErr } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+            syncError = upsertErr;
+          } else {
+            syncError = insertErr;
+          }
         }
         
         if (syncError) {
@@ -180,8 +186,13 @@ export async function triggerSync() {
               const { error: re } = await supabase.from(table).update(payload).eq('id', payload.id);
               retryError = re;
             } else {
-              const { error: re } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
-              retryError = re;
+              const { error: reInsert } = await supabase.from(table).insert(payload);
+              if (reInsert && (reInsert.code === '23505' || reInsert.message?.includes('duplicate key') || reInsert.message?.includes('already exists'))) {
+                const { error: reUpsert } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
+                retryError = reUpsert;
+              } else {
+                retryError = reInsert;
+              }
             }
             if (retryError) {
               console.error(`[Sync] Retry gagal untuk ${table}`, record.id, retryError);

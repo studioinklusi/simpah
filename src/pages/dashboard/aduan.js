@@ -9,6 +9,7 @@ import { renderPWALayout } from '../pwa/layout.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 import { compressImage } from '../../components/photo-picker.js';
 import { initGPSIndicator } from '../../utils/gps.js';
+import { triggerSync } from '../../db/sync.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: icons.download },
@@ -229,6 +230,9 @@ export async function renderAduanManagement() {
   let allComplaints = canViewAll
     ? await getAllComplaints()
     : await getComplaintsByUser(user.id);
+  
+  // Trigger background sync to push any pending unsynced complaints to Supabase
+  triggerSync().catch(err => console.error('[Sync Error]', err));
   let activeFilter = 'all';
   let searchQuery = '';
   let currentPage = 1;
