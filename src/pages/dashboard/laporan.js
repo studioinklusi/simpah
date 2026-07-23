@@ -123,6 +123,15 @@ export async function renderLaporan() {
             ${SIPSN_CATEGORIES.map(cat => `<option value="${cat.code}">${cat.name} (${cat.code})</option>`).join('')}
           </select>
         </div>
+        <div class="form-group" style="margin-bottom:0;min-width:120px">
+          <label class="form-label" style="font-size:11px">Status Validasi</label>
+          <select id="statusFilter" class="form-select">
+            <option value="approved" selected>Disetujui (Approved)</option>
+            <option value="">Semua Status</option>
+            <option value="pending">Pending (Belum Divalidasi)</option>
+            <option value="rejected">Ditolak</option>
+          </select>
+        </div>
       </div>
 
       <!-- Export Options Card -->
@@ -196,7 +205,12 @@ export async function renderLaporan() {
   document.getElementById('exportSIPSN')?.addEventListener('click', () => {
     const startDate = document.getElementById('startDateInput').value;
     const period = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-    const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
+    // Export SIPSN hanya mencakup data yang telah disetujui (valid)
+    const filtered = getFilteredRecords(sorted, allUsers, masterLocations).filter(r => r.verification_status === 'approved' || (!r.verification_status && !r.is_demo));
+    if (filtered.length === 0) {
+      showToast('Tidak ada data ter-validasi (Disetujui) untuk diekspor ke SIPSN', 'warning');
+      return;
+    }
     exportToSIPSN(filtered, period);
     showToast('Data format SIPSN berhasil di-export!', 'success');
   });
@@ -310,7 +324,7 @@ export async function renderLaporan() {
   };
 
   // Filter change
-  const filterInputs = ['startDateInput', 'endDateInput', 'typeFilter', 'locationFilter', 'userFilter', 'categoryFilter'];
+  const filterInputs = ['startDateInput', 'endDateInput', 'typeFilter', 'locationFilter', 'userFilter', 'categoryFilter', 'statusFilter'];
   filterInputs.forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
       currentPage = 1;
@@ -340,6 +354,7 @@ function getFilteredRecords(records, allUsers, masterLocations) {
   const locationType = document.getElementById('locationFilter')?.value;
   const userType = document.getElementById('userFilter')?.value;
   const category = document.getElementById('categoryFilter')?.value;
+  const status = document.getElementById('statusFilter')?.value;
 
   if (startDate) {
     filtered = filtered.filter(r => r.date_str && r.date_str >= startDate);
@@ -368,6 +383,15 @@ function getFilteredRecords(records, allUsers, masterLocations) {
   }
   if (category) {
     filtered = filtered.filter(r => r.category_sipsn === category);
+  }
+  if (status) {
+    if (status === 'approved') {
+      filtered = filtered.filter(r => r.verification_status === 'approved' || (!r.verification_status && !r.is_demo));
+    } else if (status === 'pending') {
+      filtered = filtered.filter(r => r.verification_status === 'pending');
+    } else if (status === 'rejected') {
+      filtered = filtered.filter(r => r.verification_status === 'rejected');
+    }
   }
   return filtered;
 }
