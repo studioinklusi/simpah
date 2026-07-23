@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => ({
   base: '/',
   esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : []
+    drop: mode === 'production' ? ['debugger'] : []
   },
   plugins: [
     VitePWA({

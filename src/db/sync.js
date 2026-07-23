@@ -156,33 +156,52 @@ export async function triggerSync() {
           if (publicUrl) {
             payload.photo_url = publicUrl;
           }
-        } else if (payload.photo_url && payload.photo_url.startsWith('data:image')) {
+        } else if (payload.photo_url && payload.photo_url.startsWith('data:')) {
           // Path 2: foto disimpan langsung di photo_url sebagai base64 data URI (complaints)
           // Upload ke Storage lalu ganti dengan public URL
           const bucket = 'simpah_media';
           const ext = payload.photo_url.startsWith('data:image/png') ? 'png' : 'jpg';
           const path = `${table}/${record.id}/${Date.now()}.${ext}`;
-          const publicUrl = await uploadBase64Image(bucket, path, payload.photo_url);
-          if (publicUrl) {
-            payload.photo_url = publicUrl;
-          } else {
-            // Jika upload gagal, hapus photo_url agar tidak mengirim data base64 besar ke DB
+          try {
+            const publicUrl = await uploadBase64Image(bucket, path, payload.photo_url);
+            if (publicUrl) {
+              payload.photo_url = publicUrl;
+              console.log(`[Sync] Foto berhasil di-upload ke Storage: ${publicUrl}`);
+            } else {
+              console.warn(`[Sync] Upload foto gagal, menghapus photo_url dari payload`);
+              delete payload.photo_url;
+            }
+          } catch (uploadErr) {
+            console.error(`[Sync] Exception saat upload foto:`, uploadErr);
             delete payload.photo_url;
           }
         }
         
+        // Sanitasi final: pastikan photo_url hanya berisi URL valid (http/https)
+        // Hapus jika berisi blob:, data:, atau URL halaman yang bukan gambar
+        if (payload.photo_url && !payload.photo_url.startsWith('http')) {
+          console.warn(`[Sync] photo_url tidak valid (bukan http URL), dihapus:`, payload.photo_url.substring(0, 80));
+          delete payload.photo_url;
+        }
+        
+        // Log payload yang akan dikirim (tanpa konten besar)
+        const debugPayload = { ...payload };
+        if (debugPayload.photo_url && debugPayload.photo_url.length > 100) {
+          debugPayload.photo_url = debugPayload.photo_url.substring(0, 100) + '...[truncated]';
+        }
+        console.log(`[Sync] Mengirim ${table} id=${record.id}`, JSON.stringify(debugPayload, null, 2));
+
         // Gunakan UPDATE jika record ditandai sync_action='update' (misal: validasi oleh koordinator)
         // Ini diperlukan karena upsert memerlukan INSERT policy, sedangkan koordinator hanya punya UPDATE policy
         let syncError;
-        console.log(`[Sync] Mengirim ${table} id=${record.id}`, Object.keys(payload));
         if (record.sync_action === 'update') {
           const { error: updateErr } = await supabase.from(table).update(payload).eq('id', payload.id);
           syncError = updateErr;
-          if (updateErr) console.error(`[Sync] UPDATE error:`, updateErr);
+          if (updateErr) console.error(`[Sync] UPDATE error:`, JSON.stringify(updateErr));
         } else {
           // Coba insert terlebih dahulu (karena upsert memerlukan UPDATE policy di Supabase RLS, sedangkan user non-admin hanya punya INSERT policy)
           const { error: insertErr } = await supabase.from(table).insert(payload);
-          if (insertErr) console.warn(`[Sync] INSERT error (code=${insertErr.code}):`, insertErr.message);
+          if (insertErr) console.error(`[Sync] INSERT error (code=${insertErr.code}, status=${insertErr.status}):`, JSON.stringify(insertErr));
           if (insertErr && (insertErr.code === '23505' || insertErr.message?.includes('duplicate key') || insertErr.message?.includes('already exists'))) {
             console.log(`[Sync] Duplikat ditemukan, mencoba upsert...`);
             const { error: upsertErr } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
