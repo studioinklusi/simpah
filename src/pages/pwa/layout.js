@@ -27,6 +27,9 @@ export function renderPWALayout(title, content, activeTab = 'home') {
     return;
   }
 
+  // Ensure PWA CSS is loaded for mobile layout
+  import('../../styles/pwa.css');
+
   const app = document.getElementById('app');
   
   app.innerHTML = `
