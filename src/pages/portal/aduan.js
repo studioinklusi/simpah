@@ -160,13 +160,15 @@ export function renderAduan() {
 
     try {
       const user = getCurrentUser();
+      const addrVal = document.getElementById('complaintAddress').value.trim();
       const result = await addComplaint({
         reporter_name: document.getElementById('reporterName').value.trim() || 'Anonim',
         reporter_phone: document.getElementById('reporterPhone').value.trim(),
         is_anonymous: document.getElementById('isAnonymous').checked,
         category: document.getElementById('complaintCategory').value,
         description: document.getElementById('complaintDesc').value.trim(),
-        address: document.getElementById('complaintAddress').value.trim(),
+        address: addrVal,
+        location_text: addrVal,
         lat: gpsData?.latitude || null,
         lng: gpsData?.longitude || null,
         photo_url: previewImg?.src || null

@@ -164,7 +164,8 @@ export async function getVillageProfiles() {
     // Try matching complaint to wilayah by checking address or nearest location
     let matched = false;
     for (const wil of kecamatanSet) {
-      if (c.address && c.address.toLowerCase().includes(wil.toLowerCase())) {
+      const addr = (c.address || c.location_text || '').toLowerCase();
+      if (addr && addr.includes(wil.toLowerCase())) {
         const p = profiles[wil];
         p.complaint_count++;
         p.complaints.push(c);

@@ -167,7 +167,8 @@ export function renderCekAduan() {
           <div class="track-row"><span class="track-row-label">Kategori</span><span class="track-row-value">${escapeHTML(complaint.category)}</span></div>
           <div class="track-row"><span class="track-row-label">Pelapor</span><span class="track-row-value">${escapeHTML(complaint.reporter_name || 'Anonim')}</span></div>
           <div class="track-row"><span class="track-row-label">Tanggal Lapor</span><span class="track-row-value">${escapeHTML(dateStr)}</span></div>
-          <div class="track-row"><span class="track-row-label">Lokasi</span><span class="track-row-value">${escapeHTML(complaint.address || '-')}</span></div>
+          <div class="track-row"><span class="track-row-label">Lokasi</span><span class="track-row-value">${escapeHTML(complaint.address || complaint.location_text || '-')}</span></div>
+          <div class="track-row"><span class="track-row-label">GPS</span><span class="track-row-value" style="font-size:var(--font-xs)">${complaint.lat && complaint.lng ? `${Number(complaint.lat).toFixed(6)}, ${Number(complaint.lng).toFixed(6)}` : '-'}</span></div>
 
           <div class="track-desc">${escapeHTML(complaint.description)}</div>
 

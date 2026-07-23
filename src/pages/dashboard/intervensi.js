@@ -420,7 +420,7 @@ function renderProfilView() {
                   <td style="white-space:nowrap">${formatDate(c.created_at)}</td>
                   <td><span class="badge badge-neutral">${c.category || '-'}</span></td>
                   <td style="max-width:300px;font-size:12px">${c.description || '-'}</td>
-                  <td style="font-size:12px">${c.address || '-'}</td>
+                  <td style="font-size:12px">${c.address || c.location_text || '-'}</td>
                   <td><span class="badge ${c.status === 'selesai' ? 'badge-success' : c.status === 'diproses' ? 'badge-warning' : 'badge-danger'}">${c.status}</span></td>
                 </tr>
               `).join('')}

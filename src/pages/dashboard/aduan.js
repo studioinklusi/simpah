@@ -8,6 +8,7 @@ import { renderDashboardLayout } from './layout.js';
 import { renderPWALayout } from '../pwa/layout.js';
 import { escapeHTML, sanitizeURL } from '../../utils/sanitize.js';
 import { compressImage } from '../../components/photo-picker.js';
+import { initGPSIndicator } from '../../utils/gps.js';
 
 const STATUS_CONFIG = {
   baru: { label: 'Baru', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: icons.download },
@@ -405,8 +406,8 @@ export async function renderAduanManagement() {
       <div class="am-detail-row"><span class="am-detail-label">Pelapor</span><span class="am-detail-value">${escapeHTML(detailReporter)}</span></div>
       ${canViewAll && !c.is_anonymous ? `<div class="am-detail-row"><span class="am-detail-label">Telepon</span><span class="am-detail-value">${escapeHTML(c.reporter_phone) || '-'}</span></div>` : ''}
       <div class="am-detail-row"><span class="am-detail-label">Tanggal</span><span class="am-detail-value">${escapeHTML(dt)}</span></div>
-      <div class="am-detail-row"><span class="am-detail-label">Alamat</span><span class="am-detail-value">${escapeHTML(c.address) || '-'}</span></div>
-      ${c.lat ? `<div class="am-detail-row"><span class="am-detail-label">GPS</span><span class="am-detail-value" style="font-size:var(--font-xs)">${Number(c.lat).toFixed(6)}, ${Number(c.lng).toFixed(6)}</span></div>` : ''}
+      <div class="am-detail-row"><span class="am-detail-label">Alamat</span><span class="am-detail-value">${escapeHTML(c.address || c.location_text) || '-'}</span></div>
+      <div class="am-detail-row"><span class="am-detail-label">GPS</span><span class="am-detail-value" style="font-size:var(--font-xs)">${c.lat && c.lng ? `${Number(c.lat).toFixed(6)}, ${Number(c.lng).toFixed(6)}` : '-'}</span></div>
       ${c.is_anonymous ? '<div class="am-detail-row"><span class="am-detail-label">Mode</span><span class="am-detail-value"><span class="am-badge" style="background:rgba(107,114,128,0.1);color:#6b7280">🔒 Anonim</span></span></div>' : ''}
 
       <div class="am-desc-box"><strong>Deskripsi:</strong><br/>${escapeHTML(c.description)}</div>
@@ -488,6 +489,11 @@ export async function renderAduanManagement() {
   function openCreateComplaintModal() {
     document.getElementById('aduanModalTitle').textContent = 'Buat Aduan Baru';
     document.getElementById('aduanModalBody').innerHTML = `
+      <div class="gps-indicator pending" id="newAduanGps" style="margin-bottom:var(--space-4)">
+        ${icons.mapPin}
+        <span>Mendeteksi lokasi otomatis...</span>
+      </div>
+
       <form id="newComplaintForm">
         <div class="form-group" style="margin-bottom:var(--space-4)">
           <label class="form-label" style="display:block;font-size:var(--font-sm);font-weight:600;margin-bottom:var(--space-2)">Nama Pelapor</label>
@@ -598,13 +604,7 @@ export async function renderAduanManagement() {
 
     // Geolocation detection
     let gpsData = null;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { gpsData = pos.coords; },
-        (err) => console.warn('GPS detection failed:', err.message),
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
+    initGPSIndicator('newAduanGps', p => { gpsData = p; });
 
     // Submit handler
     document.getElementById('newComplaintForm')?.addEventListener('submit', async (ev) => {
@@ -615,13 +615,15 @@ export async function renderAduanManagement() {
       btn.disabled = true;
 
       try {
+        const newAddrVal = document.getElementById('newComplaintAddress').value.trim();
         const result = await addComplaint({
           reporter_name: document.getElementById('newReporterName').value.trim() || 'Anonim',
           reporter_phone: document.getElementById('newReporterPhone').value.trim(),
           is_anonymous: document.getElementById('newIsAnonymous').checked,
           category: document.getElementById('newComplaintCategory').value,
           description: document.getElementById('newComplaintDesc').value.trim(),
-          address: document.getElementById('newComplaintAddress').value.trim(),
+          address: newAddrVal,
+          location_text: newAddrVal,
           lat: gpsData?.latitude || null,
           lng: gpsData?.longitude || null,
           photo_url: previewImg?.src || null

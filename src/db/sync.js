@@ -83,7 +83,7 @@ export async function triggerSync() {
         const COMPLAINT_FIELDS = [
           'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
           'reporter_phone', 'reporter_email',
-          'category', 'description', 'location_text', 'lat', 'lng',
+          'category', 'description', 'location_text', 'address', 'lat', 'lng',
           'photo_url', 'status', 'is_anonymous', 'created_at', 'updated_at',
           'response_text', 'responded_at', 'responded_by'
         ];
@@ -134,6 +134,16 @@ export async function triggerSync() {
         // Sesuaikan user_id
         if (!payload.user_id && record.created_by && table !== 'complaints') {
            payload.user_id = record.created_by;
+        }
+
+        // Normalisasi address & location_text untuk complaints
+        if (table === 'complaints') {
+          if (!payload.address && (record.location_text || record.address)) {
+            payload.address = record.address || record.location_text;
+          }
+          if (!payload.location_text && (record.address || record.location_text)) {
+            payload.location_text = record.location_text || record.address;
+          }
         }
         
         // Unggah foto jika ada

@@ -600,6 +600,8 @@ export async function getAllComplaints() {
         
         const tx = db.transaction('complaints', 'readwrite');
         for (const item of data) {
+          if (item.location_text && !item.address) item.address = item.location_text;
+          if (item.address && !item.location_text) item.location_text = item.address;
           const localItem = await tx.store.get(item.id);
           if (localItem && localItem.synced === false) {
             continue; // Jangan timpa data lokal yang belum sinkron
@@ -614,29 +616,41 @@ export async function getAllComplaints() {
         const serverIds = new Set(data.map(r => r.id));
         const purelyLocal = unsynced.filter(r => !serverIds.has(r.id));
         
-        return [...purelyLocal, ...merged].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const list = [...purelyLocal, ...merged];
+        list.forEach(c => {
+          if (c.location_text && !c.address) c.address = c.location_text;
+          if (c.address && !c.location_text) c.location_text = c.address;
+        });
+        return list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       }
     } catch (e) {
       console.warn('Gagal fetch complaints dari Supabase', e);
     }
   }
   const all = await getAll('complaints');
+  all.forEach(c => {
+    if (c.location_text && !c.address) c.address = c.location_text;
+    if (c.address && !c.location_text) c.location_text = c.address;
+  });
   return all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 export async function getComplaintsByUser(userId) {
-  const all = await getAll('complaints');
+  const all = await getAllComplaints();
   return all.filter(c => c.reporter_user_id === userId);
 }
 
 export async function getComplaintByTracking(trackingNumber) {
-  const all = await getAll('complaints');
+  const all = await getAllComplaints();
   return all.find(c => c.tracking_number === trackingNumber) || null;
 }
 
 export async function addComplaint(complaint, userId = null) {
+  const addressVal = complaint.address || complaint.location_text || '';
   const data = {
     ...complaint,
+    address: addressVal,
+    location_text: addressVal,
     id: complaint.id || generateId(),
     tracking_number: generateTrackingNumber(),
     reporter_user_id: userId,
