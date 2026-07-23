@@ -83,7 +83,7 @@ export async function triggerSync() {
         const COMPLAINT_FIELDS = [
           'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
           'reporter_phone', 'reporter_email',
-          'category', 'description', 'location_text', 'address', 'lat', 'lng',
+          'category', 'description', 'address', 'lat', 'lng',
           'photo_url', 'status', 'is_anonymous', 'created_at', 'updated_at',
           'response_text', 'responded_at', 'responded_by'
         ];
@@ -213,7 +213,7 @@ export async function triggerSync() {
         
         if (syncError) {
           // Jika error karena kolom tidak dikenal, coba hapus kolom bermasalah dan retry
-          const colMatch = syncError.message?.match(/column "([^"]+)" of relation/);
+          const colMatch = syncError.message?.match(/Could not find the '([^']+)' column/) || syncError.message?.match(/column "([^"]+)" of relation/);
           if (colMatch) {
             const badCol = colMatch[1];
             console.warn(`[Sync] Kolom "${badCol}" tidak ada di tabel ${table}, menghapus dan mencoba ulang...`);

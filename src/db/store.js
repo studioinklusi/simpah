@@ -675,7 +675,7 @@ export async function addComplaint(complaint, userId = null) {
       // Siapkan payload — hanya field yang ada di tabel Supabase
       const COMPLAINT_FIELDS = [
         'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
-        'reporter_phone', 'category', 'description', 'location_text',
+        'reporter_phone', 'category', 'description',
         'address', 'lat', 'lng', 'photo_url', 'status', 'is_anonymous',
         'created_at'
       ];
@@ -706,7 +706,19 @@ export async function addComplaint(complaint, userId = null) {
 
       console.log('[addComplaint] Payload ke Supabase:', JSON.stringify(payload, null, 2));
 
-      const { error } = await supabase.from('complaints').insert(payload);
+      let { error } = await supabase.from('complaints').insert(payload);
+
+      // Jika error karena kolom tidak dikenal di schema cache, hapus kolom bermasalah dan retry
+      if (error) {
+        const colMatch = error.message?.match(/Could not find the '([^']+)' column/) || error.message?.match(/column "([^"]+)" of relation/);
+        if (colMatch) {
+          const badCol = colMatch[1];
+          console.warn(`[addComplaint] Kolom "${badCol}" tidak ada di Supabase, menghapus dan mencoba ulang...`);
+          delete payload[badCol];
+          const retryRes = await supabase.from('complaints').insert(payload);
+          error = retryRes.error;
+        }
+      }
 
       if (error) {
         console.error('[addComplaint] Supabase INSERT gagal:', JSON.stringify(error));
