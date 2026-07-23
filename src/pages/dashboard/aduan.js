@@ -633,7 +633,11 @@ export async function renderAduanManagement() {
           photo_url: previewImg?.src || null
         }, user.id);
 
-        showToast(`Aduan berhasil dikirim! Resi: ${result.tracking_number}`, 'success');
+        if (result._offlineSaved) {
+          showToast(`Aduan tersimpan lokal (Offline). Resi: ${result.tracking_number}. Akan dikirim saat online.`, 'warning');
+        } else {
+          showToast(`Aduan berhasil dikirim ke server! Resi: ${result.tracking_number}`, 'success');
+        }
         closeModal();
 
         // Refresh data
@@ -643,7 +647,7 @@ export async function renderAduanManagement() {
         renderStats();
         renderList();
       } catch (err) {
-        showToast('Gagal mengirim aduan: ' + err.message, 'error');
+        showToast(err.message || 'Gagal mengirim aduan', 'error');
         btn.innerHTML = oldBtnHTML;
         btn.disabled = false;
       }

@@ -178,11 +178,17 @@ export function renderAduan() {
       document.getElementById('complaintSuccess').style.display = 'block';
       document.getElementById('trackingNumber').textContent = result.tracking_number;
       
+      if (result._offlineSaved) {
+        showToast('Aduan tersimpan lokal karena perangkat sedang offline.', 'warning');
+      } else {
+        showToast('Aduan Anda berhasil dikirim ke server!', 'success');
+      }
+
       document.getElementById('trackNowBtn').addEventListener('click', () => {
         window.location.hash = `#/portal/cek-aduan?resi=${result.tracking_number}`;
       });
     } catch (err) {
-      showToast('Gagal mengirim laporan: ' + err.message, 'error');
+      showToast(err.message || 'Gagal mengirim laporan', 'error');
       btn.innerHTML = `${icons.messageCircle} Kirim Laporan`;
       btn.disabled = false;
     }

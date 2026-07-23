@@ -661,12 +661,89 @@ export async function addComplaint(complaint, userId = null) {
     synced: false,
     created_at: new Date().toISOString()
   };
+
+  // Simpan ke IndexedDB dulu (sebagai backup lokal)
   await put('complaints', data);
+
   if (userId) {
     await createAuditEntry('complaints', data.id, 'create', userId, { tracking: data.tracking_number, category: data.category });
   }
-  triggerSync().catch(err => console.error('[Sync Error]', err));
-  return data;
+
+  // Jika online, langsung insert ke Supabase (bukan lewat sync background)
+  if (navigator.onLine) {
+    try {
+      // Siapkan payload — hanya field yang ada di tabel Supabase
+      const COMPLAINT_FIELDS = [
+        'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
+        'reporter_phone', 'category', 'description', 'location_text',
+        'address', 'lat', 'lng', 'photo_url', 'status', 'is_anonymous',
+        'created_at'
+      ];
+
+      const payload = {};
+      for (const key of COMPLAINT_FIELDS) {
+        if (key in data && data[key] !== undefined) {
+          payload[key] = data[key];
+        }
+      }
+
+      // Upload foto ke Storage jika ada (jangan kirim base64 ke DB)
+      if (payload.photo_url && payload.photo_url.startsWith('data:')) {
+        const { uploadBase64Image } = await import('../lib/storage.js');
+        const ext = payload.photo_url.startsWith('data:image/png') ? 'png' : 'jpg';
+        const path = `complaints/${data.id}/${Date.now()}.${ext}`;
+        const publicUrl = await uploadBase64Image('simpah_media', path, payload.photo_url);
+        if (publicUrl) {
+          payload.photo_url = publicUrl;
+        } else {
+          // Gagal upload foto, kirim tanpa foto
+          delete payload.photo_url;
+        }
+      } else if (payload.photo_url && !payload.photo_url.startsWith('http')) {
+        // Bukan URL valid, hapus
+        delete payload.photo_url;
+      }
+
+      console.log('[addComplaint] Payload ke Supabase:', JSON.stringify(payload, null, 2));
+
+      const { error } = await supabase.from('complaints').insert(payload);
+
+      if (error) {
+        console.error('[addComplaint] Supabase INSERT gagal:', JSON.stringify(error));
+        // Tandai error di IndexedDB agar user tahu
+        data.sync_error = error.message || 'Gagal mengirim ke server';
+        data.synced = false;
+        await put('complaints', data);
+        // Throw error agar UI bisa menampilkan pesan gagal
+        throw new Error(`Gagal mengirim aduan ke server: ${error.message || error.code || 'Unknown error'}`);
+      }
+
+      // Berhasil masuk ke Supabase
+      console.log('[addComplaint] Berhasil insert ke Supabase!');
+      data.synced = true;
+      delete data.sync_error;
+      await put('complaints', data);
+      return data;
+
+    } catch (err) {
+      // Jika error bukan dari throw di atas (network error, dll)
+      if (!err.message.startsWith('Gagal mengirim aduan')) {
+        console.error('[addComplaint] Exception:', err);
+        data.sync_error = err.message;
+        data.synced = false;
+        await put('complaints', data);
+        throw new Error(`Gagal mengirim aduan: ${err.message}`);
+      }
+      throw err;
+    }
+  } else {
+    // Offline — simpan lokal saja, sync nanti
+    console.log('[addComplaint] Offline — disimpan lokal, akan di-sync saat online');
+    triggerSync().catch(err => console.error('[Sync Error]', err));
+    // Tandai khusus bahwa ini belum terkirim ke server
+    data._offlineSaved = true;
+    return data;
+  }
 }
 
 export async function updateComplaint(id, updates) {
