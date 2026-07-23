@@ -146,8 +146,9 @@ export async function triggerSync() {
           }
         }
         
-        // Unggah foto jika ada
+        // Unggah foto jika ada (dari record.photos array ATAU dari photo_url yang berisi base64 data URI)
         if (!payload.photo_url && record.photos && record.photos.length > 0 && record.photos[0].dataUrl) {
+          // Path 1: foto disimpan di record.photos (waste_records / incidental_events)
           const bucket = 'simpah_media';
           const ext = record.photos[0].dataUrl.startsWith('data:image/png') ? 'png' : 'jpg';
           const path = `${table}/${record.id}/${Date.now()}.${ext}`;
@@ -155,18 +156,35 @@ export async function triggerSync() {
           if (publicUrl) {
             payload.photo_url = publicUrl;
           }
+        } else if (payload.photo_url && payload.photo_url.startsWith('data:image')) {
+          // Path 2: foto disimpan langsung di photo_url sebagai base64 data URI (complaints)
+          // Upload ke Storage lalu ganti dengan public URL
+          const bucket = 'simpah_media';
+          const ext = payload.photo_url.startsWith('data:image/png') ? 'png' : 'jpg';
+          const path = `${table}/${record.id}/${Date.now()}.${ext}`;
+          const publicUrl = await uploadBase64Image(bucket, path, payload.photo_url);
+          if (publicUrl) {
+            payload.photo_url = publicUrl;
+          } else {
+            // Jika upload gagal, hapus photo_url agar tidak mengirim data base64 besar ke DB
+            delete payload.photo_url;
+          }
         }
         
         // Gunakan UPDATE jika record ditandai sync_action='update' (misal: validasi oleh koordinator)
         // Ini diperlukan karena upsert memerlukan INSERT policy, sedangkan koordinator hanya punya UPDATE policy
         let syncError;
+        console.log(`[Sync] Mengirim ${table} id=${record.id}`, Object.keys(payload));
         if (record.sync_action === 'update') {
           const { error: updateErr } = await supabase.from(table).update(payload).eq('id', payload.id);
           syncError = updateErr;
+          if (updateErr) console.error(`[Sync] UPDATE error:`, updateErr);
         } else {
           // Coba insert terlebih dahulu (karena upsert memerlukan UPDATE policy di Supabase RLS, sedangkan user non-admin hanya punya INSERT policy)
           const { error: insertErr } = await supabase.from(table).insert(payload);
+          if (insertErr) console.warn(`[Sync] INSERT error (code=${insertErr.code}):`, insertErr.message);
           if (insertErr && (insertErr.code === '23505' || insertErr.message?.includes('duplicate key') || insertErr.message?.includes('already exists'))) {
+            console.log(`[Sync] Duplikat ditemukan, mencoba upsert...`);
             const { error: upsertErr } = await supabase.from(table).upsert(payload, { onConflict: 'id' });
             syncError = upsertErr;
           } else {

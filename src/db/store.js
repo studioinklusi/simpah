@@ -588,6 +588,8 @@ export async function getAllComplaints() {
   if (navigator.onLine) {
     try {
       const { data, error } = await supabase.from('complaints').select('*').order('created_at', { ascending: false });
+      if (error) console.warn('[getAllComplaints] Supabase error:', error);
+      console.log(`[getAllComplaints] Supabase returned ${data?.length ?? 0} complaints`);
       if (!error && data) {
         const db = await getDB();
         let unsynced = [];
