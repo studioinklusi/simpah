@@ -1,7 +1,7 @@
 // SIMPAH - Laporan & Export
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, formatDate, formatWeight, onStateChange } from '../../utils/helpers.js';
-import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah, getAllUsers } from '../../db/store.js';
+import { getAllWasteRecords, getAllLocations, getAllEvents, getAllMasterWilayah, getAllUsers, getAllSortedWaste } from '../../db/store.js';
 import { exportToCSV, exportToSIPSN, exportToExcel } from '../../utils/export.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -198,11 +198,12 @@ export async function renderLaporan() {
 
   document.getElementById('exportExcel')?.addEventListener('click', async () => {
     const filtered = getFilteredRecords(sorted, allUsers, masterLocations);
-    await exportToExcel(filtered, 'simpah-report');
+    const sortedWasteList = await getAllSortedWaste();
+    await exportToExcel(filtered, 'simpah-report', sortedWasteList);
     showToast('Excel berhasil di-export!', 'success');
   });
 
-  document.getElementById('exportSIPSN')?.addEventListener('click', () => {
+  document.getElementById('exportSIPSN')?.addEventListener('click', async () => {
     const startDate = document.getElementById('startDateInput').value;
     const period = startDate ? startDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
     // Export SIPSN hanya mencakup data yang telah disetujui (valid)
@@ -211,7 +212,8 @@ export async function renderLaporan() {
       showToast('Tidak ada data ter-validasi (Disetujui) untuk diekspor ke SIPSN', 'warning');
       return;
     }
-    exportToSIPSN(filtered, period);
+    const sortedWasteList = await getAllSortedWaste();
+    exportToSIPSN(filtered, period, sortedWasteList);
     showToast('Data format SIPSN berhasil di-export!', 'success');
   });
 

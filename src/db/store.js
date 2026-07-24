@@ -201,6 +201,26 @@ export async function getSortedWasteByRecord(wasteRecordId) {
   return getByIndex('sorted_waste', 'waste_record_id', wasteRecordId);
 }
 
+export async function getAllSortedWaste() {
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabase.from('sorted_waste').select('*');
+      if (!error && data) {
+        const db = await getDB();
+        const tx = db.transaction('sorted_waste', 'readwrite');
+        for (const item of data) {
+          await tx.store.put(item);
+        }
+        await tx.done;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Gagal mengambil sorted_waste dari Supabase, menggunakan data lokal', e);
+    }
+  }
+  return getAll('sorted_waste');
+}
+
 // ========== Locations ==========
 export async function getAllLocations() {
   if (navigator.onLine) {

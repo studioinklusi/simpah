@@ -37,7 +37,8 @@ export function exportToCSV(records, filename = 'simpah-export') {
   downloadFile(csv, `${filename}.csv`, 'text/csv');
 }
 
-export function exportToSIPSN(records, period = '') {
+export function exportToSIPSN(records, period = '', sortedWasteList = []) {
+  const sortedWasteMap = buildSortedWasteMap(sortedWasteList);
   // Format specifically for SIPSN upload template
   // MIX is excluded from per-category SIPSN columns (not a standard SIPSN category)
   const sipsn9 = SIPSN_CATEGORIES.filter(c => !c.isMixed);
@@ -53,9 +54,19 @@ export function exportToSIPSN(records, period = '') {
   let totalManaged = 0, totalResidu = 0;
   records.forEach(r => {
     const weightTon = (r.weight_kg || 0) / 1000;
-    if (r.category_sipsn && byCategory[r.category_sipsn] !== undefined) {
+    const sortedItems = sortedWasteMap[r.id];
+
+    if (r.category_sipsn === 'MIX' && Array.isArray(sortedItems) && sortedItems.length > 0) {
+      sortedItems.forEach(item => {
+        const itemWeightTon = (parseFloat(item.weight_kg) || 0) / 1000;
+        if (byCategory[item.category_sipsn] !== undefined) {
+          byCategory[item.category_sipsn] += itemWeightTon;
+        }
+      });
+    } else if (r.category_sipsn && byCategory[r.category_sipsn] !== undefined) {
       byCategory[r.category_sipsn] += weightTon;
     }
+
     if (r.type === 'pilah' || r.type === 'olah') totalManaged += weightTon;
     if (r.type === 'residu' || r.type === 'campur' || r.type === 'masuk') totalResidu += weightTon;
   });
@@ -76,7 +87,7 @@ export function exportToSIPSN(records, period = '') {
   downloadFile(csv, `sipsn-export-${period || 'all'}.csv`, 'text/csv');
 }
 
-export async function exportToExcel(records, filename = 'simpah-report') {
+export async function exportToExcel(records, filename = 'simpah-report', sortedWasteList = []) {
   try {
     const XLSX = await import('xlsx');
     const data = records.map((r, i) => ({
@@ -104,7 +115,7 @@ export async function exportToExcel(records, filename = 'simpah-report') {
     XLSX.utils.book_append_sheet(wb, ws, 'Data Sampah');
 
     // Add SIPSN summary sheet
-    const summary = createSIPSNSummary(records);
+    const summary = createSIPSNSummary(records, sortedWasteList);
     const wsSummary = XLSX.utils.json_to_sheet(summary);
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan SIPSN');
 
@@ -116,18 +127,56 @@ export async function exportToExcel(records, filename = 'simpah-report') {
   }
 }
 
-function createSIPSNSummary(records) {
+function createSIPSNSummary(records, sortedWasteList = []) {
+  const sortedWasteMap = buildSortedWasteMap(sortedWasteList);
+  const catTotals = {};
+  const catRecordCounts = {};
+
+  SIPSN_CATEGORIES.forEach(cat => {
+    catTotals[cat.code] = 0;
+    catRecordCounts[cat.code] = 0;
+  });
+
+  records.forEach(r => {
+    const sortedItems = sortedWasteMap[r.id];
+    if (r.category_sipsn === 'MIX' && Array.isArray(sortedItems) && sortedItems.length > 0) {
+      sortedItems.forEach(item => {
+        const code = item.category_sipsn;
+        if (catTotals[code] !== undefined) {
+          catTotals[code] += (parseFloat(item.weight_kg) || 0);
+          catRecordCounts[code] += 1;
+        }
+      });
+    } else if (r.category_sipsn && catTotals[r.category_sipsn] !== undefined) {
+      catTotals[r.category_sipsn] += (parseFloat(r.weight_kg) || 0);
+      catRecordCounts[r.category_sipsn] += 1;
+    }
+  });
+
   return SIPSN_CATEGORIES.map(cat => {
-    const catRecords = records.filter(r => r.category_sipsn === cat.code);
-    const totalKg = catRecords.reduce((s, r) => s + (r.weight_kg || 0), 0);
+    const totalKg = catTotals[cat.code] || 0;
     return {
       'Kategori': cat.name,
       'Kode': cat.code,
-      'Jumlah Record': catRecords.length,
+      'Jumlah Record': catRecordCounts[cat.code] || 0,
       'Total (kg)': totalKg.toFixed(1),
       'Total (ton)': (totalKg / 1000).toFixed(3)
     };
   });
+}
+
+function buildSortedWasteMap(sortedWasteList) {
+  const map = {};
+  if (Array.isArray(sortedWasteList)) {
+    sortedWasteList.forEach(sw => {
+      const recId = sw.waste_record_id;
+      if (recId) {
+        if (!map[recId]) map[recId] = [];
+        map[recId].push(sw);
+      }
+    });
+  }
+  return map;
 }
 
 function getCategoryName(code) {
