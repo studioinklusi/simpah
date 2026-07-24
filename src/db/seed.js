@@ -343,7 +343,7 @@ function generateWasteRecords(count = 180) {
     const type = randomFromList(['masuk', 'masuk', 'masuk', 'pilah', 'pilah', 'residu']);
     const location = randomFromList(LOCATIONS_DATA);
     const user = randomFromList(USERS_DATA);
-    const category = randomFromList(SIPSN_CODES);
+    const category = (type === 'masuk' || type === 'campur' || type === 'residu') ? 'MIX' : randomFromList(SIPSN_CODES);
 
     const weightRanges = {
       masuk: [50, 800],
@@ -388,13 +388,13 @@ function generateWasteRecords(count = 180) {
   // Create explicit pending records for demo
   records.push({
     id: `wr-pend-01`,
-    type: 'masuk', category_sipsn: 'PL', weight_kg: 50.5,
+    type: 'masuk', category_sipsn: 'MIX', weight_kg: 50.5,
     lat: LOCATIONS_DATA[1].lat, lng: LOCATIONS_DATA[1].lng,
     location_id: LOCATIONS_DATA[1].id, location_name: LOCATIONS_DATA[1].name,
     desa_id: LOCATIONS_DATA[1].desa_id || null,
     user_id: USERS_DATA[0].id, user_name: USERS_DATA[0].name,
     fleet_id: null, fleet_plate: null, is_incidental: false,
-    notes: 'Klaim plastik jumlah besar',
+    notes: 'Klaim sampah campur jumlah besar',
     created_at: now.toISOString(),
     date_str: now.toISOString().split('T')[0],
     synced: true,
@@ -404,7 +404,7 @@ function generateWasteRecords(count = 180) {
   
   records.push({
     id: `wr-pend-02`,
-    type: 'residu', category_sipsn: 'LN', weight_kg: 120,
+    type: 'residu', category_sipsn: 'MIX', weight_kg: 120,
     lat: LOCATIONS_DATA[3].lat, lng: LOCATIONS_DATA[3].lng,
     location_id: LOCATIONS_DATA[3].id, location_name: LOCATIONS_DATA[3].name,
     desa_id: LOCATIONS_DATA[3].desa_id || null,
