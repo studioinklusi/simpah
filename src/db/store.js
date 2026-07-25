@@ -628,6 +628,11 @@ export async function getAllComplaints() {
           if (localItem && localItem.synced === false) {
             continue; // Jangan timpa data lokal yang belum sinkron
           }
+          if (localItem) {
+            if (!item.response_text && localItem.response_text) item.response_text = localItem.response_text;
+            if (!item.responded_at && localItem.responded_at) item.responded_at = localItem.responded_at;
+            if (!item.responded_by && localItem.responded_by) item.responded_by = localItem.responded_by;
+          }
           item.synced = true;
           await tx.store.put(item);
         }
@@ -781,9 +786,61 @@ export async function addComplaint(complaint, userId = null) {
 export async function updateComplaint(id, updates) {
   const complaint = await getById('complaints', id);
   if (!complaint) throw new Error('Aduan tidak ditemukan');
-  const updated = { ...complaint, ...updates, synced: false, updated_at: new Date().toISOString() };
+  
+  const updated = { 
+    ...complaint, 
+    ...updates, 
+    sync_action: 'update', 
+    synced: false, 
+    updated_at: new Date().toISOString() 
+  };
   await put('complaints', updated);
-  triggerSync().catch(err => console.error('[Sync Error]', err));
+
+  if (navigator.onLine) {
+    try {
+      const COMPLAINT_FIELDS = [
+        'id', 'tracking_number', 'reporter_user_id', 'reporter_name',
+        'reporter_phone', 'reporter_email', 'category', 'description',
+        'address', 'location_text', 'lat', 'lng', 'photo_url', 'status', 'is_anonymous',
+        'created_at', 'updated_at', 'response_text', 'responded_at', 'responded_by'
+      ];
+      const payload = {};
+      for (const key of COMPLAINT_FIELDS) {
+        if (key in updated && updated[key] !== undefined) {
+          payload[key] = updated[key];
+        }
+      }
+      let { error } = await supabase.from('complaints').update(payload).eq('id', id);
+
+      if (error) {
+        const colMatch = error.message?.match(/Could not find the '([^']+)' column/) || error.message?.match(/column "([^"]+)" of relation/);
+        if (colMatch) {
+          const badCol = colMatch[1];
+          console.warn(`[updateComplaint] Kolom "${badCol}" tidak ada di Supabase complaints, menghapus dan mencoba ulang...`);
+          delete payload[badCol];
+          const retryRes = await supabase.from('complaints').update(payload).eq('id', id);
+          error = retryRes.error;
+        }
+      }
+
+      if (!error) {
+        console.log('[updateComplaint] Berhasil update langsung ke Supabase!');
+        updated.synced = true;
+        delete updated.sync_action;
+        delete updated.sync_error;
+        await put('complaints', updated);
+      } else {
+        console.error('[updateComplaint] Direct update error, memicu background sync:', error);
+        triggerSync().catch(err => console.error('[Sync Error]', err));
+      }
+    } catch (e) {
+      console.error('[updateComplaint] Exception saat update langsung:', e);
+      triggerSync().catch(err => console.error('[Sync Error]', err));
+    }
+  } else {
+    triggerSync().catch(err => console.error('[Sync Error]', err));
+  }
+
   return updated;
 }
 
