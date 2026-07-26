@@ -154,7 +154,7 @@ export function renderPortalFooter() {
           <div class="portal-footer-links">
             <a href="#">DPPKPLH Banjarnegara</a>
             <a href="#">Jl. Selamanik No. 1</a>
-            <a href="#">info@simpah.banjarnegara.go.id</a>
+            <a href="mailto:admin@simpah.id">admin@simpah.id</a>
           </div>
         </div>
       </div>
