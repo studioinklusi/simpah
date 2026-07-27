@@ -1,7 +1,7 @@
 // SIMPAH - PWA Layout (Header + Bottom Nav)
 import { icons } from '../../components/icons.js';
 import { confirmLogout } from '../../components/logout-modal.js';
-import { getCurrentUser, toggleTheme, getState } from '../../utils/helpers.js';
+import { getCurrentUser, toggleTheme, getState, isMobileDevice } from '../../utils/helpers.js';
 import { isActiveRoute } from '../../router.js';
 import { renderDashboardLayout } from '../dashboard/layout.js';
 import { canInputWaste } from '../../utils/permissions.js';
@@ -9,7 +9,7 @@ import { canInputWaste } from '../../utils/permissions.js';
 export function renderPWALayout(title, content, activeTab = 'home') {
   const user = getCurrentUser();
 
-  const isDesktopView = window.innerWidth > 768;
+  const isDesktopView = !isMobileDevice() && window.innerWidth > 1024;
   if (isDesktopView) {
     // Ensure dashboard CSS is loaded for desktop layout
     import('../../styles/dashboard.css');

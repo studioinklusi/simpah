@@ -157,3 +157,14 @@ export function setCurrentUser(user) {
 export async function logout() {
   return authLogout();
 }
+
+export function isMobileDevice() {
+  const ua = navigator.userAgent || '';
+  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  
+  // HP / Smartphone (termasuk layar 6.7" berdensitas DP tinggi) akan terdeteksi sebagai Mobile
+  if (isMobileUA) return true;
+  return (window.innerWidth <= 1024) && isTouch;
+}
+

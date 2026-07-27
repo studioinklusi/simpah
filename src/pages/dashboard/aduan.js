@@ -1,6 +1,6 @@
 // SIMPAH - Manajemen Aduan (Complaint Management with Privacy Controls)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, onStateChange } from '../../utils/helpers.js';
+import { getCurrentUser, onStateChange, isMobileDevice } from '../../utils/helpers.js';
 import { getAllComplaints, getComplaintsByUser, updateComplaint, addComplaint } from '../../db/store.js';
 import { hasPermission } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
@@ -41,7 +41,7 @@ export async function renderAduanManagement() {
     ? 'Pantau, proses, dan tindak lanjuti laporan dari masyarakat.'
     : 'Lihat status dan riwayat aduan yang Anda buat.';
 
-  const isDesktopView = window.innerWidth > 768;
+  const isDesktopView = !isMobileDevice() && window.innerWidth > 1024;
   const isPWARole = !isDesktopView && ['warga', 'petugas', 'kader'].includes(user.role) && user.job_type !== 'koordinator';
   const renderLayout = isPWARole ? renderPWALayout : renderDashboardLayout;
 
