@@ -2,7 +2,7 @@
 import { icons } from '../../components/icons.js';
 import { getCurrentUser, getKaderActivityStatus } from '../../utils/helpers.js';
 import { LOCATION_TYPES, USER_ROLES } from '../../utils/sipsn.js';
-import { JOB_TYPES, hasPermission, getAllowedInputTypes } from '../../utils/permissions.js';
+import { JOB_TYPES, hasPermission, getAllowedInputTypes, canInputWaste } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
 import {
@@ -1172,8 +1172,7 @@ export async function renderMasterData() {
     const roleLabels = {};
     USER_ROLES.forEach(r => { roleLabels[r.id] = r.label; });
 
-    // Calculate Kader activity stats
-    const kaderUsers = users.filter(u => u.role === 'petugas' && u.job_type === 'kader');
+    const kaderUsers = users.filter(u => canInputWaste(u) && u.role !== 'admin');
     let activeKaderCount = 0;
     let passiveKaderCount = 0;
     let inactiveKaderCount = 0;
@@ -1190,8 +1189,8 @@ export async function renderMasterData() {
         <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
           <div style="width:38px; height:38px; border-radius:10px; background:rgba(6,182,212,0.1); color:#0891b2; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🌿</div>
           <div>
-            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Total Kader</div>
-            <div style="font-size:18px; font-weight:800; color:var(--text-primary);">${kaderUsers.length} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">orang</span></div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Petugas Input</div>
+            <div style="font-size:18px; font-weight:800; color:var(--text-primary);">${kaderUsers.length} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">akun</span></div>
           </div>
         </div>
         <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
@@ -1250,6 +1249,7 @@ export async function renderMasterData() {
             <option value="active">🟢 Aktif (≤10 hr)</option>
             <option value="passive">🟡 Pasif (11-30 hr)</option>
             <option value="inactive">🔴 Inaktif (>30 hr/Nihil)</option>
+            <option value="non_inputter">⚪ Non-Inputter (-)</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom:0;width:140px">
@@ -1344,8 +1344,17 @@ export async function renderMasterData() {
 
         let matchesActivity = true;
         if (activity !== 'all') {
-          const act = getKaderActivityStatus(u.last_input_at);
-          matchesActivity = act.status === activity;
+          const isInputter = canInputWaste(u) && u.role !== 'admin';
+          if (activity === 'non_inputter') {
+            matchesActivity = !isInputter;
+          } else {
+            if (!isInputter) {
+              matchesActivity = false;
+            } else {
+              const act = getKaderActivityStatus(u.last_input_at);
+              matchesActivity = act.status === activity;
+            }
+          }
         }
 
         return matchesSearch && matchesRole && matchesStatus && matchesActivity;
@@ -1385,12 +1394,35 @@ export async function renderMasterData() {
       }
 
       tbody.innerHTML = paginatedItems.map(u => {
-        const act = getKaderActivityStatus(u.last_input_at);
-        const actBg = act.color === 'green' ? '#d1fae5' : (act.color === 'amber' ? '#fef3c7' : '#fee2e2');
-        const actColor = act.color === 'green' ? '#065f46' : (act.color === 'amber' ? '#92400e' : '#991b1b');
-        const lastInputText = u.last_input_at 
-          ? (act.days === 0 ? 'Hari ini' : `${act.days} hr lalu`) 
-          : 'Belum pernah';
+        const isInputter = canInputWaste(u) && u.role !== 'admin';
+        let activityHTML = '';
+
+        if (isInputter) {
+          const act = getKaderActivityStatus(u.last_input_at);
+          const actBg = act.color === 'green' ? '#d1fae5' : (act.color === 'amber' ? '#fef3c7' : '#fee2e2');
+          const actColor = act.color === 'green' ? '#065f46' : (act.color === 'amber' ? '#92400e' : '#991b1b');
+          const lastInputText = u.last_input_at 
+            ? (act.days === 0 ? 'Hari ini' : `${act.days} hr lalu`) 
+            : 'Belum pernah';
+
+          activityHTML = `
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span class="md-badge" style="background:${actBg}; color:${actColor}; display:inline-flex; align-items:center; gap:4px; font-weight:700; width:fit-content;">
+                ${act.icon} ${act.label}
+              </span>
+              <span style="font-size:11px; color:var(--text-muted);">${lastInputText} (${u.total_waste_records || 0} record)</span>
+            </div>
+          `;
+        } else {
+          activityHTML = `
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span class="md-badge" style="background:var(--gray-100, #f3f4f6); color:var(--text-muted, #6b7280); font-weight:500; display:inline-flex; align-items:center; gap:4px; width:fit-content;">
+                ⚪ - N/A -
+              </span>
+              <span style="font-size:11px; color:var(--text-muted);">Non-Inputter</span>
+            </div>
+          `;
+        }
 
         return `
           <tr>
@@ -1403,14 +1435,7 @@ export async function renderMasterData() {
               <span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span>
               ${u.job_type ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${JOB_TYPES.find(j => j.id === u.job_type)?.label || u.job_type}</div>` : ''}
             </td>
-            <td>
-              <div style="display:flex; flex-direction:column; gap:2px;">
-                <span class="md-badge" style="background:${actBg}; color:${actColor}; display:inline-flex; align-items:center; gap:4px; font-weight:700; width:fit-content;">
-                  ${act.icon} ${act.label}
-                </span>
-                <span style="font-size:11px; color:var(--text-muted);">${lastInputText} (${u.total_waste_records || 0} record)</span>
-              </div>
-            </td>
+            <td>${activityHTML}</td>
             <td>${u.wilayah || '-'}</td>
             <td>
               ${u.is_active !== false 
@@ -1676,8 +1701,12 @@ export async function renderMasterData() {
       try {
         const headers = ['No', 'Nama Lengkap', 'Username', 'Email', 'Role', 'Tipe Pekerjaan', 'Kecamatan / Wilayah', 'Status Keaktifan', 'Tanggal Terakhir Input', 'Selisih Hari Input', 'Total Record Sampah'];
         const rows = filteredToExport.map((u, idx) => {
-          const act = getKaderActivityStatus(u.last_input_at);
-          const lastDateStr = u.last_input_at ? new Date(u.last_input_at).toLocaleString('id-ID') : 'Belum Pernah';
+          const isInputter = canInputWaste(u) && u.role !== 'admin';
+          const act = isInputter ? getKaderActivityStatus(u.last_input_at) : null;
+          const statusText = isInputter ? `${act.icon} ${act.label}` : 'Non-Inputter';
+          const lastDateStr = isInputter ? (u.last_input_at ? new Date(u.last_input_at).toLocaleString('id-ID') : 'Belum Pernah') : '-';
+          const daysStr = isInputter ? (act.days !== null ? `${act.days} hari` : 'Belum Pernah') : '-';
+
           return [
             idx + 1,
             u.full_name || u.name || '-',
@@ -1686,10 +1715,10 @@ export async function renderMasterData() {
             u.role || '-',
             u.job_type ? (JOB_TYPES.find(j => j.id === u.job_type)?.label || u.job_type) : '-',
             u.kecamatan || u.wilayah || '-',
-            `${act.icon} ${act.label}`,
+            statusText,
             lastDateStr,
-            act.days !== null ? `${act.days} hari` : 'Belum Pernah',
-            u.total_waste_records || 0
+            daysStr,
+            isInputter ? (u.total_waste_records || 0) : '-'
           ];
         });
 
