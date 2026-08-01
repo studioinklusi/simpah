@@ -158,6 +158,7 @@ export async function logout() {
   return authLogout();
 }
 
+
 export function isMobileDevice() {
   const ua = navigator.userAgent || '';
   const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
@@ -167,4 +168,28 @@ export function isMobileDevice() {
   if (isMobileUA) return true;
   return (window.innerWidth <= 1024) && isTouch;
 }
+
+/**
+ * Menghitung status keaktifan kader berdasarkan tanggal input terakhir (ambang 10 hari)
+ * @param {string|Date|null} lastInputDate 
+ * @returns {{ status: 'active'|'passive'|'inactive', label: string, color: string, icon: string, days: number|null }}
+ */
+export function getKaderActivityStatus(lastInputDate) {
+  if (!lastInputDate) {
+    return { status: 'inactive', label: 'Belum Input', color: 'red', icon: '🔴', days: null };
+  }
+  const now = new Date();
+  const inputDate = new Date(lastInputDate);
+  const diffTime = Math.max(0, now - inputDate);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays <= 10) {
+    return { status: 'active', label: 'Aktif', color: 'green', icon: '🟢', days: diffDays };
+  } else if (diffDays <= 30) {
+    return { status: 'passive', label: 'Pasif', color: 'amber', icon: '🟡', days: diffDays };
+  } else {
+    return { status: 'inactive', label: 'Inaktif', color: 'red', icon: '🔴', days: diffDays };
+  }
+}
+
 

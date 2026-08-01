@@ -921,6 +921,34 @@ export async function getAllUsers() {
   return getAll('users');
 }
 
+export async function getUsersWithActivity() {
+  const [users, wasteRecords] = await Promise.all([
+    getAllUsers(),
+    getAllWasteRecords()
+  ]);
+
+  const activityMap = {};
+  wasteRecords.forEach(r => {
+    const userId = r.created_by || r.user_id;
+    if (userId) {
+      if (!activityMap[userId]) {
+        activityMap[userId] = { lastInput: null, count: 0 };
+      }
+      activityMap[userId].count += 1;
+      const recDate = r.created_at || r.date_str;
+      if (recDate && (!activityMap[userId].lastInput || new Date(recDate) > new Date(activityMap[userId].lastInput))) {
+        activityMap[userId].lastInput = recDate;
+      }
+    }
+  });
+
+  return users.map(u => ({
+    ...u,
+    last_input_at: activityMap[u.id]?.lastInput || null,
+    total_waste_records: activityMap[u.id]?.count || 0
+  }));
+}
+
 export async function getUserByUsername(username) {
   const users = await getByIndex('users', 'username', username);
   return users[0] || null;

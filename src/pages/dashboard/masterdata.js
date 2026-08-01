@@ -1,6 +1,6 @@
 // SIMPAH - Master Data Management (CRUD Panel for Dinas)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser } from '../../utils/helpers.js';
+import { getCurrentUser, getKaderActivityStatus } from '../../utils/helpers.js';
 import { LOCATION_TYPES, USER_ROLES } from '../../utils/sipsn.js';
 import { JOB_TYPES, hasPermission, getAllowedInputTypes } from '../../utils/permissions.js';
 import { showToast } from '../../components/toast.js';
@@ -8,7 +8,7 @@ import { renderDashboardLayout } from './layout.js';
 import {
   getAllLocations, addLocation, addLocationsBatch, updateLocation, deleteLocation, deleteLocationsBatch,
   getAllFleet, addFleet, updateFleet, deleteFleet,
-  getAllUsers, addUser, updateUser, deleteUser, deleteUsersBatch, deactivateUsersBatch,
+  getAllUsers, getUsersWithActivity, addUser, updateUser, deleteUser, deleteUsersBatch, deactivateUsersBatch,
   getAllVillagePopulation, addVillagePopulation, updateVillagePopulation, deleteVillagePopulation,
   getAllPublicFacilities, addPublicFacility, updatePublicFacility, deletePublicFacility, deletePublicFacilitiesBatch, addPublicFacilitiesBatch,
   getSystemModules, getSystemRoles, getRolePermissions, saveRolePermissions,
@@ -1165,20 +1165,69 @@ export async function renderMasterData() {
   // ---------- USERS TAB ----------
   async function renderUsersTab(container) {
     const [users, masterWilayah] = await Promise.all([
-      getAllUsers(),
+      getUsersWithActivity(),
       getAllMasterWilayah()
     ]);
     const roleColors = { warga: 'green', petugas: 'amber', eksekutif: 'blue', admin: 'purple' };
     const roleLabels = {};
     USER_ROLES.forEach(r => { roleLabels[r.id] = r.label; });
 
+    // Calculate Kader activity stats
+    const kaderUsers = users.filter(u => u.role === 'petugas' && u.job_type === 'kader');
+    let activeKaderCount = 0;
+    let passiveKaderCount = 0;
+    let inactiveKaderCount = 0;
+    kaderUsers.forEach(u => {
+      const act = getKaderActivityStatus(u.last_input_at);
+      if (act.status === 'active') activeKaderCount++;
+      else if (act.status === 'passive') passiveKaderCount++;
+      else inactiveKaderCount++;
+    });
+
     container.innerHTML = `
+      <!-- Kader Activity Overview Card -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:var(--space-3); margin-bottom:var(--space-4);">
+        <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
+          <div style="width:38px; height:38px; border-radius:10px; background:rgba(6,182,212,0.1); color:#0891b2; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🌿</div>
+          <div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Total Kader</div>
+            <div style="font-size:18px; font-weight:800; color:var(--text-primary);">${kaderUsers.length} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">orang</span></div>
+          </div>
+        </div>
+        <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
+          <div style="width:38px; height:38px; border-radius:10px; background:rgba(16,185,129,0.1); color:#10b981; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🟢</div>
+          <div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Aktif (≤10 hr)</div>
+            <div style="font-size:18px; font-weight:800; color:#10b981;">${activeKaderCount} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+          </div>
+        </div>
+        <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
+          <div style="width:38px; height:38px; border-radius:10px; background:rgba(245,158,11,0.1); color:#f59e0b; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🟡</div>
+          <div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Pasif (11-30 hr)</div>
+            <div style="font-size:18px; font-weight:800; color:#d97706;">${passiveKaderCount} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+          </div>
+        </div>
+        <div style="background:var(--card-bg, #fff); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); display:flex; align-items:center; gap:var(--space-3);">
+          <div style="width:38px; height:38px; border-radius:10px; background:rgba(239,68,68,0.1); color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">🔴</div>
+          <div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Inaktif (>30 hr/Nihil)</div>
+            <div style="font-size:18px; font-weight:800; color:#ef4444;">${inactiveKaderCount} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+          </div>
+        </div>
+      </div>
+
       <div class="md-toolbar">
         <div style="display:flex;align-items:center;gap:var(--space-3)">
           <h3 style="display:flex;align-items:center;gap:8px">${icons.users} Daftar Pengguna</h3>
           <span class="md-count">${users.length} akun</span>
         </div>
-        <button class="btn btn-primary btn-sm" id="addUserBtn">${icons.plus} Tambah Pengguna</button>
+        <div style="display:flex;gap:var(--space-2)">
+          <button class="btn btn-secondary btn-sm" id="exportKaderExcelBtn" style="display:inline-flex;align-items:center;gap:6px" title="Unduh Rekap Keaktifan Kader Format Excel">
+            ${icons.download} Ekspor Keaktifan (Excel)
+          </button>
+          <button class="btn btn-primary btn-sm" id="addUserBtn">${icons.plus} Tambah Pengguna</button>
+        </div>
       </div>
 
       <!-- Controls -->
@@ -1187,15 +1236,24 @@ export async function renderMasterData() {
           <label class="form-label" style="font-size:11px">Cari Pengguna</label>
           <input type="text" id="userSearchInput" class="form-input" placeholder="Cari nama, username, atau email..." style="width:100%" />
         </div>
-        <div class="form-group" style="margin-bottom:0;width:180px">
+        <div class="form-group" style="margin-bottom:0;width:170px">
           <label class="form-label" style="font-size:11px">Filter Role</label>
           <select id="userRoleFilter" class="form-select" style="width:100%">
             <option value="all">Semua Role</option>
             ${USER_ROLES.map(r => `<option value="${r.id}">${r.label}</option>`).join('')}
           </select>
         </div>
+        <div class="form-group" style="margin-bottom:0;width:170px">
+          <label class="form-label" style="font-size:11px">Filter Keaktifan Input</label>
+          <select id="userActivityFilter" class="form-select" style="width:100%">
+            <option value="all">Semua Keaktifan</option>
+            <option value="active">🟢 Aktif (≤10 hr)</option>
+            <option value="passive">🟡 Pasif (11-30 hr)</option>
+            <option value="inactive">🔴 Inaktif (>30 hr/Nihil)</option>
+          </select>
+        </div>
         <div class="form-group" style="margin-bottom:0;width:140px">
-          <label class="form-label" style="font-size:11px">Filter Status</label>
+          <label class="form-label" style="font-size:11px">Filter Status Akun</label>
           <select id="userStatusFilter" class="form-select" style="width:100%">
             <option value="all">Semua Status</option>
             <option value="active">Aktif</option>
@@ -1225,10 +1283,10 @@ export async function renderMasterData() {
               <th style="width:40px; text-align:center"><input type="checkbox" id="selectAllUsers" style="cursor:pointer; transform:scale(1.1)" /></th>
               <th>Nama</th>
               <th>Username</th>
-              <th>Email</th>
               <th>Role</th>
+              <th>Keaktifan Input</th>
               <th>Wilayah</th>
-              <th>Status</th>
+              <th>Status Akun</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -1269,6 +1327,7 @@ export async function renderMasterData() {
       const search = document.getElementById('userSearchInput')?.value.toLowerCase().trim() || '';
       const role = document.getElementById('userRoleFilter')?.value || 'all';
       const status = document.getElementById('userStatusFilter')?.value || 'all';
+      const activity = document.getElementById('userActivityFilter')?.value || 'all';
 
       // 1. Filter
       const filtered = users.filter(u => {
@@ -1283,7 +1342,13 @@ export async function renderMasterData() {
         if (status === 'active') matchesStatus = u.is_active !== false;
         else if (status === 'inactive') matchesStatus = u.is_active === false;
 
-        return matchesSearch && matchesRole && matchesStatus;
+        let matchesActivity = true;
+        if (activity !== 'all') {
+          const act = getKaderActivityStatus(u.last_input_at);
+          matchesActivity = act.status === activity;
+        }
+
+        return matchesSearch && matchesRole && matchesStatus && matchesActivity;
       });
 
       // 2. Paginate
@@ -1319,31 +1384,50 @@ export async function renderMasterData() {
         return;
       }
 
-      tbody.innerHTML = paginatedItems.map(u => `
-        <tr>
-          <td style="text-align:center; vertical-align:middle">
-            ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
-          </td>
-          <td><strong>${u.full_name || u.name || ''}</strong></td>
-          <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
-          <td><span style="font-size:var(--font-sm);color:var(--text-secondary)">${u.email || (u.username.includes('@') ? u.username : `${u.username}@simpah.dev`)}</span></td>
-          <td><span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span></td>
-          <td>${u.wilayah || '-'}</td>
-          <td>
-            ${u.is_active !== false 
-              ? `<span class="md-badge" style="background:#d1fae5; color:#065f46">Aktif</span>` 
-              : `<span class="md-badge" style="background:#fee2e2; color:#991b1b">Nonaktif</span>`}
-          </td>
-          <td><div class="md-actions">
-            <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
-            ${u.role !== 'admin' ? (
-              u.is_active !== false
-                ? `<button class="md-btn-icon danger" title="Nonaktifkan Akun" data-toggle-user="${u.id}" data-active="true" style="color:#dc2626">${icons.xCircle}</button>`
-                : `<button class="md-btn-icon" title="Aktifkan Akun" data-toggle-user="${u.id}" data-active="false" style="color:#059669">${icons.checkCircle}</button>`
-            ) : ''}
-          </div></td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = paginatedItems.map(u => {
+        const act = getKaderActivityStatus(u.last_input_at);
+        const actBg = act.color === 'green' ? '#d1fae5' : (act.color === 'amber' ? '#fef3c7' : '#fee2e2');
+        const actColor = act.color === 'green' ? '#065f46' : (act.color === 'amber' ? '#92400e' : '#991b1b');
+        const lastInputText = u.last_input_at 
+          ? (act.days === 0 ? 'Hari ini' : `${act.days} hr lalu`) 
+          : 'Belum pernah';
+
+        return `
+          <tr>
+            <td style="text-align:center; vertical-align:middle">
+              ${u.role !== 'admin' ? `<input type="checkbox" class="user-select-checkbox" data-id="${u.id}" style="cursor:pointer; transform:scale(1.1)" />` : '-'}
+            </td>
+            <td><strong>${u.full_name || u.name || ''}</strong></td>
+            <td><code style="font-size:var(--font-xs);background:var(--gray-100);padding:2px 8px;border-radius:4px">${u.username}</code></td>
+            <td>
+              <span class="md-badge ${roleColors[u.role] || 'blue'}">${u.role_icon || ''} ${roleLabels[u.role] || u.role}</span>
+              ${u.job_type ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${JOB_TYPES.find(j => j.id === u.job_type)?.label || u.job_type}</div>` : ''}
+            </td>
+            <td>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span class="md-badge" style="background:${actBg}; color:${actColor}; display:inline-flex; align-items:center; gap:4px; font-weight:700; width:fit-content;">
+                  ${act.icon} ${act.label}
+                </span>
+                <span style="font-size:11px; color:var(--text-muted);">${lastInputText} (${u.total_waste_records || 0} record)</span>
+              </div>
+            </td>
+            <td>${u.wilayah || '-'}</td>
+            <td>
+              ${u.is_active !== false 
+                ? `<span class="md-badge" style="background:#d1fae5; color:#065f46">Aktif</span>` 
+                : `<span class="md-badge" style="background:#fee2e2; color:#991b1b">Nonaktif</span>`}
+            </td>
+            <td><div class="md-actions">
+              <button class="md-btn-icon" title="Edit" data-edit-user="${u.id}">${icons.edit}</button>
+              ${u.role !== 'admin' ? (
+                u.is_active !== false
+                  ? `<button class="md-btn-icon danger" title="Nonaktifkan Akun" data-toggle-user="${u.id}" data-active="true" style="color:#dc2626">${icons.xCircle}</button>`
+                  : `<button class="md-btn-icon" title="Aktifkan Akun" data-toggle-user="${u.id}" data-active="false" style="color:#059669">${icons.checkCircle}</button>`
+              ) : ''}
+            </div></td>
+          </tr>
+        `;
+      }).join('');
 
       // Wire up row checkboxes
       const rowCheckboxes = container.querySelectorAll('.user-select-checkbox');
@@ -1544,6 +1628,8 @@ export async function renderMasterData() {
     const searchInput = document.getElementById('userSearchInput');
     const roleFilter = document.getElementById('userRoleFilter');
     const statusFilter = document.getElementById('userStatusFilter');
+    const activityFilterEl = document.getElementById('userActivityFilter');
+    const exportKaderBtn = document.getElementById('exportKaderExcelBtn');
 
     ['input', 'change'].forEach(evtType => {
       searchInput?.addEventListener(evtType, () => {
@@ -1558,6 +1644,64 @@ export async function renderMasterData() {
     statusFilter?.addEventListener('change', () => {
       currentPage = 1;
       updateTable();
+    });
+    activityFilterEl?.addEventListener('change', () => {
+      currentPage = 1;
+      updateTable();
+    });
+
+    exportKaderBtn?.addEventListener('click', () => {
+      const search = searchInput?.value.toLowerCase().trim() || '';
+      const role = roleFilter?.value || 'all';
+      const status = statusFilter?.value || 'all';
+      const activity = activityFilterEl?.value || 'all';
+
+      const filteredToExport = users.filter(u => {
+        const fullName = (u.full_name || u.name || '').toLowerCase();
+        const username = (u.username || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const matchesSearch = fullName.includes(search) || username.includes(search) || email.includes(search);
+        const matchesRole = (role === 'all' || u.role === role);
+        let matchesStatus = true;
+        if (status === 'active') matchesStatus = u.is_active !== false;
+        else if (status === 'inactive') matchesStatus = u.is_active === false;
+        let matchesActivity = true;
+        if (activity !== 'all') {
+          const act = getKaderActivityStatus(u.last_input_at);
+          matchesActivity = act.status === activity;
+        }
+        return matchesSearch && matchesRole && matchesStatus && matchesActivity;
+      });
+
+      try {
+        const headers = ['No', 'Nama Lengkap', 'Username', 'Email', 'Role', 'Tipe Pekerjaan', 'Kecamatan / Wilayah', 'Status Keaktifan', 'Tanggal Terakhir Input', 'Selisih Hari Input', 'Total Record Sampah'];
+        const rows = filteredToExport.map((u, idx) => {
+          const act = getKaderActivityStatus(u.last_input_at);
+          const lastDateStr = u.last_input_at ? new Date(u.last_input_at).toLocaleString('id-ID') : 'Belum Pernah';
+          return [
+            idx + 1,
+            u.full_name || u.name || '-',
+            u.username || '-',
+            u.email || '-',
+            u.role || '-',
+            u.job_type ? (JOB_TYPES.find(j => j.id === u.job_type)?.label || u.job_type) : '-',
+            u.kecamatan || u.wilayah || '-',
+            `${act.icon} ${act.label}`,
+            lastDateStr,
+            act.days !== null ? `${act.days} hari` : 'Belum Pernah',
+            u.total_waste_records || 0
+          ];
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        XLSX.utils.book_append_sheet(wb, ws, 'Keaktifan Kader');
+        XLSX.writeFile(wb, `Rekap_Keaktifan_Kader_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showToast('Rekap keaktifan kader berhasil diunduh', 'success');
+      } catch (err) {
+        showToast('Gagal mengunduh rekap: ' + err.message, 'error');
+        console.error('[Export Kader Error]', err);
+      }
     });
 
     // Initial render

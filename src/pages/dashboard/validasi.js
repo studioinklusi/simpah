@@ -1,7 +1,7 @@
 // SIMPAH - Halaman Validasi Data (Anti-Fraud Queue)
 import { icons } from '../../components/icons.js';
-import { getCurrentUser, formatWeight, formatDate, onStateChange } from '../../utils/helpers.js';
-import { getAllWasteRecords, updateWasteRecordStatus, getAllMasterWilayah } from '../../db/store.js';
+import { getCurrentUser, formatWeight, formatDate, onStateChange, getKaderActivityStatus } from '../../utils/helpers.js';
+import { getAllWasteRecords, updateWasteRecordStatus, getAllMasterWilayah, getUsersWithActivity } from '../../db/store.js';
 import { SIPSN_CATEGORIES } from '../../utils/sipsn.js';
 import { showToast } from '../../components/toast.js';
 import { renderDashboardLayout } from './layout.js';
@@ -38,11 +38,15 @@ export async function renderValidasi() {
   };
 }
 
+let usersWithActivityCache = [];
+
 async function loadData() {
-  const [records, masterWilayah] = await Promise.all([
+  const [records, masterWilayah, usersWithAct] = await Promise.all([
     getAllWasteRecords(),
-    getAllMasterWilayah()
+    getAllMasterWilayah(),
+    getUsersWithActivity()
   ]);
+  usersWithActivityCache = usersWithAct;
 
   const user = getCurrentUser();
   const isKecKoordinator = user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan;
@@ -293,43 +297,120 @@ function renderView() {
         </div>
       </div>
     </div>
-    
-    <style>
-      #validasiTable {
-        border-collapse: separate !important;
-        border-spacing: 0 !important;
-      }
-      #validasiTable th, #validasiTable td {
-        border-bottom: 1px solid var(--border-color) !important;
-      }
-      #validasiTable thead th {
-        position: sticky !important;
-        top: 0;
-        z-index: 20;
-        background: var(--bg-secondary) !important;
-      }
-      #validasiTable thead th.sticky-col {
-        z-index: 30;
-      }
-      .sticky-col {
-        position: sticky !important;
-        right: 0;
-        z-index: 10;
-        box-shadow: -6px 0 10px rgba(0,0,0,0.05);
-      }
-      th.sticky-col {
-        background: var(--bg-secondary) !important;
-      }
-      td.sticky-col {
-        background: var(--bg-card) !important;
-      }
-      tr:hover td.sticky-col {
-        background: var(--gray-50) !important;
-      }
-      [data-theme="dark"] tr:hover td.sticky-col {
-        background: rgba(255,255,255,0.03) !important;
-      }
-    </style>
+        </div>
+      
+      ${user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan ? (() => {
+        const kecKaders = usersWithActivityCache.filter(u => u.role === 'petugas' && u.job_type === 'kader' && (u.kecamatan?.toLowerCase() === user.kecamatan.toLowerCase() || u.wilayah?.toLowerCase() === user.kecamatan.toLowerCase()));
+        let kecActive = 0, kecPassive = 0, kecInactive = 0;
+        kecKaders.forEach(u => {
+          const act = getKaderActivityStatus(u.last_input_at);
+          if (act.status === 'active') kecActive++;
+          else if (act.status === 'passive') kecPassive++;
+          else kecInactive++;
+        });
+
+        return `
+          <div class="card" style="margin-top:var(--space-6); padding:var(--space-5); border:1px solid var(--border-color);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-2);">
+              <h3 style="margin:0; font-size:var(--font-md); font-weight:700; display:flex; align-items:center; gap:8px;">
+                🌿 Pemantauan Keaktifan Kader Lapangan (Kec. ${user.kecamatan})
+              </h3>
+              <span style="font-size:var(--font-xs); color:var(--text-muted); font-weight:600;">${kecKaders.length} kader terdaftar</span>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:var(--space-3); margin-bottom:var(--space-4);">
+              <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-md); padding:var(--space-3); text-align:center;">
+                <div style="font-size:11px; font-weight:700; color:#065f46; text-transform:uppercase;">🟢 Aktif (≤10 hr)</div>
+                <div style="font-size:20px; font-weight:800; color:#10b981; margin-top:2px;">${kecActive} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+              </div>
+              <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-md); padding:var(--space-3); text-align:center;">
+                <div style="font-size:11px; font-weight:700; color:#92400e; text-transform:uppercase;">🟡 Pasif (11-30 hr)</div>
+                <div style="font-size:20px; font-weight:800; color:#d97706; margin-top:2px;">${kecPassive} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+              </div>
+              <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-md); padding:var(--space-3); text-align:center;">
+                <div style="font-size:11px; font-weight:700; color:#991b1b; text-transform:uppercase;">🔴 Inaktif (>30 hr/Nihil)</div>
+                <div style="font-size:20px; font-weight:800; color:#ef4444; margin-top:2px;">${kecInactive} <span style="font-size:12px; font-weight:500; color:var(--text-muted)">kader</span></div>
+              </div>
+            </div>
+
+            ${kecKaders.length > 0 ? `
+              <div style="max-height:220px; overflow:auto; border:1px solid var(--border-color); border-radius:var(--radius-md);">
+                <table class="table" style="font-size:var(--font-xs); width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Nama Kader</th>
+                      <th>Desa</th>
+                      <th>Status Keaktifan</th>
+                      <th>Input Terakhir</th>
+                      <th>Total Record</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${kecKaders.map(k => {
+                      const act = getKaderActivityStatus(k.last_input_at);
+                      return `
+                        <tr>
+                          <td><strong>${k.full_name || k.name || '-'}</strong></td>
+                          <td>${k.desa_id || '-'}</td>
+                          <td>
+                            <span class="badge" style="background:${act.color === 'green' ? '#d1fae5' : (act.color === 'amber' ? '#fef3c7' : '#fee2e2')}; color:${act.color === 'green' ? '#065f46' : (act.color === 'amber' ? '#92400e' : '#991b1b')}; font-weight:700;">
+                              ${act.icon} ${act.label}
+                            </span>
+                          </td>
+                          <td>${k.last_input_at ? (act.days === 0 ? 'Hari ini' : `${act.days} hari lalu`) : 'Belum pernah'}</td>
+                          <td>${k.total_waste_records || 0}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            ` : '<div style="text-align:center; padding:var(--space-4); color:var(--text-muted); font-size:var(--font-xs);">Belum ada kader terdaftar di kecamatan ini.</div>'}
+          </div>
+        `;
+      })() : ''}
+
+      <!-- Custom Table Fix Style for Sticky Header -->
+      <style>
+        #validasiTableContainer {
+          position: relative;
+        }
+        #validasiTable {
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+        }
+        #validasiTable th, #validasiTable td {
+          border-bottom: 1px solid var(--border-color) !important;
+        }
+        #validasiTable thead th {
+          position: sticky !important;
+          top: 0;
+          z-index: 20;
+          background: var(--bg-secondary) !important;
+        }
+        #validasiTable thead th.sticky-col {
+          z-index: 30;
+        }
+        .sticky-col {
+          position: sticky !important;
+          right: 0;
+          z-index: 10;
+          box-shadow: -6px 0 10px rgba(0,0,0,0.05);
+        }
+        th.sticky-col {
+          background: var(--bg-secondary) !important;
+        }
+        td.sticky-col {
+          background: var(--bg-card) !important;
+        }
+        tr:hover td.sticky-col {
+          background: var(--gray-50) !important;
+        }
+        [data-theme="dark"] tr:hover td.sticky-col {
+          background: rgba(255,255,255,0.03) !important;
+        }
+      </style>
+    </div>
   `, 'validasi');
 
   // Bind actions
