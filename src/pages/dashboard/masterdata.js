@@ -1675,7 +1675,7 @@ export async function renderMasterData() {
       updateTable();
     });
 
-    exportKaderBtn?.addEventListener('click', () => {
+    exportKaderBtn?.addEventListener('click', async () => {
       const search = searchInput?.value.toLowerCase().trim() || '';
       const role = roleFilter?.value || 'all';
       const status = statusFilter?.value || 'all';
@@ -1690,15 +1690,26 @@ export async function renderMasterData() {
         let matchesStatus = true;
         if (status === 'active') matchesStatus = u.is_active !== false;
         else if (status === 'inactive') matchesStatus = u.is_active === false;
+        
         let matchesActivity = true;
         if (activity !== 'all') {
-          const act = getKaderActivityStatus(u.last_input_at);
-          matchesActivity = act.status === activity;
+          const isInputter = canInputWaste(u) && u.role !== 'admin';
+          if (activity === 'non_inputter') {
+            matchesActivity = !isInputter;
+          } else {
+            if (!isInputter) {
+              matchesActivity = false;
+            } else {
+              const act = getKaderActivityStatus(u.last_input_at);
+              matchesActivity = act.status === activity;
+            }
+          }
         }
         return matchesSearch && matchesRole && matchesStatus && matchesActivity;
       });
 
       try {
+        const XLSX = await import('xlsx');
         const headers = ['No', 'Nama Lengkap', 'Username', 'Email', 'Role', 'Tipe Pekerjaan', 'Kecamatan / Wilayah', 'Status Keaktifan', 'Tanggal Terakhir Input', 'Selisih Hari Input', 'Total Record Sampah'];
         const rows = filteredToExport.map((u, idx) => {
           const isInputter = canInputWaste(u) && u.role !== 'admin';
