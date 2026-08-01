@@ -294,7 +294,14 @@ const LOCATIONS_DATA = [
   { id: 'loc-07', name: 'Pengepul Jaya Abadi', type: 'pengepul', lat: -7.3998, lng: 109.7102, address: 'Jl. Salak No. 8, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-022', served_desa_ids: ['wil-022'] },
   { id: 'loc-08', name: 'Pengepul Berkah', type: 'pengepul', lat: -7.435, lng: 109.645, address: 'Jl. Raya Bawang No. 12', wilayah: 'Bawang', desa_id: 'wil-040', served_desa_ids: ['wil-040'] },
   { id: 'loc-09', name: 'TPA Winong', type: 'tpa', lat: -7.372, lng: 109.678, address: 'Desa Winong, Kec. Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-055', served_desa_ids: ['wil-055'] },
-  { id: 'loc-10', name: 'TPS3R Wanadadi', type: 'tps3r', lat: -7.3555, lng: 109.741, address: 'Jl. Raya Wanadadi No. 3', wilayah: 'Wanadadi', desa_id: 'wil-260', served_desa_ids: ['wil-260'] }
+  { id: 'loc-10', name: 'TPS3R Wanadadi', type: 'tps3r', lat: -7.3555, lng: 109.741, address: 'Jl. Raya Wanadadi No. 3', wilayah: 'Wanadadi', desa_id: 'wil-260', served_desa_ids: ['wil-260'] },
+  { id: 'loc-11', name: 'Dapur MBG Kec. Banjarnegara', type: 'mbg', lat: -7.3905, lng: 109.6960, address: 'Jl. Pahlawan No. 5, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-055', served_desa_ids: ['wil-055'] },
+  { id: 'loc-12', name: 'SMPN 1 Banjarnegara', type: 'sekolah', lat: -7.3880, lng: 109.6975, address: 'Jl. Letjend Suprapto No. 1', wilayah: 'Banjarnegara', desa_id: 'wil-020', served_desa_ids: ['wil-020'] },
+  { id: 'loc-13', name: 'Kantor Kecamatan Banjarnegara', type: 'perkantoran', lat: -7.3912, lng: 109.6942, address: 'Jl. Pemuda No. 10', wilayah: 'Banjarnegara', desa_id: 'wil-023', served_desa_ids: ['wil-023'] },
+  { id: 'loc-14', name: 'Ponpes Al-Hikmah Bawang', type: 'pesantren', lat: -7.4350, lng: 109.6455, address: 'Jl. Raya Bawang No. 8', wilayah: 'Bawang', desa_id: 'wil-040', served_desa_ids: ['wil-040'] },
+  { id: 'loc-15', name: 'RSUD Hj. Anna Lasmanah', type: 'faskes', lat: -7.3872, lng: 109.6925, address: 'Jl. Jend. Sudirman No. 42, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-020', served_desa_ids: ['wil-020'] },
+  { id: 'loc-16', name: 'Puskesmas Banjarnegara 1', type: 'faskes', lat: -7.3910, lng: 109.6990, address: 'Jl. Semarang No. 12, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-024', served_desa_ids: ['wil-024'] },
+  { id: 'loc-17', name: 'Hotel Central Banjarnegara', type: 'institusi_lain', lat: -7.3940, lng: 109.6955, address: 'Jl. Pemuda No. 15, Banjarnegara', wilayah: 'Banjarnegara', desa_id: 'wil-020', served_desa_ids: ['wil-020'] }
 ];
 
 const USERS_DATA = [

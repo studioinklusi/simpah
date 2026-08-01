@@ -598,7 +598,8 @@ export async function renderRegister() {
             kader: 'Kader Lingkungan',
             operator_tps: 'Operator TPS3R',
             angkut: 'Petugas Pengangkut',
-            koordinator: 'Koordinator Lapangan'
+            koordinator: 'Koordinator Lapangan',
+            operator_institusi: 'Operator Institusi'
           };
           roleName = jobLabels[res.job_type] || 'Petugas Lapangan';
         } else if (res.role === 'eksekutif') {

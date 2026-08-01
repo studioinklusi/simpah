@@ -102,6 +102,7 @@ export const JOB_TYPES = [
   { id: 'angkut',       label: 'Petugas Angkut',          desc: 'Sopir/petugas pengangkutan sampah' },
   { id: 'operator_tps', label: 'Operator TPS3R/Bank Sampah', desc: 'Petugas pengelola fasilitas TPS/Bank Sampah' },
   { id: 'kader',        label: 'Kader Lingkungan',         desc: 'Penggerak lingkungan tingkat RT/RW' },
+  { id: 'operator_institusi', label: 'Operator Institusi', desc: 'Petugas pengelola sampah institusi (MBG/Sekolah/Kantor/Pesantren)' },
 ];
 
 /**
@@ -135,6 +136,8 @@ export function getAllowedInputTypes(user) {
       return ['masuk', 'pilah', 'olah']; // Full TPS operations
     case 'kader':
       return ['masuk', 'pilah', 'olah', 'insidental'];          // Basic input + sorting + processing
+    case 'operator_institusi':
+      return ['masuk', 'pilah', 'olah']; // Same as TPS operator
     default:
       return ['masuk', 'pilah', 'olah', 'armada', 'insidental'];
   }

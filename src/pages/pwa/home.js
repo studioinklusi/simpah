@@ -9,7 +9,7 @@ export async function renderPWAHome() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
+  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut', 'operator_institusi'].includes(user.job_type);
 
   let stats = null;
   let userComplaints = [];
@@ -46,7 +46,8 @@ export async function renderPWAHome() {
       kader: 'Kader Lingkungan',
       operator_tps: 'Operator TPS3R',
       angkut: 'Petugas Pengangkut',
-      koordinator: 'Koordinator Lapangan'
+      koordinator: 'Koordinator Lapangan',
+      operator_institusi: 'Operator Institusi'
     };
     const roleLabel = jobLabels[user.job_type] || 'Petugas Lapangan';
     
@@ -58,6 +59,9 @@ export async function renderPWAHome() {
     } else if (user.job_type === 'operator_tps' && user.location_id) {
       const loc = locations.find(l => l.id === user.location_id);
       authorityText = `${roleLabel} · ${loc ? loc.name : 'Fasilitas'}`;
+    } else if (user.job_type === 'operator_institusi' && user.location_id) {
+      const loc = locations.find(l => l.id === user.location_id);
+      authorityText = `${roleLabel} · ${loc ? loc.name : 'Institusi'}`;
     } else {
       authorityText = roleLabel;
     }

@@ -41,8 +41,20 @@ export const LOCATION_TYPES = [
   { id: 'tps3r', label: 'TPS3R', color: '#10b981', icon: icons.recycle },
   { id: 'bank_sampah', label: 'Bank Sampah', color: '#3b82f6', icon: icons.briefcase },
   { id: 'pengepul', label: 'Pengepul', color: '#8b5cf6', icon: icons.truck },
-  { id: 'tpa', label: 'TPA', color: '#ef4444', icon: icons.map }
+  { id: 'tpa', label: 'TPA', color: '#ef4444', icon: icons.map },
+  { id: 'mbg', label: 'Dapur MBG', color: '#f97316', icon: icons.heart },
+  { id: 'sekolah', label: 'Sekolah', color: '#06b6d4', icon: icons.users },
+  { id: 'perkantoran', label: 'Perkantoran', color: '#6366f1', icon: icons.briefcase },
+  { id: 'pesantren', label: 'Pesantren', color: '#84cc16', icon: icons.star },
+  { id: 'faskes', label: 'Fasilitas Kesehatan', color: '#ef4444', icon: icons.heart },
+  { id: 'institusi_lain', label: 'Institusi Lainnya', color: '#64748b', icon: icons.box }
 ];
+
+// Tipe lokasi yang tergolong institusi
+export const INSTITUTION_TYPES = ['mbg', 'sekolah', 'perkantoran', 'pesantren', 'faskes', 'institusi_lain'];
+
+// Tipe lokasi yang tergolong fasilitas pengolahan
+export const FACILITY_TYPES = ['tps3r', 'bank_sampah', 'pengepul'];
 
 export const INCIDENTAL_TYPES = [
   { id: 'kerja_bakti', label: 'Kerja Bakti', icon: icons.users },

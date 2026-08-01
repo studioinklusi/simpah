@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS invitation_codes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('warga', 'petugas', 'eksekutif', 'admin')),
-  job_type TEXT CHECK (job_type IN ('koordinator', 'angkut', 'operator_tps', 'kader')),
+  job_type TEXT CHECK (job_type IN ('koordinator', 'angkut', 'operator_tps', 'kader', 'operator_institusi')),
   location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
   max_uses INTEGER DEFAULT 0, -- 0 berarti tidak terbatas
   current_uses INTEGER DEFAULT 0,

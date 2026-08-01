@@ -1,5 +1,6 @@
 // SIMPAH - Input Sampah Campur (Mixed Waste → TPA)
 import { icons } from '../../components/icons.js';
+import { INSTITUTION_TYPES, FACILITY_TYPES } from '../../utils/sipsn.js';
 import { getCurrentUser } from '../../utils/helpers.js';
 import { initGPSIndicator } from '../../utils/gps.js';
 import { addWasteRecord, getAllLocations, getAllFleet, getAllMou, getAllMasterWilayah } from '../../db/store.js';
@@ -28,8 +29,11 @@ export async function renderInputSampah() {
     ? masterWilayah.find(w => w.id === userFacility.desa_id) 
     : (user.desa_id ? masterWilayah.find(w => w.id === user.desa_id) : null);
   const isOperatorTPS = user?.role === 'petugas' && user?.job_type === 'operator_tps' && userFacility;
+  const isOperatorInstitusi = user?.role === 'petugas' && user?.job_type === 'operator_institusi';
+  const institusiHasFacility = isOperatorInstitusi && userFacility;
+  const institusiFacilityIsTPSType = institusiHasFacility && FACILITY_TYPES.includes(userFacility.type);
   const isKader = user?.role === 'petugas' && user?.job_type === 'kader' && userDesa;
-  const isLockedLocation = isOperatorTPS || isKader;
+  const isLockedLocation = isOperatorTPS || institusiHasFacility || isKader;
   let gpsData = null;
   let mouValid = true; // Track MoU validation state
   let photoPicker = null;
@@ -50,6 +54,18 @@ export async function renderInputSampah() {
             </div>
             <div>
               <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Lokasi Fasilitas TPS3R / Pengolahan</div>
+              <div style="font-size:var(--font-sm); font-weight:700; color:var(--primary-800, #065f46); margin-top:1px;">${userFacility.name}</div>
+              <div style="font-size:var(--font-xs); color:var(--text-secondary);">Desa ${userDesa ? userDesa.desa_kelurahan : '-'}, Kec. ${userDesa ? userDesa.kecamatan : '-'}</div>
+            </div>
+          </div>
+        ` : ''}
+        ${institusiHasFacility ? `
+          <div class="tps-facility-badge" style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-radius:var(--radius-lg); background:${institusiFacilityIsTPSType ? 'rgba(13,124,61,0.08)' : 'rgba(6,182,212,0.08)'}; border:1px solid ${institusiFacilityIsTPSType ? 'rgba(13,124,61,0.25)' : 'rgba(6,182,212,0.25)'}; margin-bottom:var(--space-4);">
+            <div style="width:36px; height:36px; border-radius:8px; background:${institusiFacilityIsTPSType ? '#0D7C3D' : '#0891b2'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+              ${institusiFacilityIsTPSType ? '🏭' : '🏫'}
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${institusiFacilityIsTPSType ? 'Lokasi Fasilitas TPS3R / Pengolahan' : 'Lokasi Institusi'}</div>
               <div style="font-size:var(--font-sm); font-weight:700; color:var(--primary-800, #065f46); margin-top:1px;">${userFacility.name}</div>
               <div style="font-size:var(--font-xs); color:var(--text-secondary);">Desa ${userDesa ? userDesa.desa_kelurahan : '-'}, Kec. ${userDesa ? userDesa.kecamatan : '-'}</div>
             </div>
@@ -146,14 +162,14 @@ export async function renderInputSampah() {
             <div id="desaFeedback" style="color:#ef4444; font-size:var(--font-xs); margin-top:4px; display:none; font-weight:600;">⚠️ Desa tidak ditemukan di kecamatan terpilih</div>
           </div>
         </div>
-        <div class="form-group" id="locationGroup" style="display:${(userDesa || isOperatorTPS) ? 'block' : 'none'}">
-          <label class="form-label">${isOperatorTPS ? 'Fasilitas Terdaftar' : 'Dicatat di Fasilitas (Opsional)'}</label>
-          <select id="locationSelect" class="form-select form-input-lg" ${isOperatorTPS ? 'disabled' : ''}>
-            ${isOperatorTPS && userFacility ? `
+        <div class="form-group" id="locationGroup" style="display:${(userDesa || isOperatorTPS || institusiHasFacility) ? 'block' : 'none'}">
+          <label class="form-label">${(isOperatorTPS || institusiHasFacility) ? 'Fasilitas Terdaftar' : 'Dicatat di Fasilitas (Opsional)'}</label>
+          <select id="locationSelect" class="form-select form-input-lg" ${(isOperatorTPS || institusiHasFacility) ? 'disabled' : ''}>
+            ${(isOperatorTPS && userFacility) || institusiHasFacility ? `
               <option value="${userFacility.id}" data-lat="${userFacility.lat || 0}" data-lng="${userFacility.lng || 0}" data-name="${userFacility.name}" selected>${userFacility.name} (${(userFacility.type || 'tps3r').toUpperCase()})</option>
             ` : `
               <option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>
-              ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
+              ${userDesa ? locations.filter(l => (l.desa_id === userDesa.id || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(userDesa.id))) && [...FACILITY_TYPES, ...INSTITUTION_TYPES].includes(l.type)).map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${l.name}">${l.name} (${l.type.toUpperCase()})</option>`).join('') : ''}
             `}
           </select>
         </div>
@@ -224,7 +240,7 @@ export async function renderInputSampah() {
   let selectKecInstance, selectDesaInstance;
 
   const updateLocationDropdown = (selectedDesaId) => {
-    if (isOperatorTPS && userFacility) {
+    if ((isOperatorTPS && userFacility) || institusiHasFacility) {
       locSelect.innerHTML = `<option value="${userFacility.id}" data-lat="${userFacility.lat || 0}" data-lng="${userFacility.lng || 0}" data-name="${userFacility.name}" selected>${userFacility.name} (${(userFacility.type || 'tps3r').toUpperCase()})</option>`;
       locSelect.disabled = true;
       locGroup.style.display = 'block';
@@ -235,7 +251,7 @@ export async function renderInputSampah() {
       locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>';
       return;
     }
-    const filteredLocs = locations.filter(l => (l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId))) && ['tps3r', 'bank_sampah', 'pengepul'].includes(l.type));
+    const filteredLocs = locations.filter(l => (l.desa_id === selectedDesaId || (Array.isArray(l.served_desa_ids) && l.served_desa_ids.includes(selectedDesaId))) && [...FACILITY_TYPES, ...INSTITUTION_TYPES].includes(l.type));
     locSelect.innerHTML = '<option value="">Tanpa Fasilitas (Pencatatan Mandiri Desa)</option>' + 
       filteredLocs.map(l => `<option value="${l.id}" data-lat="${l.lat}" data-lng="${l.lng}">${l.name} (${l.type.toUpperCase()})</option>`).join('');
     locGroup.style.display = 'block';

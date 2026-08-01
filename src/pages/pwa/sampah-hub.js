@@ -9,7 +9,7 @@ export async function renderSampahHub() {
   const user = getCurrentUser();
   if (!user) { window.location.hash = '#/login'; return; }
 
-  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut'].includes(user.job_type);
+  const isInputter = user.role === 'petugas' && ['kader', 'operator_tps', 'angkut', 'operator_institusi'].includes(user.job_type);
   const stats = await getWasteStats(isInputter ? user.id : null);
   const allowed = getAllowedInputTypes(user);
   if (allowed.length === 0) { window.location.hash = '#/pwa/home'; return; }

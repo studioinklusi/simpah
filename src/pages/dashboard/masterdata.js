@@ -244,7 +244,13 @@ export async function renderMasterData() {
         ['TPS3R', 'TPS 3R (Reduce, Reuse, Recycle)'],
         ['Bank Sampah', 'Bank Sampah Unit/Induk'],
         ['Pengepul', 'Pengepul / Lapak Sampah'],
-        ['TPA', 'Tempat Pemrosesan Akhir']
+        ['TPA', 'Tempat Pemrosesan Akhir'],
+        ['MBG', 'Dapur Makan Bergizi Gratis'],
+        ['Sekolah', 'Sekolah / Madrasah'],
+        ['Perkantoran', 'Kantor Pemerintah / Swasta'],
+        ['Pesantren', 'Pondok Pesantren / Asrama'],
+        ['Fasilitas Kesehatan', 'Rumah Sakit / Puskesmas / Klinik'],
+        ['Institusi Lainnya', 'Hotel / Tempat Wisata / Tempat Ibadah / Dll']
       ];
       const wsTypes = XLSX.utils.aoa_to_sheet([typeHeaders, ...typeRows]);
       XLSX.utils.book_append_sheet(wb, wsTypes, 'Referensi Tipe Lokasi');
@@ -263,7 +269,7 @@ export async function renderMasterData() {
       getAllLocations(),
       getAllMasterWilayah()
     ]);
-    const badgeColors = { tps: 'amber', tps3r: 'green', bank_sampah: 'blue', pengepul: 'purple', tpa: 'red' };
+    const badgeColors = { tps: 'amber', tps3r: 'green', bank_sampah: 'blue', pengepul: 'purple', tpa: 'red', mbg: 'orange', sekolah: 'cyan', perkantoran: 'indigo', pesantren: 'lime', faskes: 'red', institusi_lain: 'slate' };
     container.innerHTML = `
       <div class="md-toolbar">
         <div style="display:flex;align-items:center;gap:var(--space-3)">
@@ -873,6 +879,12 @@ export async function renderMasterData() {
         else if (typeLower === 'banksampah') type = 'bank_sampah';
         else if (typeLower === 'pengepul') type = 'pengepul';
         else if (typeLower === 'tpa') type = 'tpa';
+        else if (typeLower === 'mbg') type = 'mbg';
+        else if (typeLower === 'sekolah') type = 'sekolah';
+        else if (typeLower === 'perkantoran') type = 'perkantoran';
+        else if (typeLower === 'pesantren') type = 'pesantren';
+        else if (typeLower === 'faskes' || typeLower === 'fasilitaskesehatan' || typeLower === 'rumahsakit' || typeLower === 'puskesmas') type = 'faskes';
+        else if (typeLower === 'institusilain' || typeLower === 'institusilainnya' || typeLower === 'lainnya') type = 'institusi_lain';
         else {
           errors.push('Tipe lokasi tidak valid');
         }
@@ -3135,6 +3147,7 @@ export async function renderMasterData() {
             <option value="angkut" ${inv?.job_type === 'angkut' ? 'selected' : ''}>Driver Armada</option>
             <option value="operator_tps" ${inv?.job_type === 'operator_tps' ? 'selected' : ''}>Operator TPS3R</option>
             <option value="koordinator" ${inv?.job_type === 'koordinator' ? 'selected' : ''}>Koordinator Lapangan</option>
+            <option value="operator_institusi" ${inv?.job_type === 'operator_institusi' ? 'selected' : ''}>Operator Institusi (MBG/Sekolah/Kantor/Faskes/dll)</option>
           </select>
         </div>
 
