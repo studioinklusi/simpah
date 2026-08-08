@@ -39,6 +39,7 @@ export async function renderValidasi() {
 }
 
 let usersWithActivityCache = [];
+let masterWilayahCache = [];
 
 async function loadData() {
   const [records, masterWilayah, usersWithAct] = await Promise.all([
@@ -46,7 +47,23 @@ async function loadData() {
     getAllMasterWilayah(),
     getUsersWithActivity()
   ]);
-  usersWithActivityCache = usersWithAct;
+  masterWilayahCache = masterWilayah;
+  usersWithActivityCache = usersWithAct.map(u => {
+    let desaDisplay = '-';
+    if (u.desa_id) {
+      const w = masterWilayah.find(item => item.id === u.desa_id);
+      if (w) {
+        desaDisplay = w.desa_kelurahan;
+      } else if (u.desa) {
+        desaDisplay = u.desa;
+      } else if (!u.desa_id.includes('-')) {
+        desaDisplay = u.desa_id;
+      }
+    } else if (u.desa) {
+      desaDisplay = u.desa;
+    }
+    return { ...u, desa_display: desaDisplay };
+  });
 
   const user = getCurrentUser();
   const isKecKoordinator = user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan;
@@ -300,20 +317,29 @@ function renderView() {
         </div>
       
       ${user?.role === 'petugas' && user?.job_type === 'koordinator' && user?.kecamatan ? (() => {
-        const kecKaders = usersWithActivityCache.filter(u => u.role === 'petugas' && u.job_type === 'kader' && (u.kecamatan?.toLowerCase() === user.kecamatan.toLowerCase() || u.wilayah?.toLowerCase() === user.kecamatan.toLowerCase()));
+        const kecKaders = usersWithActivityCache.filter(u => {
+          if (u.role !== 'petugas' || u.job_type !== 'kader') return false;
+          if (u.kecamatan && u.kecamatan.toLowerCase() === user.kecamatan.toLowerCase()) return true;
+          if (u.wilayah && u.wilayah.toLowerCase() === user.kecamatan.toLowerCase()) return true;
+          if (u.desa_id) {
+            const w = masterWilayahCache.find(item => item.id === u.desa_id);
+            if (w && w.kecamatan.toLowerCase() === user.kecamatan.toLowerCase()) return true;
+          }
+          return false;
+        });
         let kecActive = 0, kecPassive = 0, kecInactive = 0;
         kecKaders.forEach(u => {
           const act = getKaderActivityStatus(u.last_input_at);
           if (act.status === 'active') kecActive++;
           else if (act.status === 'passive') kecPassive++;
-          else kecInactive++;
+          else if (act.status === 'inactive' || act.status === 'never') kecInactive++;
         });
 
         return `
           <div class="card" style="margin-top:var(--space-6); padding:var(--space-5); border:1px solid var(--border-color);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-2);">
               <h3 style="margin:0; font-size:var(--font-md); font-weight:700; display:flex; align-items:center; gap:8px;">
-                🌿 Pemantauan Keaktifan Kader Lapangan (Kec. ${user.kecamatan})
+                🌿 Pemantauan Keaktifan Kader Lapangan (Kec. ${escapeHTML(user.kecamatan)})
               </h3>
               <span style="font-size:var(--font-xs); color:var(--text-muted); font-weight:600;">${kecKaders.length} kader terdaftar</span>
             </div>
@@ -348,10 +374,11 @@ function renderView() {
                   <tbody>
                     ${kecKaders.map(k => {
                       const act = getKaderActivityStatus(k.last_input_at);
+                      const desaName = k.desa_display || k.desa_name || k.desa || '-';
                       return `
                         <tr>
-                          <td><strong>${k.full_name || k.name || '-'}</strong></td>
-                          <td>${k.desa_id || '-'}</td>
+                          <td><strong>${escapeHTML(k.full_name || k.name || '-')}</strong></td>
+                          <td>Desa ${escapeHTML(desaName)}</td>
                           <td>
                             <span class="badge" style="background:${act.color === 'green' ? '#d1fae5' : (act.color === 'amber' ? '#fef3c7' : '#fee2e2')}; color:${act.color === 'green' ? '#065f46' : (act.color === 'amber' ? '#92400e' : '#991b1b')}; font-weight:700;">
                               ${act.icon} ${act.label}

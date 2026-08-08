@@ -176,7 +176,7 @@ export function isMobileDevice() {
  */
 export function getKaderActivityStatus(lastInputDate) {
   if (!lastInputDate) {
-    return { status: 'inactive', label: 'Belum Input', color: 'red', icon: '🔴', days: null };
+    return { status: 'never', label: 'Belum Input', color: 'red', icon: '🔴', days: null };
   }
   const now = new Date();
   const inputDate = new Date(lastInputDate);

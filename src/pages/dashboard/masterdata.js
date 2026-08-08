@@ -1180,7 +1180,7 @@ export async function renderMasterData() {
       const act = getKaderActivityStatus(u.last_input_at);
       if (act.status === 'active') activeKaderCount++;
       else if (act.status === 'passive') passiveKaderCount++;
-      else inactiveKaderCount++;
+      else if (act.status === 'inactive' || act.status === 'never') inactiveKaderCount++;
     });
 
     container.innerHTML = `
@@ -1248,7 +1248,8 @@ export async function renderMasterData() {
             <option value="all">Semua Keaktifan</option>
             <option value="active">🟢 Aktif (≤10 hr)</option>
             <option value="passive">🟡 Pasif (11-30 hr)</option>
-            <option value="inactive">🔴 Inaktif (>30 hr/Nihil)</option>
+            <option value="inactive">🔴 Inaktif (>30 hr)</option>
+            <option value="never">🔴 Belum Input (Nihil)</option>
             <option value="non_inputter">⚪ Non-Inputter (-)</option>
           </select>
         </div>
