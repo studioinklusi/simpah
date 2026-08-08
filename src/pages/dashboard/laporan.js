@@ -112,7 +112,9 @@ export async function renderLaporan() {
             <option value="">Semua Tipe</option>
             <option value="kader">Kader Lingkungan</option>
             <option value="angkut">Petugas Angkut</option>
-            <option value="operator_tps">Operator TPS3R</option>
+            <option value="operator_tps">Operator TPS3R / Bank Sampah</option>
+            <option value="operator_institusi">Operator Institusi</option>
+            <option value="koordinator">Koordinator Lapangan</option>
             <option value="admin">Administrator / Dinas</option>
           </select>
         </div>
@@ -411,6 +413,7 @@ function getRecordUserType(r, allUsers) {
   if (name.includes('admin')) return 'admin';
   if (name.includes('kader')) return 'kader';
   if (name.includes('angkut') || name.includes('pengangkut')) return 'angkut';
+  if (name.includes('institusi')) return 'operator_institusi';
   if (name.includes('operator')) return 'operator_tps';
   if (name.includes('koordinator')) return 'koordinator';
   return '';
