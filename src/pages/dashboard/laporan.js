@@ -114,7 +114,6 @@ export async function renderLaporan() {
             <option value="angkut">Petugas Angkut</option>
             <option value="operator_tps">Operator TPS3R / Bank Sampah</option>
             <option value="operator_institusi">Operator Institusi</option>
-            <option value="koordinator">Koordinator Lapangan</option>
             <option value="admin">Administrator / Dinas</option>
           </select>
         </div>
