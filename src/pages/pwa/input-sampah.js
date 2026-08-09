@@ -95,8 +95,8 @@ export async function renderInputSampah() {
         <div class="form-group">
           <label class="form-label">Metode Pembuangan Akhir (SIPSN)</label>
           <select id="campurDestSelect" class="form-select form-input-lg">
+            <option value="tpa" selected>TPA - Controlled Landfill</option>
             <option value="tpa_open_dumping">TPA - Open Dumping</option>
-            <option value="tpa">TPA - Controlled Landfill</option>
             <option value="sanitary_landfill">TPA - Sanitary Landfill</option>
             <option value="insinerasi">Insinerasi</option>
             <option value="lainnya">Lainnya</option>
