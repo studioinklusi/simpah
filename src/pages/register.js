@@ -478,6 +478,7 @@ export async function renderRegister() {
   }
 
   let isInvitationCodeValid = true;
+  let isValidatingCode = false;
   let resolvedRole = 'warga';
   let resolvedJobType = null;
   let resolvedDesaId = null;
@@ -572,12 +573,14 @@ export async function renderRegister() {
       invitationFeedback.style.display = 'none';
       invitationFeedback.innerHTML = '';
       isInvitationCodeValid = true;
+      isValidatingCode = false;
       resolvedRole = 'warga';
       unlockWilayahFields();
       desaFromCodeBadge.style.display = 'none';
       return;
     }
 
+    isValidatingCode = true;
     invitationFeedback.style.display = 'flex';
     invitationFeedback.style.color = '#4b5563';
     invitationFeedback.innerHTML = `<div class="spinner" style="width:12px;height:12px;border-width:1.5px;margin:0"></div> Memvalidasi kode...`;
@@ -586,6 +589,7 @@ export async function renderRegister() {
       const res = await validateInvitationCode(code);
       if (res && res.is_valid) {
         isInvitationCodeValid = true;
+        hideError();
         resolvedRole = res.role;
         resolvedJobType = res.job_type;
         resolvedDesaId = res.desa_id || null;
@@ -670,6 +674,8 @@ export async function renderRegister() {
       invitationFeedback.style.color = '#b91c1c';
       const errMsg = err?.message || err?.error_description || JSON.stringify(err);
       invitationFeedback.innerHTML = `<span>Gagal memverifikasi kode: ${errMsg}</span>`;
+    } finally {
+      isValidatingCode = false;
     }
   });
 
@@ -742,6 +748,11 @@ export async function renderRegister() {
     }
 
     // Check code validity before proceeding
+    if (isValidatingCode) {
+      showError('Kode undangan sedang divalidasi. Mohon tunggu beberapa saat.');
+      shakeCard();
+      return;
+    }
     if (!isInvitationCodeValid) {
       showError('Kode undangan yang Anda masukkan tidak valid. Silakan periksa kembali atau kosongkan.');
       shakeCard();
