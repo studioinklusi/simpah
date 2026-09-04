@@ -1834,7 +1834,6 @@ export async function renderMasterData() {
         : null;
 
       const data = {
-        name: document.getElementById('userName').value.trim(),
         full_name: document.getElementById('userName').value.trim(),
         username: document.getElementById('userUsername').value.trim().toLowerCase(),
         role: role,
